@@ -27,7 +27,4 @@ async def on_ready():
     print(f'{bot.user} a connecté à Discord!')
     await bot.tree.sync()
 
-bot.load_extension('commands')
-bot.load_extension('games')
-
 bot.run(os.getenv('TOKEN'))
