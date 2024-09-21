@@ -20,8 +20,6 @@ except mysql.connector.Error as err:
     print(f"Erreur de connexion à la base de données MySQL: {err}")
     exit(1)
 
-intents = discord.Intents.default()
-bot = commands.Bot(command_prefix='!', intents=intents)
 
 @bot.event
 async def on_ready():
@@ -37,5 +35,5 @@ async def on_ready():
 
 bot.load_extension('commands')
 bot.load_extension('games')
-
+    
 bot.run(os.getenv('TOKEN'))
