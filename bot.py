@@ -7,9 +7,8 @@ intents.message_content = True
 
 load_dotenv()
 TOKEN = os.getenv('TOKEN')
-print(TOKEN)
 
-""" client = discord.Client(intents=intents)
+client = discord.Client(intents=intents)
 
 @client.event
 async def on_ready():
@@ -27,4 +26,4 @@ async def on_message(message):
     await message.channel.send('ANINI')
 
 # LOGIN
-client.run(token=TOKEN) """
+client.run(token=TOKEN) 
