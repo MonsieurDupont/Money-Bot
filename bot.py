@@ -6,7 +6,7 @@ intents.members = True
 intents.message_content = True
 
 load_dotenv()
-TOKEN: Final[str] = os.getenv('TOKEN')
+TOKEN = os.getenv('TOKEN')
 print(TOKEN)
 
 """ client = discord.Client(intents=intents)
