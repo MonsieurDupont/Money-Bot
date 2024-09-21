@@ -16,6 +16,9 @@ async def on_ready():
 
 @bot.tree.command(name="hello", description="Say hello!")
 async def hello(interaction: Interaction):
-    await interaction.followup.send(f'Hello, {interaction.user.mention}!')
+    try:
+        await interaction.response.send(f'Hello, {interaction.user.mention}!')
+    except Exception as e:
+        print(f"Error: {e}")
 
 bot.run(os.getenv('TOKEN'))
