@@ -4,6 +4,7 @@ import mysql.connector
 import discord.app_commands as app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
+from commands import bonjour, bye
 
 load_dotenv()
 
@@ -28,12 +29,8 @@ async def on_ready():
     print(f'{bot.user} a connecté à Discord!')
     await bot.tree.sync()
 
-    # Register commands manually
-    bonjour_command = app_commands.Command(name="bonjour", description="Dire bonjour!")
-    bye_command = app_commands.Command(name="bye", description="Dire au bye!")
-
-    await bot.tree.add_command(bonjour_command)
-    await bot.tree.add_command(bye_command)
+bot.tree.add_command(app_commands.Command(name="bonjour", description="Dire bonjour!", func=bonjour))
+bot.tree.add_command(app_commands.Command(name="bye", description="Dire au bye!", func=bye))
 
 bot.load_extension('commands')
 bot.load_extension('games')
