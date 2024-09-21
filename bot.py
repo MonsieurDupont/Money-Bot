@@ -21,4 +21,4 @@ async def on_message(message):
   if message.content.startswith('idir'):
     await message.channel.send('ANINI')
 
-client.run('MTI4NzAxNjEyMjQ0MDIyNDc2OA.GfNXGv.cDs1KAC_aKhdBsD7mpuAMhza7nPZWW5qoIuVyI')
+client.run('')
