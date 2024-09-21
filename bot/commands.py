@@ -1,4 +1,5 @@
 from discord import app_commands
+from discord.ui import Button, View
 from discord.interactions import Interaction
 
 @app_commands.command(name="bonjour", description="Dire bonjour!")
@@ -17,11 +18,10 @@ async def bye(interaction: Interaction):
     except Exception as e:
         print(f"Erreur: {e}")
  """
-class MyView(discord.ui.View): # Create a class called MyView that subclasses discord.ui.View
-    @discord.ui.button(label="Click me!", style=discord.ButtonStyle.primary, emoji="😎") # Create a button with the label "😎 Click me!" with color Blurple
-    async def button_callback(self, button, interaction):
-        await interaction.response.send_message("You clicked the button!") # Send a message when the button is clicked
 
 @app_commands.command(name="bye", description="Dire au bye!")
 async def button(ctx):
-    await ctx.respond("This is a button!", view=MyView()) # Send a message with our View class that contains the button       
+    button = Button(label='test', style=discord.ButtonStyle.red)
+    View = View()
+    view.add_item(button)
+    await ctx.send("This is a button!", view=View) # Send a message with our View class that contains the button       
