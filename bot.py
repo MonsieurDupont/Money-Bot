@@ -1,10 +1,14 @@
 import os
 from dotenv import load_dotenv
 import discord
+from discord import app_commands
+from discord.ext import commands
+
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
 
+# DOTENV
 load_dotenv()
 TOKEN = os.getenv('TOKEN')
 
@@ -13,6 +17,11 @@ client = discord.Client(intents=intents)
 @client.event
 async def on_ready():
   print(f'{client.user} est connecté !')
+  try:
+      synced = await bot.tree.sync()
+      print(f"{len(synced)} commande(s) synchronisée(s)")
+  except Exception as exep:
+      print(exep)
 
 @client.event
 async def on_message(message):
