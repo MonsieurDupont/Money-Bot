@@ -32,7 +32,4 @@ async def on_ready():
 bot.tree.add_command(app_commands.Command(name="bonjour", description="Dire bonjour!", func=bonjour))
 bot.tree.add_command(app_commands.Command(name="bye", description="Dire au bye!", func=bye))
 
-bot.load_extension('commands')
-bot.load_extension('games')
-
 bot.run(os.getenv('TOKEN'))
