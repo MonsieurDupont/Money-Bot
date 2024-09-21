@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import os
 import mysql.connector
 import discord.app_commands as app_commands
-from commands import bonjour, bye
+from commands import bonjour_func, bye_func
 
 load_dotenv()
 
@@ -31,11 +31,11 @@ async def on_ready():
 
 @bot.tree.command(name="bonjour", description="Dire bonjour!")
 async def bonjour(interaction: discord.Interaction):
-    await bonjour(interaction)
+    await bonjour_func(interaction)
 
 @bot.tree.command(name="bye", description="Dire au bye!")
 async def bye(interaction: discord.Interaction):
-    await bye(interaction)
+    await bye_func(interaction)
 
 bot.load_extension('commands')
 bot.load_extension('games')
