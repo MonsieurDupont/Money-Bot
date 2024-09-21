@@ -25,4 +25,5 @@ async def on_message(message):
   if message.content.startswith('idir'):
     await message.channel.send('ANINI')
 
-client.run('')
+# LOGIN
+client.run(token=TOKEN)
