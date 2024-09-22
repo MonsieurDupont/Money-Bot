@@ -27,7 +27,7 @@ except mysql.connector.Error as err:
 
 dbcursor.execute("CREATE TABLE IF NOT EXISTS player_stats (player int, cash int, bank int)")
 dbcursor.execute("DESCRIBE player_stats")
-for x in dbcursor: 
+for x in dbcursor:
     print(x)
 # Événement lorsque le bot est prêt
 @bot.event
