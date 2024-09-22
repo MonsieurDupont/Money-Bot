@@ -1,7 +1,6 @@
 import discord
 import os
 import mysql.connector
-import discord.app_commands as app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -29,12 +28,28 @@ except mysql.connector.Error as err:
 # Événement lorsque le bot est prêt
 @bot.event
 async def on_ready():
-    print(f'{bot.user} a connecté à Discord!')
-    await bot.tree.sync()  # Synchroniser les commandes avec Discord
+    print(f'{bot.user} est connecté à Discord!')
+    try:
+        synced = await bot.tree.sync()  # Synchroniser les commandes avec Discord
+        print(f"Commandes synchronisées: {len(synced)} commandes.")
+    except Exception as e:
+        print(f"Erreur de synchronisation des commandes : {e}")
 
-# Charger les extensions
-bot.load_extension('commands')
-bot.load_extension('games')
+# Fonction pour charger les extensions
+async def load_extensions():
+    await bot.load_extension('commands')
+    await bot.load_extension('games')
+
+# Charger les extensions au démarrage du bot
+@bot.event
+async def on_ready():
+    print(f'{bot.user} est connecté à Discord!')
+    await load_extensions()
+    try:
+        synced = await bot.tree.sync()
+        print(f"Commandes synchronisées: {len(synced)} commandes.")
+    except Exception as e:
+        print(f"Erreur de synchronisation des commandes : {e}")
 
 # Démarrer le bot en utilisant le token dans .env
 bot.run(os.getenv('TOKEN'))
