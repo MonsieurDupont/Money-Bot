@@ -26,7 +26,7 @@ except mysql.connector.Error as err:
     exit(1)
 
 dbcursor.execute("CREATE TABLE player_stats (a int)")
-dbcursor.execute("SHOW DATABASES")
+dbcursor.execute("SHOW TABLES")
 for x in dbcursor: 
     print(x)
 # Événement lorsque le bot est prêt
