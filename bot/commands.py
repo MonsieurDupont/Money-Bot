@@ -2,7 +2,7 @@ from discord.ext import commands
 from discord import app_commands, Interaction
 from discord.ui import Button, View
 
-class MyCommands(app_commands.Group):
+class BotCommands(app_commands.Group):
     def __init__(self, bot: commands.Bot):
         super().__init__()
         self.bot = bot
@@ -26,5 +26,5 @@ class MyCommands(app_commands.Group):
         await interaction.response.send_message("Button clicked!")
 
 async def setup(bot):
-    my_commands = MyCommands(bot)
-    bot.tree.add_command(my_commands)
+
+    bot.tree.add_command(BotCommands(bot))
