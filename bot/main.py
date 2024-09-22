@@ -44,7 +44,7 @@ async def on_ready():
 @bot.event
 async def on_ready():
     print(f'{bot.user} est connecté à Discord!')
-    await load_extensions()
+    # await load_extensions()
     try:
         synced = await bot.tree.sync()
         print(f"Commandes synchronisées: {len(synced)} commandes.")
