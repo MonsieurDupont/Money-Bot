@@ -1,13 +1,17 @@
 import discord
-from discord.ext import commands
-from dotenv import load_dotenv
 import os
 import mysql.connector
-import discord.app_commands as app_commands
-from commands import bonjour_func, bye_func
+from discord.ext import commands
+from dotenv import load_dotenv
 
 load_dotenv()
 
+# Définir l'objet bot avec le préfixe de commande
+intents = discord.Intents.default()
+intents.message_content = True  # Assurez-vous d'avoir les bons intents
+bot = commands.Bot(command_prefix="!", intents=intents)
+
+# Connexion à la base de données
 try:
     conn = mysql.connector.connect(
         host=os.getenv('host'),
@@ -21,23 +25,34 @@ except mysql.connector.Error as err:
     print(f"Erreur de connexion à la base de données MySQL: {err}")
     exit(1)
 
-intents = discord.Intents.default()
-bot = commands.Bot(command_prefix='!', intents=intents)
-
+dbcursor.execute("CREATE TABLE IF NOT EXISTS player_stats (player VARCHAR, cash int, bank int)")
+dbcursor.execute("SHOW TABLES")
+for x in dbcursor:
+    print(x)
+# Événement lorsque le bot est prêt
 @bot.event
 async def on_ready():
-    print(f'{bot.user} a connecté à Discord!')
-    await bot.tree.sync()
+    print(f'{bot.user} est connecté à Discord!')
+    try:
+        await bot.tree.sync()  # Synchroniser les commandes avec Discord
+    except Exception as e:
+        print(f"Erreur de synchronisation des commandes : {e}")
 
-@bot.tree.command(name="bonjour", description="Dire bonjour!")
-async def bonjour(interaction: discord.Interaction):
-    await bonjour_func(interaction)
+# Fonction pour charger les extensions
+""" async def load_extensions():
+    await bot.load_extension('commands')
+    await bot.load_extension('games') """
 
-@bot.tree.command(name="bye", description="Dire au bye!")
-async def bye(interaction: discord.Interaction):
-    await bye_func(interaction)
+# Charger les extensions au démarrage du bot
+""" @bot.event
+async def on_ready():
+    print(f'{bot.user} est connecté à Discord!')
+    # await load_extensions()
+    try:
+        synced = await bot.tree.sync()
+        print(f"Commandes synchronisées: {len(synced)} commandes.")
+    except Exception as e:
+        print(f"Erreur de synchronisation des commandes : {e}") """
 
-bot.load_extension('commands')
-bot.load_extension('games')
-
+# Démarrer le bot en utilisant le token dans .env
 bot.run(os.getenv('TOKEN'))
