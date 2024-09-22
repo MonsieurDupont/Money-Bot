@@ -32,8 +32,15 @@ bot.load_extension('commands')
 @bot.event
 async def on_ready():
     print(f'{bot.user} is connected to Discord!')
-    await bot.tree.sync(guild=discord.Object(id=os.getenv('GUILD_ID')))  # Replace GUILD_ID with your guild ID
-    print(f"Commands synced: {len(bot.tree.get_commands())} commands.")
+    try:
+        await bot.tree.sync(guild=discord.Object(id=os.getenv('GUILD_ID')))
+        print(f"Commands synced: {len(bot.tree.get_commands())} commands.")
+    except discord.Forbidden:
+        print("Failed to sync commands: Forbidden")
+    except discord.HTTPException as e:
+        print(f"Failed to sync commands: {e.status} {e.text}")
+    except Exception as e:
+        print(f"Failed to sync commands: {e}")
 
 # Run the bot with the token from .env
 bot.run(os.getenv('TOKEN'))
