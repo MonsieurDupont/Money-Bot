@@ -6,12 +6,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Définir l'objet bot avec le préfixe de commande
+# Define the bot with the command prefix
 intents = discord.Intents.default()
-intents.message_content = True  # Assurez-vous d'avoir les bons intents
+intents.message_content = True  # Make sure to have the correct intents
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Connexion à la base de données
+# Database connection
 try:
     conn = mysql.connector.connect(
         host=os.getenv('host'),
@@ -20,38 +20,38 @@ try:
         database=os.getenv('database')
     )
     dbcursor = conn.cursor(buffered=True)
-    print("Connecté à la base de données MySQL")
+    print("Connected to MySQL database")
 except mysql.connector.Error as err:
-    print(f"Erreur de connexion à la base de données MySQL: {err}")
+    print(f"Error connecting to MySQL database: {err}")
     exit(1)
 
+# Create table if not exists
 dbcursor.execute("CREATE TABLE IF NOT EXISTS player_stats (player int, cash int, bank int)")
 dbcursor.execute("DESCRIBE player_stats")
 
-# Événement lorsque le bot est prêt
+# Event when the bot is ready
 @bot.event
 async def on_ready():
-    print(f'{bot.user} est connecté à Discord!')
+    print(f'{bot.user} is connected to Discord!')
     try:
-        await bot.tree.sync()  # Synchroniser les commandes avec Discord
+        await bot.tree.sync()  # Sync commands with Discord
     except Exception as e:
-        print(f"Erreur de synchronisation des commandes : {e}")
+        print(f"Error syncing commands: {e}")
 
-# Fonction pour charger les extensions
-""" async def load_extensions():
+# Load extensions
+async def load_extensions():
     await bot.load_extension('commands')
-    await bot.load_extension('games') """
 
-# Charger les extensions au démarrage du bot
-""" @bot.event
+# Load extensions on startup
+@bot.event
 async def on_ready():
-    print(f'{bot.user} est connecté à Discord!')
-    # await load_extensions()
+    print(f'{bot.user} is connected to Discord!')
+    await load_extensions()
     try:
         synced = await bot.tree.sync()
-        print(f"Commandes synchronisées: {len(synced)} commandes.")
+        print(f"Commands synced: {len(synced)} commands.")
     except Exception as e:
-        print(f"Erreur de synchronisation des commandes : {e}") """
+        print(f"Error syncing commands: {e}")
 
-# Démarrer le bot en utilisant le token dans .env
+# Run the bot with the token from .env
 bot.run(os.getenv('TOKEN'))

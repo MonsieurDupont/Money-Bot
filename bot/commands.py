@@ -2,23 +2,23 @@ from discord import app_commands
 from discord.ui import Button, View
 from discord.interactions import Interaction
 
-# Commande /bonjour
-@app_commands.command(name="bonjour", description="Dire bonjour!")
+# Command /bonjour
+@app_commands.command(name="bonjour", description="Say hello!")
 async def bonjour(interaction: Interaction):
     try:
-        await interaction.response.send_message(f'Bonjour, {interaction.user.mention}!')
+        await interaction.response.send_message(f'Hello, {interaction.user.mention}!')
     except Exception as e:
-        print(f"Erreur: {e}")
+        print(f"Error: {e}")
 
-# Commande /bye avec un bouton
-@app_commands.command(name="bye", description="Dire au revoir!")
+# Command /bye with a button
+@app_commands.command(name="bye", description="Say goodbye!")
 async def bye(interaction: Interaction):
     button = Button(label='Test', style=discord.ButtonStyle.red)
     view = View()
     view.add_item(button)
-    await interaction.response.send_message("Voici un bouton !", view=view)
+    await interaction.response.send_message("Here's a button!", view=view)
 
-# Fonction pour configurer les commandes et les ajouter à la commande d'arborescence (tree)
+# Function to set up commands and add them to the command tree
 async def setup(bot):
     bot.tree.add_command(bonjour)
     bot.tree.add_command(bye)
