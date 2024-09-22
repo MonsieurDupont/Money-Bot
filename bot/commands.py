@@ -26,5 +26,4 @@ class BotCommands(app_commands.Group):
         await interaction.response.send_message("Button clicked!")
 
 async def setup(bot):
-
-    bot.tree.add_command(bonjour)
+    bot.tree.add_command(BotCommands(bot))
