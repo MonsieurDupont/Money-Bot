@@ -16,7 +16,7 @@ class BotCommands(commands.Cog):
         view = View()
         view.add_item(button)
         try:
-            await interaction.response.send_message(f'Bye {interaction.user.mention}!') 
+            await interaction.response.send_message(f'Bye {interaction.user.mention}!', view=view) 
         except Exception as e:
             print(f"COMMAND ERROR: {e}")
 
