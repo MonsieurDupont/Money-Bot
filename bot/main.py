@@ -1,7 +1,7 @@
 import discord
+from discord.ext import commands
 import os
 import mysql.connector
-from discord.ext import commands
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -25,10 +25,6 @@ except mysql.connector.Error as err:
     print(f"Error connecting to MySQL database: {err}")
     exit(1)
 
-# Create table if not exists
-dbcursor.execute("CREATE TABLE IF NOT EXISTS player_stats (player int, cash int, bank int)")
-dbcursor.execute("DESCRIBE player_stats")
-
 # Load extensions
 bot.load_extension('commands')
 
@@ -36,7 +32,7 @@ bot.load_extension('commands')
 @bot.event
 async def on_ready():
     print(f'{bot.user} is connected to Discord!')
-    await bot.tree.sync(guild=discord.Object(id=YOUR_GUILD_ID))  
+    await bot.tree.sync(guild=discord.Object(id=os.getenv('GUILD_ID')))  # Replace GUILD_ID with your guild ID
     print(f"Commands synced: {len(bot.tree.get_commands())} commands.")
 
 # Run the bot with the token from .env
