@@ -25,8 +25,14 @@ except mysql.connector.Error as err:
     print(f"Error connecting to MySQL database: {err}")
     exit(1)
 
-# Load extensions
-bot.load_extension('commands')
+
+# Asynchronous cog loading
+async def load_extensions():
+    try:
+        await bot.load_extension('commands')
+    except Exception as e:
+        print(f"Failed to load extension commands: {e}")
+
 
 # Event when the bot is ready
 @bot.event
@@ -56,5 +62,15 @@ async def on_ready():
         print(f"Failed to sync commands: {e}")
 
 
-# Run the bot with the token from .env
-bot.run(os.getenv('TOKEN'))
+# Main bot function to run everything
+async def main():
+    async with bot:
+        await load_extensions()
+        await bot.start(os.getenv('TOKEN'))
+
+
+# Run the main function
+if __name__ == "__main__":
+    import asyncio
+
+    asyncio.run(main())
