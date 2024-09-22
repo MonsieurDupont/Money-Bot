@@ -26,7 +26,6 @@ except mysql.connector.Error as err:
     exit(1)
 
 dbcursor.execute("CREATE TABLE player_stats (name VARCHAR, cash INT, bank INT)")
-dbcursor.execute("DESCRIBE player_stats")
 
 for x in dbcursor: 
     print(x)
