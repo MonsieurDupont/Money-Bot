@@ -36,9 +36,9 @@ async def on_ready():
         print(f"Erreur de synchronisation des commandes : {e}")
 
 # Fonction pour charger les extensions
-async def load_extensions():
+""" async def load_extensions():
     await bot.load_extension('commands')
-    await bot.load_extension('games')
+    await bot.load_extension('games') """
 
 # Charger les extensions au démarrage du bot
 @bot.event
