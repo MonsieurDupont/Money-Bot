@@ -13,6 +13,6 @@ class BotCommands(commands.Cog):
     async def bye_command(self, interaction: Interaction):
         await interaction.response.send_message(f'Bye {interaction.user.mention}!')
 
-# Cog setup function
-def setup(bot: commands.Bot):
-    bot.add_cog(BotCommands(bot))
+# Async cog setup function
+async def setup(bot: commands.Bot):
+    await bot.add_cog(BotCommands(bot))

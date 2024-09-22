@@ -26,7 +26,7 @@ except mysql.connector.Error as err:
     exit(1)
 
 
-# Asynchronous cog loading
+# Asynchronous cog loading (with 'await')
 async def load_extensions():
     try:
         await bot.load_extension('commands')
@@ -41,12 +41,12 @@ async def on_ready():
     try:
         guild_id = os.getenv('GUILD_ID')
         if guild_id:
-            # Sync commands for the specific guild
+            # Sync commands for the specific guild (faster updates)
             guild = discord.Object(id=guild_id)
             await bot.tree.sync(guild=guild)
             print(f"Commands synced for guild {guild_id}: {len(bot.tree.get_commands(guild=guild))} commands.")
         else:
-            # Sync commands globally
+            # Sync commands globally (slower to update, but no guild restriction)
             await bot.tree.sync()
             print(f"Commands globally synced: {len(bot.tree.get_commands())} commands.")
 
