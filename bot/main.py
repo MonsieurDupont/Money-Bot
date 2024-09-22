@@ -42,7 +42,6 @@ async def on_ready():
 async def load_extensions():
     await bot.load_extension('commands')
 
-# Load extensions on startup
 @bot.event
 async def on_ready():
     print(f'{bot.user} is connected to Discord!')
