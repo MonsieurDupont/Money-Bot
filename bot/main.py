@@ -41,7 +41,7 @@ async def on_ready():
     await bot.load_extension('games') """
 
 # Charger les extensions au démarrage du bot
-@bot.event
+""" @bot.event
 async def on_ready():
     print(f'{bot.user} est connecté à Discord!')
     # await load_extensions()
@@ -49,7 +49,7 @@ async def on_ready():
         synced = await bot.tree.sync()
         print(f"Commandes synchronisées: {len(synced)} commandes.")
     except Exception as e:
-        print(f"Erreur de synchronisation des commandes : {e}")
+        print(f"Erreur de synchronisation des commandes : {e}") """
 
 # Démarrer le bot en utilisant le token dans .env
 bot.run(os.getenv('TOKEN'))
