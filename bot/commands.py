@@ -24,6 +24,5 @@ class BotCommands(commands.Cog):
     async def button_callback(self, interaction: Interaction):
         await interaction.response.send_message("Button clicked!")
 
-async def setup(bot):
-    await bot.tree.sync()
+def setup(bot):
     bot.add_cog(BotCommands(bot))

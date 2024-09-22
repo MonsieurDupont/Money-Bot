@@ -8,7 +8,7 @@ load_dotenv()
 
 # Define the bot with the command prefix
 intents = discord.Intents.default()
-intents.message_content = True  # Make sure to have the correct intents
+intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # Database connection
@@ -43,6 +43,7 @@ async def on_ready():
 # Load extensions
 async def load_extensions():
     await bot.load_extension('commands')
+    await bot.tree.sync()
 
 # Run the bot with the token from .env
 bot.run(os.getenv('TOKEN'))
