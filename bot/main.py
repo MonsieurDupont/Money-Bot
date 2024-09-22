@@ -27,10 +27,13 @@ except mysql.connector.Error as err:
 
 dbcursor.execute("CREATE TABLE IF NOT EXISTS player_stats (player int, cash int, bank int)")
 dbcursor.execute("DESCRIBE player_stats")
-for x in dbcursor:
-    print(x)
+
 # Événement lorsque le bot est prêt
 @bot.event
+async def setup(bot):
+    bot.tree.add_command(bonjour)
+    bot.tree.add_command(bye)
+    
 async def on_ready():
     print(f'{bot.user} est connecté à Discord!')
     try:
