@@ -33,24 +33,16 @@ dbcursor.execute("DESCRIBE player_stats")
 @bot.event
 async def on_ready():
     print(f'{bot.user} is connected to Discord!')
-    try:
-        await bot.tree.sync()  # Sync commands with Discord
-    except Exception as e:
-        print(f"Error syncing commands: {e}")
-
-# Load extensions
-async def load_extensions():
-    await bot.load_extension('commands')
-
-@bot.event
-async def on_ready():
-    print(f'{bot.user} is connected to Discord!')
     await load_extensions()
     try:
         synced = await bot.tree.sync()
         print(f"Commands synced: {len(synced)} commands.")
     except Exception as e:
         print(f"Error syncing commands: {e}")
+
+# Load extensions
+async def load_extensions():
+    await bot.load_extension('commands')
 
 # Run the bot with the token from .env
 bot.run(os.getenv('TOKEN'))
