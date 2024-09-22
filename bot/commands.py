@@ -27,4 +27,4 @@ class BotCommands(app_commands.Group):
 
 async def setup(bot):
 
-    bot.tree.add_command(BotCommands(bot))
+    bot.tree.add_command(bonjour)
