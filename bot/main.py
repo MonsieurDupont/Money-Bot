@@ -39,16 +39,9 @@ async def load_extensions():
 async def on_ready():
     print(f'{bot.user} is connected to Discord!')
     try:
-        guild_id = os.getenv('GUILD_ID')
-        if guild_id:
-            # Sync commands for the specific guild (faster updates)
-            guild = discord.Object(id=guild_id)
-            await bot.tree.sync(guild=guild)
-            print(f"Commands synced for guild {guild_id}: {len(bot.tree.get_commands(guild=guild))} commands.")
-        else:
-            # Sync commands globally (slower to update, but no guild restriction)
-            await bot.tree.sync()
-            print(f"Commands globally synced: {len(bot.tree.get_commands())} commands.")
+        # Sync commands globally (slower to update)
+        await bot.tree.sync()
+        print(f"Commands globally synced: {len(bot.tree.get_commands())} commands.")
 
         # Debugging: Print registered commands after sync
         for cmd in bot.tree.get_commands():
