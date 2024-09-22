@@ -30,10 +30,6 @@ dbcursor.execute("DESCRIBE player_stats")
 
 # Événement lorsque le bot est prêt
 @bot.event
-async def setup(bot):
-    bot.tree.add_command(bonjour)
-    bot.tree.add_command(bye)
-    
 async def on_ready():
     print(f'{bot.user} est connecté à Discord!')
     try:
