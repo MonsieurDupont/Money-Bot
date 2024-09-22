@@ -15,7 +15,10 @@ class BotCommands(commands.Cog):
         button = Button(label="test", style=discord.ButtonStyle.green)
         view = View()
         view.add_item(button)
-        await interaction.response.send_message(f'Bye {interaction.user.mention}!') 
+        try:
+            await interaction.response.send_message(f'Bye {interaction.user.mention}!') 
+        except Exception as e:
+            print(f"COMMAND ERROR: {e}")
 
 # Async cog setup function
 async def setup(bot: commands.Bot):
