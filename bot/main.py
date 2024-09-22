@@ -28,11 +28,9 @@ except mysql.connector.Error as err:
 # Événement lorsque le bot est prêt
 @bot.event
 async def on_ready():
-    await bot.tree.sync()
     print(f'{bot.user} est connecté à Discord!')
     try:
-        synced = await bot.tree.sync()  # Synchroniser les commandes avec Discord
-        print(f"Commandes synchronisées: {len(synced)} commandes.")
+        await bot.tree.sync()  # Synchroniser les commandes avec Discord
     except Exception as e:
         print(f"Erreur de synchronisation des commandes : {e}")
 
