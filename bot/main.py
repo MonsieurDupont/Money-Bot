@@ -25,7 +25,7 @@ except mysql.connector.Error as err:
     print(f"Erreur de connexion à la base de données MySQL: {err}")
     exit(1)
 
-dbcursor.execute("CREATE TABLE player_stats")
+dbcursor.execute("CREATE TABLE player_stats (a int)")
 dbcursor.execute("SHOW DATABASES")
 for x in dbcursor: 
     print(x)
