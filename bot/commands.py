@@ -2,9 +2,8 @@ from discord.ext import commands
 from discord import app_commands, Interaction
 from discord.ui import Button, View
 
-class BotCommands(app_commands.Group):
+class BotCommands(commands.Cog):
     def __init__(self, bot: commands.Bot):
-        super().__init__()
         self.bot = bot
 
     @app_commands.command(name="bonjour", description="Say hello!")
@@ -15,7 +14,7 @@ class BotCommands(app_commands.Group):
             print(f"Error: {e}")
 
     @app_commands.command(name="bye", description="Say goodbye!")
-    async def bye(self, interaction: Interaction):
+    async def bye_command(self, interaction: Interaction):
         button = Button(label='Test', style=discord.ButtonStyle.red)
         button.callback = self.button_callback
         view = View()
@@ -26,4 +25,5 @@ class BotCommands(app_commands.Group):
         await interaction.response.send_message("Button clicked!")
 
 async def setup(bot):
-    bot.tree.add_command(BotCommands(bot))
+    await bot.tree.sync()
+    bot.add_cog(BotCommands(bot))
