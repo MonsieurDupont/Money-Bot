@@ -43,12 +43,18 @@ async def on_ready():
             # Sync commands globally
             await bot.tree.sync()
             print(f"Commands globally synced: {len(bot.tree.get_commands())} commands.")
+
+        # Debugging: Print registered commands after sync
+        for cmd in bot.tree.get_commands():
+            print(f"Registered command: {cmd.name}")
+
     except discord.Forbidden:
         print("Failed to sync commands: Forbidden")
     except discord.HTTPException as e:
         print(f"Failed to sync commands: {e.status} {e.text}")
     except Exception as e:
         print(f"Failed to sync commands: {e}")
+
 
 # Run the bot with the token from .env
 bot.run(os.getenv('TOKEN'))
