@@ -6,9 +6,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Define the bot with the command prefix
+# Command prefix
 intents = discord.Intents.default()
-intents.message_content = True  # Make sure to have the correct intents
+intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # Database connection
@@ -26,7 +26,7 @@ except mysql.connector.Error as err:
     exit(1)
 
 
-# Asynchronous cog loading (with 'await')
+# Async cog loading
 async def load_extensions():
     try:
         await bot.load_extension('commands')
@@ -39,11 +39,11 @@ async def load_extensions():
 async def on_ready():
     print(f'{bot.user} is connected to Discord!')
     try:
-        # Sync commands globally (slower to update)
+        # Sync commands globally
         await bot.tree.sync()
         print(f"Commands globally synced: {len(bot.tree.get_commands())} commands.")
 
-        # Debugging: Print registered commands after sync
+        # Debugging
         for cmd in bot.tree.get_commands():
             print(f"Registered command: {cmd.name}")
 
@@ -55,7 +55,7 @@ async def on_ready():
         print(f"Failed to sync commands: {e}")
 
 
-# Main bot function to run everything
+# Main bot function
 async def main():
     async with bot:
         await load_extensions()
