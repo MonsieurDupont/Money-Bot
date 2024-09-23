@@ -3,10 +3,16 @@ from discord.ext import commands
 import os
 import mysql.connector
 from dotenv import load_dotenv
+import logging
 
+# Load environment variables from .env file
 load_dotenv()
 
-# Command prefix
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Command prefix and intents
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -20,25 +26,25 @@ try:
         database=os.getenv('database')
     )
     dbcursor = conn.cursor(buffered=True)
-    print("Connected to MySQL database")
+    logger.info("Connected to MySQL database")
 except mysql.connector.Error as err:
-    print(f"Error connecting to MySQL database: {err}")
+    logger.error(f"Error connecting to MySQL database: {err}")
     exit(1)
 
 # Event when the bot is ready
 @bot.event
 async def on_ready():
-    print(f'{bot.user} is connected to Discord!')
+    logger.info(f'{bot.user} is connected to Discord!')
     guild = discord.Object(id=os.getenv('GUILD_ID'))
     try:
         await bot.tree.sync(guild=guild)
-        print(f"Commands synced to guild {guild.id}")
+        logger.info(f"Commands synced to guild {guild.id}")
     except discord.Forbidden:
-        print("Failed to sync commands: Forbidden")
+        logger.error("Failed to sync commands: Forbidden")
     except discord.HTTPException as e:
-        print(f"Failed to sync commands: {e.status} {e.text}")
+        logger.error(f"Failed to sync commands: {e.status} {e.text}")
     except Exception as e:
-        print(f"Failed to sync commands: {e}")
+        logger.error(f"Failed to sync commands: {e}")
 
 # Async cog setup function
 async def setup(bot: commands.Bot):
@@ -49,7 +55,11 @@ async def setup(bot: commands.Bot):
 async def main():
     async with bot:
         await setup(bot)
-        await bot.start(os.getenv('TOKEN'))
+        try:
+            await bot.start(os.getenv('TOKEN'))
+        finally:
+            dbcursor.close()
+            conn.close()
 
 # Run the main function
 if __name__ == "__main__":
