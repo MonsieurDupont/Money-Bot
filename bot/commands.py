@@ -7,9 +7,15 @@ bonjour_command = app_commands.Command(name="bonjour", description="Say hello!")
 async def bonjour(interaction: Interaction):
     await interaction.response.send_message(f'Bonjour {interaction.user.mention}!')
 
+<<<<<<< HEAD
 bye_command = app_commands.Command(name="bye", description="Say goodbye!")
 async def bye(interaction: Interaction):
     button = Button(label="Click Me!", style=discord.ButtonStyle.green)
+=======
+@app_commands.command(name="bye", description="Say goodbye!")
+async def bye_command(interaction: Interaction):
+    button = Button(label="Click Me!")
+>>>>>>> 39aa10ade41010c4218248cbdf0424530722757e
 
     # Define button callback
     async def button_callback(interaction: Interaction):
