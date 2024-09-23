@@ -64,8 +64,8 @@ async def main():
             dbcursor.close()
             conn.close()
 
-# Run the main function
+""" # Run the main function
 if __name__ == "__main__":
     import asyncio
 
-    asyncio.run(main())
+    asyncio.run(main()) """
