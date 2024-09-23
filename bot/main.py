@@ -3,6 +3,7 @@ import discord
 from discord.ext import commands
 import mysql.connector
 from dotenv import load_dotenv
+from commands import setup
 
 load_dotenv()
 
