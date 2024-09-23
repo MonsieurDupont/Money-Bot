@@ -1,12 +1,17 @@
+import os
 import discord
 from discord.ext import commands
-import os
 import mysql.connector
 from dotenv import load_dotenv
 import logging
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Check if required environment variables are set
+if not os.getenv('APPLICATION_ID') or not os.getenv('TOKEN') or not os.getenv('GUILD_ID'):
+    print("Error: Required environment variables are not set")
+    exit(1)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -17,7 +22,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 # Initialize bot with application ID from environment variables
-bot = commands.Bot(command_prefix="!", intents=intents, application_id=int(os.getenv('APPLICATION_ID')))
+bot = commands.Bot(command_prefix="!", application_id=int(os.getenv('APPLICATION_ID')), intents=intents)
 
 # Database connection
 try:
@@ -37,9 +42,8 @@ except mysql.connector.Error as err:
 @bot.event
 async def on_ready():
     logger.info(f'{bot.user} is connected to Discord!')
-    guild = discord.Object(id=os.getenv('GUILD_ID'))
+    guild = discord.Object(id=int(os.getenv('GUILD_ID')))
     try:
-        await setup(bot)
         await bot.tree.sync(guild=guild)
         logger.info(f"Commands synced to guild {guild.id}")
     except discord.Forbidden:
@@ -49,17 +53,17 @@ async def on_ready():
     except Exception as e:
         logger.error(f"Failed to sync commands: {e}")
 
-# Async cog setup function
-async def setup(bot: commands.Bot):
-    guild = discord.Object(id=int(os.getenv('GUILD_ID')))
-    await bot.tree.sync(guild=guild)
-
 # Main bot function
 async def main():
     async with bot:
-        await setup(bot)
         try:
             await bot.start(os.getenv('TOKEN'))
+        except discord.LoginFailure:
+            logger.error("Failed to login: Invalid token")
+        except discord.HTTPException as e:
+            logger.error(f"Failed to login: {e.status} {e.text}")
+        except Exception as e:
+            logger.error(f"Failed to login: {e}")
         finally:
             dbcursor.close()
             conn.close()
