@@ -53,7 +53,7 @@ async def on_ready():
         print(f'Failed to connect to guild with ID {GUILD_ID}')
 
     try:
-        await bot.load_extension('commands')
+        await setup(bot)
     except Exception as e:
         print(f'Failed to load extension: {e}')
 

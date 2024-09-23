@@ -12,5 +12,5 @@ class Commands(commands.Cog):
     async def bye(self, ctx):
         await ctx.send(f'Goodbye, {ctx.author.mention}!')
 
-def setup(bot):
-    bot.add_cog(Commands(bot))
+async def setup(bot):
+    await bot.add_cog(Commands(bot))
