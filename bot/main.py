@@ -14,16 +14,26 @@ DATABASE_NAME = os.getenv('database')
 GUILD_ID = int(os.getenv('guild_id'))
 APPLICATION_ID = int(os.getenv('application_id'))
 
-bot = commands.Bot(command_prefix='/', intents=discord.Intents.default())
+intents = discord.Intents.default()
+intents.guilds = True
+intents.members = True
+intents.message_content = True
 
-db = mysql.connector.connect(
-    host=DATABASE_HOST,
-    user=DATABASE_USER,
-    password=DATABASE_PASSWORD,
-    database=DATABASE_NAME
-)
+bot = commands.Bot(command_prefix='/', intents=intents)
 
-cursor = db.cursor()
+try:
+    db = mysql.connector.connect(
+        host=DATABASE_HOST,
+        user=DATABASE_USER,
+        password=DATABASE_PASSWORD,
+        database=DATABASE_NAME
+    )
+    cursor = db.cursor()
+except mysql.connector.Error as e:
+    print(f'Failed to connect to database: {e}')
+finally:
+    if db:
+        db.close()
 
 @bot.tree.command(name='hello', guild=discord.Object(id=GUILD_ID))
 async def hello(interaction: discord.Interaction):
@@ -32,11 +42,6 @@ async def hello(interaction: discord.Interaction):
 @bot.tree.command(name='bye', guild=discord.Object(id=GUILD_ID))
 async def bye(interaction: discord.Interaction):
     await interaction.response.send(f'Goodbye, {interaction.user.mention}!')
-
-intents = discord.Intents.default()
-intents.guilds = True
-intents.members = True
-bot = commands.Bot(command_prefix='/', intents=intents)
 
 @bot.event
 async def on_ready():
@@ -47,6 +52,9 @@ async def on_ready():
     else:
         print(f'Failed to connect to guild with ID {GUILD_ID}')
 
-    await bot.load_extension('commands')
+    try:
+        await bot.load_extension('commands')
+    except Exception as e:
+        print(f'Failed to load extension: {e}')
 
 bot.run(TOKEN)
