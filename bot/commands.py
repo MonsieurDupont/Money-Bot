@@ -1,14 +1,14 @@
-from discord.ext import commands
 from discord import app_commands, Interaction
 from discord.ui import Button, View
+from main import bot
 
 # Define commands
-@app_commands.command(name="bonjour", description="Say hello!")
+bonjour_command = app_commands.Command(name="bonjour", description="Say hello!")
 async def bonjour(interaction: Interaction):
     await interaction.response.send_message(f'Bonjour {interaction.user.mention}!')
 
-@app_commands.command(name="bye", description="Say goodbye!")
-async def bye_command(interaction: Interaction):
+bye_command = app_commands.Command(name="bye", description="Say goodbye!")
+async def bye(interaction: Interaction):
     button = Button(label="Click Me!", style=discord.ButtonStyle.green)
 
     # Define button callback
@@ -23,8 +23,8 @@ async def bye_command(interaction: Interaction):
     try:
         await interaction.response.send_message(f'Bye {interaction.user.mention}!', view=view)
     except Exception as e:
-        logger.error(f"COMMAND ERROR: {e}")
+        print(f"COMMAND ERROR: {e}")  # Print the error to the console
 
 # Add commands to bot.tree
-bot.tree.add_command(bonjour)
+bot.tree.add_command(bonjour_command)
 bot.tree.add_command(bye_command)
