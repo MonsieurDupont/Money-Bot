@@ -15,7 +15,9 @@ logger = logging.getLogger(__name__)
 # Command prefix and intents
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix="!", intents=intents)
+
+# Initialize bot with application ID from environment variables
+bot = commands.Bot(command_prefix="!", intents=intents, application_id=int(os.getenv('APPLICATION_ID')))
 
 # Database connection
 try:
@@ -37,6 +39,7 @@ async def on_ready():
     logger.info(f'{bot.user} is connected to Discord!')
     guild = discord.Object(id=os.getenv('GUILD_ID'))
     try:
+        await setup(bot)
         await bot.tree.sync(guild=guild)
         logger.info(f"Commands synced to guild {guild.id}")
     except discord.Forbidden:
