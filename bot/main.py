@@ -35,6 +35,7 @@ async def bye(interaction: discord.Interaction):
 
 intents = discord.Intents.default()
 intents.guilds = True
+intents.members = True
 bot = commands.Bot(command_prefix='/', intents=intents)
 
 @bot.event
@@ -46,6 +47,6 @@ async def on_ready():
     else:
         print(f'Failed to connect to guild with ID {GUILD_ID}')
 
-bot.load_extension('commands')
+    await bot.load_extension('commands')
 
 bot.run(TOKEN)
