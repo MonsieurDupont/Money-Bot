@@ -15,7 +15,7 @@ bot_commands.append(bonjour)
 
 @app_commands.command(name="bye", description="Say goodbye!")
 async def bye_command(interaction: Interaction):
-    button = Button(label="Click Me!", style=discord.ButtonStyle.green)
+    button = Button(label="Click Me!")
 
     # Define button callback
     async def button_callback(interaction: Interaction):
