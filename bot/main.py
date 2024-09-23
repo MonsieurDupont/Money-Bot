@@ -33,11 +33,18 @@ async def hello(interaction: discord.Interaction):
 async def bye(interaction: discord.Interaction):
     await interaction.response.send(f'Goodbye, {interaction.user.mention}!')
 
+intents = discord.Intents.default()
+intents.guilds = True
+bot = commands.Bot(command_prefix='/', intents=intents)
+
 @bot.event
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
     guild = bot.get_guild(GUILD_ID)
-    print(f'Connected to guild: {guild.name}')
+    if guild is not None:
+        print(f'Connected to guild: {guild.name}')
+    else:
+        print(f'Failed to connect to guild with ID {GUILD_ID}')
 
 bot.load_extension('commands')
 
