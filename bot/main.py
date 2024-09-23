@@ -43,7 +43,7 @@ async def on_ready():
 # Async cog setup function
 async def setup(bot: commands.Bot):
     guild = discord.Object(id=int(os.getenv('GUILD_ID')))
-    bot.tree.sync(guild=guild)
+    await bot.tree.sync(guild=guild)
 
 # Main bot function
 async def main():
