@@ -26,13 +26,13 @@ bot = commands.Bot(command_prefix="!", application_id=int(os.getenv('APPLICATION
 
 # Database connection
 try:
-    conn = mysql.connector.connect(
+    SQLconnect = mysql.connector.connect(
         host=os.getenv('host'),
         user=os.getenv('user'),
         password=os.getenv('password'),
         database=os.getenv('database')
     )
-    dbcursor = conn.cursor(buffered=True)
+    dbcursor = SQLconnect.cursor(buffered=True)
     logger.info("Connected to MySQL database")
 except mysql.connector.Error as err:
     logger.error(f"Error connecting to MySQL database: {err}")
@@ -66,5 +66,10 @@ async def main():
             logger.error(f"Failed to login: {e}")
         finally:
             dbcursor.close()
-            conn.close()
+            SQLconnect.close()
 
+# Run the main function
+if __name__ == "__main__":
+    import asyncio
+
+    asyncio.run(main()) 
