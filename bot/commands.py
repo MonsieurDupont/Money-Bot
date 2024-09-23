@@ -6,7 +6,7 @@ class BotCommands(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @app_commands.command(name="bonjour", description="Say hello!")
+    @app_commands.command(name="zebi", description="Say hello!")
     async def bonjour(self, interaction: Interaction):
         await interaction.response.send_message(f'Bonjour {interaction.user.mention}!')
 
