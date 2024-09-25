@@ -36,14 +36,6 @@ finally:
     if db:
         db.close()
 
-@bot.tree.command(name='hello', guild=discord.Object(id=GUILD_ID))
-async def hello(interaction: discord.Interaction):
-    await interaction.response.send(f'Hello, {interaction.user.mention}!')
-
-@bot.tree.command(name='bye', guild=discord.Object(id=GUILD_ID))
-async def bye(interaction: discord.Interaction):
-    await interaction.response.send(f'Goodbye, {interaction.user.mention}!')
-
 @bot.event
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
