@@ -9,9 +9,9 @@ load_dotenv()
 
 TOKEN = os.getenv('token')
 
-intents = discord.intents.default()
+intents = discord.Intents.default()
 intents.message_content = True
-intents.voice_stats = True
+intents.voice_states = True
 
 FFMPEG_OPTIONS = {'options' : '-vn'}
 YDL_OPTIONS = {'format' : 'bestaudio', 'noplaylist' : True}
