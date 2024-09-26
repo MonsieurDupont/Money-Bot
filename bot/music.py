@@ -57,7 +57,7 @@ class MusicBot(commands.Cog):
             ctx.voice_client.stop()
             await ctx.send('Musique passée')
 
-client = commands.Bot(command_prefix='+', intents=intents)
+client = commands.Bot(command_prefix='an!', intents=intents)
 
 async def main():
     await client.add_cog(MusicBot(client))
