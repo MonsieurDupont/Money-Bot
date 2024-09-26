@@ -8,6 +8,7 @@ import asyncio
 load_dotenv()
 
 TOKEN = os.getenv('token')
+GUILD_ID = int(os.getenv('guild_id'))
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -61,6 +62,20 @@ client = commands.Bot(command_prefix='+', intents=intents)
 async def main():
     await client.add_cog(MusicBot(client))
     await client.start(TOKEN)
+
+@client.event
+async def on_ready():
+    print(f'{client.user} has connected to Discord!')
+    guild = client.get_guild(GUILD_ID)
+    if guild is not None:
+        print(f'Connected to guild: {guild.name}')
+    else:
+        print(f'Failed to connect to guild with ID {GUILD_ID}')
+
+    try:
+        await setup(client)
+    except Exception as e:
+        print(f'Failed to load extension: {e}')
 
 asyncio.run(main())
 
