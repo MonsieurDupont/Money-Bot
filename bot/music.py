@@ -4,6 +4,7 @@ from discord.ext import commands
 import yt_dlp
 from dotenv import load_dotenv
 import asyncio
+from commands import setup
 
 load_dotenv()
 
