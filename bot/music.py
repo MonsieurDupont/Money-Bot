@@ -62,5 +62,5 @@ async def main():
     await client.add_cog(MusicBot(client))
     await client.start(TOKEN)
 
-asyncio.run(main)
+asyncio.run(main())
 
