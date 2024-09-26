@@ -16,7 +16,7 @@ intents.voice_states = True
 FFMPEG_OPTIONS = {'options' : '-vn'}
 YDL_OPTIONS = {'format' : 'bestaudio', 'noplaylist' : True}
 
-class MusicBot(commands.cog):
+class MusicBot(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.queue = []
