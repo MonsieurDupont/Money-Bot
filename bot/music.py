@@ -26,13 +26,7 @@ class MusicBot(commands.Cog):
     @commands.command()
     async def play(self, ctx, *, search):
         voice_channel = ctx.author.voice.channel if ctx.author.voice else None
-        if not voice_channel:
-            return await ctx.send("Rejoins un vocal fdp")
-        if not ctx.voice_client:
-            try:
-                await voice_channel.connect()
-            except Exception as e:
-                print(f'{e}')
+        await voice_channel.connect()
 
         async with ctx.typing():
             with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
