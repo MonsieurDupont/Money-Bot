@@ -31,17 +31,7 @@ class MusicBot(commands.Cog):
         except Exception as e:
             print({e})
 
-        async with ctx.typing():
-            with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
-                info = ydl.extract_info(url=f"ytsearch:{search}", download=False)
-                if 'entries' in info:
-                    info = info['entries'[0]]
-                url = info['url']
-                title = info['title']
-                self.queue.append((url, title))
-                await ctx.send(f'**{title}** ajoutée a la file')
-        if not ctx.voice_client.is_playing():
-            await self.play_next(ctx)
+
     
     async def play_next(self, ctx):
         if self.queue:
