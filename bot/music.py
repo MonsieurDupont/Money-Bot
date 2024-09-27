@@ -27,10 +27,7 @@ class MusicBot(commands.Cog):
     async def play(self, ctx, *, search):
         voice_channel = ctx.author.voice.channel if ctx.author.voice else None
         await ctx.send('mets ton doigt dans mon cul')
-        try:
-            await voice_channel.connect()
-        except Exception as e:
-            print({voice_channel})
+
 
 
     
