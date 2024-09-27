@@ -29,7 +29,7 @@ class MusicBot(commands.Cog):
         try:
             await voice_channel.connect()
         except Exception as e:
-            print({e})
+            print({voice_channel})
 
 
     
