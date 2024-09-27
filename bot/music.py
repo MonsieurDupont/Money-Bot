@@ -26,7 +26,10 @@ class MusicBot(commands.Cog):
     @commands.command()
     async def play(self, ctx, *, search):
         voice_channel = ctx.author.voice.channel if ctx.author.voice else None
-        await voice_channel.connect()
+        try:
+            await voice_channel.connect()
+        except Exception as e:
+            print({e})
 
         async with ctx.typing():
             with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
