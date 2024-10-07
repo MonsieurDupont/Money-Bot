@@ -103,7 +103,7 @@ class TestButton(discord.ui.View):
     @discord.ui.button(label="zebi", style=discord.ButtonStyle.blurple)
     async def buttontest(self, interaction: discord.Interaction, Button: discord.ui.Button):
         await interaction.channel.send(content="zebiiiiii")
-    @discord.ui.button(label="zebi2", style=discord.ButtonStyle.premium)
+    @discord.ui.button(label="zebi2", style=discord.ButtonStyle.danger)
     async def buttontest(self, interaction: discord.Interaction, Button: discord.ui.Button):
         await interaction.channel.send(content="grrrr")
 
