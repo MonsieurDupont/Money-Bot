@@ -281,5 +281,8 @@ async def delete_account(interaction: discord.Interaction, user: discord.User):
         await interaction.response.send_message(embed=embed)
 
 # Lancement du bot
-await bot.tree.sync()
-bot.run(os.getenv("token"))
+async def main():
+    await bot.tree.sync()
+    bot.run(os.getenv("token"))
+
+asyncio.run(main())
