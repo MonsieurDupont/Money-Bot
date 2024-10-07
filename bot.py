@@ -263,5 +263,34 @@ async def withdraw(interaction: discord.Interaction, amount: int):
         embed = discord.Embed(title="Erreur", description=f"Erreur lors du retrait : {err}", color=0xff0000)
         await interaction.response.send_message(embed=embed)
 
+@bot.tree.command(name="delete_account", description="Supprimer le compte d'un utilisateur")
+@commands.has_permissions(administrator=True)
+async def delete_account(interaction: discord.Interaction, user: discord.User):
+    try:
+        embed = discord.Embed(title="Confirmation de suppression", description=f"Voulez-vous vraiment supprimer le compte de {user.mention} ? Toute donnée sera perdue.", color=0xff0000)
+        embed.add_field(name="Attention", value="Cette action est irréversible.", inline=False)
+        message = await interaction.response.send_message(embed=embed)
+        await message.add_reaction("✅")
+        await message.add_reaction("❌")
+
+        def check(reaction, user_reaction):
+            return user_reaction == interaction.user and reaction.message == message and (str(reaction.emoji) == "✅" or str(reaction.emoji) == "❌")
+
+        reaction, user_reaction = await bot.wait_for("reaction_add", check=check)
+
+        if str(reaction.emoji) == "✅":
+            query = f"DELETE FROM {TABLE_USERS} WHERE {FIELD_ID} = %s"
+            execute_query(query, (user.id,))
+            query = f"DELETE FROM {TABLE_TRANSACTIONS} WHERE {FIELD_ID} = %s"
+            execute_query(query, (user.id,))
+            embed = discord.Embed(title="Compte supprimé", description=f"Le compte de {user.mention} a été supprimé avec succès.", color=0x00ff00)
+            await interaction.followup.send(embed=embed)
+        elif str(reaction.emoji) == "❌":
+            embed = discord.Embed(title="Annulation", description=f"La suppression du compte de {user.mention} a été annulée.", color=0x00ff00)
+            await interaction.followup.send(embed=embed)
+    except mysql.connector.Error as err:
+        embed = discord.Embed(title="Erreur", description=f"Erreur lors de la suppression du compte : {err}", color=0xff0000)
+        await interaction.response.send_message(embed=embed)
+
 # Lancement du bot
 bot.run(os.getenv("token"))
