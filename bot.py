@@ -101,8 +101,10 @@ class TestButton(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 @discord.ui.button(label="zebi", style=discord.ButtonStyle.blurple)
+async def buttontest(self, interaction: discord.Interaction, Button: discord.ui.Button):
+    await interaction.channel.send(content="zebiiiiii")
 @bot.tree.command(name="balance", description="Vérifier votre solde")
-async def balance(self, interaction: discord.Interaction, Button: discord.ui.Button):
+async def balance(self, interaction: discord.Interaction):
     user_id = interaction.user.id
     if not is_registered(user_id):
         embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
