@@ -77,7 +77,7 @@ def fetch_data(query, params=None):
         logging.error("Erreur de requête SQL : {}".format(err))
         return None
 
-# Fonction pour vérifier si un joueur est inscrit
+# Fonction pour vérifier si un utilisateur est inscrit
 def is_registered(user_id):
     query = f"SELECT * FROM {TABLE_USERS} WHERE {FIELD_ID} = %s"
     data = fetch_data(query, (user_id,))
@@ -113,11 +113,11 @@ async def balance(interaction: discord.Interaction):
         embed = discord.Embed(title="Solde", description=f" **Cash** : {cash} <:AploucheCoin:1286080674046152724> \n **Banque** : {bank} <:AploucheCoin:1286080674046152724> \n **Total** : {total} <:AploucheCoin:1286080674046152724>", color=color_blue)
         await interaction.response.send_message(embed=embed)
     else:
-        embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
+        embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=0xff0000)
         await interaction.response.send_message(embed=embed)
 
 # Commande pour voler un joueur
-@bot.tree.command(name="steal", description="Volé un joueur")
+@bot.tree.command(name="steal", description="Voler un joueur")
 async def steal(interaction: discord.Interaction, user: discord.User):
     robber_id = interaction.user.id
     victim_id = user.id
