@@ -97,16 +97,6 @@ async def register(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 # Commande pour vérifier son solde
-class TestButton(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
-
-    @discord.ui.button(label="zebi", style=discord.ButtonStyle.blurple)
-    async def buttontest(self, interaction: discord.Interaction, Button: discord.ui.Button):
-        await interaction.channel.send(content="zebiiiiii")
-    @discord.ui.button(label="zebi2", style=discord.ButtonStyle.danger)
-    async def buttontest2(self, interaction: discord.Interaction, Button: discord.ui.Button):
-        await interaction.response.send_message(content="grrrr")
 
 @bot.tree.command(name="balance", description="Vérifier votre solde")
 async def balance(interaction: discord.Interaction):
@@ -122,7 +112,7 @@ async def balance(interaction: discord.Interaction):
         cash, bank = data[0]
         total = cash + bank
         embed = discord.Embed(title="Solde", description=f" **Cash** : {cash} <:AploucheCoin:1286080674046152724> \n **Banque** : {bank} <:AploucheCoin:1286080674046152724> \n **Total** : {total} <:AploucheCoin:1286080674046152724>", color=color_blue)
-        await interaction.response.send_message(embed=embed, view=TestButton())
+        await interaction.response.send_message(embed=embed)
     else:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
         await interaction.response.send_message(embed=embed)
@@ -266,6 +256,16 @@ async def transaction_history(interaction: discord.Interaction, user: discord.Us
         await interaction.response.send_message(embed=embed)
 
 # Commande pour supprimer un compte
+class DeleteAccView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+@discord.ui.button(label="Confirmer", style=discord.ButtonStyle.green)
+async def confirm(self, interaction: discord.Interaction, Button: discord.ui.Button):
+    await interaction.channel.send(content="Confirmer")
+@discord.ui.button(label="Annuler", style=discord.ButtonStyle.green)
+async def cancel(self, interaction: discord.Interaction, Button: discord.ui.Button):
+    await interaction.channel.send(content="Annuler")
 @bot.tree.command(name="delete_account", description="Supprimer un compte")
 @commands.has_permissions(administrator=True)
 async def delete_account(interaction: discord.Interaction, user: discord.User):
@@ -291,6 +291,9 @@ async def delete_account(interaction: discord.Interaction, user: discord.User):
     elif str(reaction.emoji) == "❌":
         await message.edit(content=f"Suppression annulée.")
 
+# JEUX
+
+    # BLACKJACK
 # Lancement du bot
 async def main():
     await bot.start(TOKEN)
