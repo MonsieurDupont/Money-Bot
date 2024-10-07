@@ -23,7 +23,7 @@ FIELD_AMOUNT = "amount"
 def get_db_connection():
     try:
         return mysql.connector.connect(
-            host="localhost",
+            host="host",
             user="username",
             password="password",
             database="database"
