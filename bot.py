@@ -261,12 +261,14 @@ class DeleteAccView(discord.ui.View):
         super().__init__(timeout=None)
 
     @discord.ui.button(label="Confirmer", style=discord.ButtonStyle.green)
-    async def confirm(self, interaction: discord.Interaction, Button: discord.ui.Button):
-        await interaction.channel.send(content="Confirmer")
-    @discord.ui.button(label="Annuler", style=discord.ButtonStyle.green)
+    async def confirm(self, interaction: discord.Interaction, Button: discord.ui.Button, user: discord.user):
+        execute_query(f"DELETE FROM {TABLE_USERS} WHERE {FIELD_ID} = %s", (user.id,))
+        execute_query(f"DELETE FROM {TABLE_TRANSACTIONS} WHERE {FIELD_ID} = %s", (user.id,))
+        await interaction.response.send_message(content=f"Compte de {user.mention} supprimé avec succès.")
+    @discord.ui.button(label="Annuler", style=discord.ButtonStyle.red)
     async def cancel(self, interaction: discord.Interaction, Button: discord.ui.Button):
-        await interaction.channel.send(content="Annuler")
-@bot.tree.command(name="delete_account", description="Supprimer un compte")
+        await interaction.response.send_message(content="Annuler")
+@bot.tree.command(name="delete_account", description="Suppression annulée.")
 @commands.has_permissions(administrator=True)
 async def delete_account(interaction: discord.Interaction, user: discord.User):
     embed = discord.Embed(title="Confirmation de suppression", description=f"Voulez-vous vraiment supprimer le compte de {user.mention} ? Toute donnée sera perdue.", color=color_red)
