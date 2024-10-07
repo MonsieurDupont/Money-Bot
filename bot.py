@@ -141,7 +141,8 @@ async def leaderboard(interaction: discord.Interaction):
         data = fetch_data(query, ())
         embed = discord.Embed(title="Classement des richesses", description="Voici le classement des utilisateurs les plus riches :", color=0x00ff00)
         for i, (user_id, cash, bank) in enumerate(data):
-            embed.add_field(name=f"#{i+1} <@{user_id}>", value=f"Cash : {cash} <:AploucheCoin:1286080674046152724>\nBanque : {bank} <:AploucheCoin:1286080674046152724>", inline=False)
+            user = await bot.fetch_user(user_id)
+            embed.add_field(name=f"#{i+1} {user.name}", value=f"Cash : {cash} <:AploucheCoin:1286080674046152724>\nBanque : {bank} <:AploucheCoin:1286080674046152724>", inline=False)
         await interaction.response.send_message(embed=embed)
     except mysql.connector.Error as err:
         embed = discord.Embed(title="Erreur", description=f"Erreur lors de l'affichage du classement : {err}", color=0xff0000)
