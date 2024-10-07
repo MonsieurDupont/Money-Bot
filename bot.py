@@ -260,12 +260,12 @@ class DeleteAccView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-@discord.ui.button(label="Confirmer", style=discord.ButtonStyle.green)
-async def confirm(self, interaction: discord.Interaction, Button: discord.ui.Button):
-    await interaction.channel.send(content="Confirmer")
-@discord.ui.button(label="Annuler", style=discord.ButtonStyle.green)
-async def cancel(self, interaction: discord.Interaction, Button: discord.ui.Button):
-    await interaction.channel.send(content="Annuler")
+    @discord.ui.button(label="Confirmer", style=discord.ButtonStyle.green)
+    async def confirm(self, interaction: discord.Interaction, Button: discord.ui.Button):
+        await interaction.channel.send(content="Confirmer")
+    @discord.ui.button(label="Annuler", style=discord.ButtonStyle.green)
+    async def cancel(self, interaction: discord.Interaction, Button: discord.ui.Button):
+        await interaction.channel.send(content="Annuler")
 @bot.tree.command(name="delete_account", description="Supprimer un compte")
 @commands.has_permissions(administrator=True)
 async def delete_account(interaction: discord.Interaction, user: discord.User):
