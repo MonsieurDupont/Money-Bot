@@ -27,27 +27,27 @@ db.commit()
 # --- Commands ---
 @bot.tree.command(name="register", description="Register a new user")
 async def register(ctx):
-    user_id = ctx.author.id
+    user_id = interaction.user.id
     cursor.execute("INSERT IGNORE INTO users (id) VALUES (%s)", (user_id,))
     cursor.execute("UPDATE users SET cash = 100, bank = 100 WHERE id = %s", (user_id,))
     db.commit()
-    await ctx.respond(f"<@{user_id}>, vous êtes inscrit ! Vous avez 100 AploucheCoins en cash et 100 en banque.")
+    await interaction.response.send_message(f"<@{user_id}>, vous êtes inscrit ! Vous avez 100 AploucheCoins en cash et 100 en banque.")
 
 @bot.tree.command(name="balance", description="Check your balance")
 async def balance(ctx):
-    user_id = ctx.author.id
+    user_id = interaction.user.id
     cursor.execute("SELECT cash, bank FROM users WHERE id = %s", (user_id,))
     result = cursor.fetchone()
     if result:
         cash, bank = result
         total = cash + bank
-        await ctx.respond(f"<@{user_id}>, votre solde est : Cash: {cash}, Banque: {bank}, Total: {total} AploucheCoins.")
+        await interaction.response.send_message(f"<@{user_id}>, votre solde est : Cash: {cash}, Banque: {bank}, Total: {total} AploucheCoins.")
     else:
-        await ctx.respond(f"<@{user_id}>, vous devez vous inscrire avec `/register`.")
+        await interaction.response.send_message(f"<@{user_id}>, vous devez vous inscrire avec `/register`.")
 
 @bot.tree.command(name="withdraw", description="Withdraw money from your bank")
 async def withdraw(ctx, amount: int):
-    user_id = ctx.author.id
+    user_id = interaction.user.id
     cursor.execute("SELECT bank FROM users WHERE id = %s", (user_id,))
     result = cursor.fetchone()
     if result:
@@ -55,16 +55,16 @@ async def withdraw(ctx, amount: int):
         if bank >= amount:
             cursor.execute("UPDATE users SET cash = cash + %s, bank = bank - %s WHERE id = %s", (amount, amount, user_id))
             db.commit()
-            await ctx.respond(f"<@{user_id}>, vous avez retiré {amount} AploucheCoins de votre banque.")
+            await interaction.response.send_message(f"<@{user_id}>, vous avez retiré {amount} AploucheCoins de votre banque.")
             add_transaction(user_id, -amount, "Sent")
         else:
-            await ctx.respond(f"<@{user_id}>, vous n'avez pas assez d'argent en banque.")
+            await interaction.response.send_message(f"<@{user_id}>, vous n'avez pas assez d'argent en banque.")
     else:
-        await ctx.respond(f"<@{user_id}>, vous devez vous inscrire avec `/register`.")
+        await interaction.response.send_message(f"<@{user_id}>, vous devez vous inscrire avec `/register`.")
 
 @bot.tree.command(name="deposit", description="Deposit money into your bank")
 async def deposit(ctx, amount: int):
-    user_id = ctx.author.id
+    user_id = interaction.user.id
     cursor.execute("SELECT cash FROM users WHERE id = %s", (user_id,))
     result = cursor.fetchone()
     if result:
@@ -72,12 +72,12 @@ async def deposit(ctx, amount: int):
         if cash >= amount:
             cursor.execute("UPDATE users SET cash = cash - %s, bank = bank + %s WHERE id = %s", (amount, amount, user_id))
             db.commit()
-            await ctx.respond(f"<@{user_id}>, vous avez déposé {amount} AploucheCoins dans votre banque.")
+            await interaction.response.send_message(f"<@{user_id}>, vous avez déposé {amount} AploucheCoins dans votre banque.")
             add_transaction(user_id, amount, "Received")
         else:
-            await ctx.respond(f"<@{user_id}>, vous n'avez pas assez d'argent en cash.")
+            await interaction.response.send_message(f"<@{user_id}>, vous n'avez pas assez d'argent en cash.")
     else:
-        await ctx.respond(f"<@{user_id}>, vous devez vous inscrire avec `/register`.")
+        await interaction.response.send_message(f"<@{user_id}>, vous devez vous inscrire avec `/register`.")
 
 @bot.tree.command(name="leaderboard", description="View the leaderboard")
 async def leaderboard(ctx):
@@ -86,11 +86,11 @@ async def leaderboard(ctx):
     message = "Classement des richesses:\n"
     for i, (user_id, cash, bank) in enumerate(leaderboard):
         message += f"{i+1}. <@{user_id}>: {cash + bank} AploucheCoins\n"
-    await ctx.respond(message)
+    await interaction.response.send_message(message)
 
 @bot.tree.command(name="stats", description="View your transaction history")
 async def stats(ctx):
-    user_id = ctx.author.id
+    user_id = interaction.user.id
     cursor.execute("SELECT transactions FROM users WHERE id = %s", (user_id,))
     result = cursor.fetchone()
     if result:
@@ -98,13 +98,13 @@ async def stats(ctx):
         message = "Historique des transactions:\n"
         for transaction in transactions:
             message += f"{transaction}\n"
-        await ctx.respond(message)
+        await interaction.response.send_message(message)
     else:
-        await ctx.respond(f"<@{user_id}>, vous devez vous inscrire avec `/register`.")
+        await interaction.response.send_message(f"<@{user_id}>, vous devez vous inscrire avec `/register`.")
 
 @bot.tree.command(name="transaction", description="Send money to another user")
 async def transaction(ctx, user: discord.User, amount: int):
-    sender_id = ctx.author.id
+    sender_id = interaction.user.id
     receiver_id = user.id
     cursor.execute("SELECT cash FROM users WHERE id = %s", (sender_id,))
     result = cursor.fetchone()
@@ -114,17 +114,17 @@ async def transaction(ctx, user: discord.User, amount: int):
             cursor.execute("UPDATE users SET cash = cash - %s WHERE id = %s", (amount, sender_id))
             cursor.execute("UPDATE users SET cash = cash + %s WHERE id = %s", (amount, receiver_id))
             db.commit()
-            await ctx.respond(f"<@{sender_id}>, vous avez envoyé {amount} AploucheCoins à <@{receiver_id}>.")
+            await interaction.response.send_message(f"<@{sender_id}>, vous avez envoyé {amount} AploucheCoins à <@{receiver_id}>.")
             add_transaction(sender_id, -amount, "Sent")
             add_transaction(receiver_id, amount, "Received")
         else:
-            await ctx.respond(f"<@{sender_id}>, vous n'avez pas assez d'argent.")
+            await interaction.response.send_message(f"<@{sender_id}>, vous n'avez pas assez d'argent.")
     else:
-        await ctx.respond(f"<@{sender_id}>, vous devez vous inscrire avec `/register`.")
+        await interaction.response.send_message(f"<@{sender_id}>, vous devez vous inscrire avec `/register`.")
 
 @bot.tree.command(name="rob", description="Rob another user")
 async def rob(ctx, user: discord.User):
-    robber_id = ctx.author.id
+    robber_id = interaction.user.id
     victim_id = user.id
     cursor.execute("SELECT cash FROM users WHERE id = %s", (robber_id,))
     robber_cash = cursor.fetchone()[0]
@@ -142,14 +142,14 @@ async def rob(ctx, user: discord.User):
         cursor.execute("UPDATE users SET cash = cash - %s WHERE id = %s", (amount, victim_id))
         cursor.execute("UPDATE users SET cash = cash + %s WHERE id = %s", (amount, robber_id))
         db.commit()
-        await ctx.respond(f"<@{robber_id}> a volé {amount} AploucheCoins à <@{victim_id}> !")
+        await interaction.response.send_message(f"<@{robber_id}> a volé {amount} AploucheCoins à <@{victim_id}> !")
         add_transaction(robber_id, amount, "Robbery")
         add_transaction(victim_id, -amount, "Robbery")
     else:
         loss = int(robber_cash * (1 - probability))
         cursor.execute("UPDATE users SET cash = cash - %s WHERE id = %s", (loss, robber_id))
         db.commit()
-        await ctx.respond(f"<@{robber_id}> a échoué à voler <@{victim_id}> et a perdu {loss} AploucheCoins !")
+        await interaction.response.send_message(f"<@{robber_id}> a échoué à voler <@{victim_id}> et a perdu {loss} AploucheCoins !")
         add_transaction(robber_id, -loss, "Failed Robbery")
 
 def add_transaction(user_id, amount, type):
