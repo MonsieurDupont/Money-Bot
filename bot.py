@@ -288,8 +288,8 @@ async def delete_account(interaction: discord.Interaction, user: discord.User):
 
 # Lancement du bot
 async def main():
-    await asyncio.sleep(5)  # Attendre 5 secondes
-    await bot.tree.sync(guild=discord.Object(id=guild_id))
+    await asyncio.sleep(10)  # Attendre 10 secondes
+    await bot.tree.sync()
     bot.run(token)
 
 asyncio.run(main())
