@@ -137,13 +137,19 @@ async def deposit(interaction: discord.Interaction, amount: int):
 @bot.tree.command(name="leaderboard", description="View the leaderboard")
 async def leaderboard(interaction: discord.Interaction):
     try:
-        query = f"SELECT {FIELD_ID}, {FIELD_CASH}, {FIELD_BANK} FROM {TABLE_USERS} ORDER BY {FIELD_CASH} + {FIELD_BANK} DESC"
-        data = fetch_data(query, ())
-        embed = discord.Embed(title="Classement des richesses", description="Voici le classement des utilisateurs les plus riches :", color=0x00ff00)
-        for i, (user_id, cash, bank) in enumerate(data):
-            user = await bot.fetch_user(user_id)
-            embed.add_field(name=f"#{i+1} {user.name}", value=f"Cash : {cash} <:AploucheCoin:1286080674046152724>\nBanque : {bank} <:AploucheCoin:1286080674046152724>", inline=False)
-        await interaction.response.send_message(embed=embed)
+        user_id = interaction.user.id
+        if is_registered(user_id):
+            query = f"SELECT {FIELD_ID}, {FIELD_CASH}, {FIELD_BANK} FROM {TABLE_USERS} ORDER BY {FIELD_CASH} + {FIELD_BANK} DESC"
+            data = fetch_data(query, ())
+            embed = discord.Embed(title="Classement des richesses", description="Voici le classement des utilisateurs les plus riches :", color=0x00ff00)
+            for i, (user_id, cash, bank) in enumerate(data):
+                user = await bot.fetch_user(user_id)
+                total = cash + bank
+                embed.add_field(name=f"#{i+1} {user.name}", value=f"Total : {total} <:AploucheCoin:ID_DE_L_EMOJI>", inline=False)
+            await interaction.response.send_message(embed=embed)
+        else:
+            embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register` pour accéder au leaderboard.", color=0xff0000)
+            await interaction.response.send_message(embed=embed)
     except mysql.connector.Error as err:
         embed = discord.Embed(title="Erreur", description=f"Erreur lors de l'affichage du classement : {err}", color=0xff0000)
         await interaction.response.send_message(embed=embed)
