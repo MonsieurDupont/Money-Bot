@@ -247,8 +247,7 @@ async def delete_account(interaction: discord.Interaction, user: discord.User):
 async def on_ready():
     print(f"{bot.user} est connecté à Discord!")
     try:
-        bot.tree.clear_cache()  # Clear command cache
-        await bot.tree.sync(guild=None)  # Synchronize commands globally
+        await bot.tree.sync(force=True)
         print(f"Synced {len(bot.tree)} command(s)")
     except Exception as e:
         print(f"Erreur lors de la synchronisation des commandes : {e}")
