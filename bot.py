@@ -102,7 +102,7 @@ async def stats(interaction: discord.Interaction):
     else:
         await interaction.response.send_message(f"<@{user_id}>, vous devez vous inscrire avec `/register`.")
 
-@@bot.tree.command(name="transaction", description="Send money to another user")
+@bot.tree.command(name="transaction", description="Send money to another user")
 async def transaction(interaction: discord.Interaction, user: discord.User, amount: int):
     sender_id = interaction.user.id
     receiver_id = user.id
