@@ -5,7 +5,12 @@ import random
 import asyncio
 from discord.ext import commands
 from dotenv import load_dotenv
+
 load_dotenv()
+
+application_id = os.getenv("application_id")
+guild_id = os.getenv("guild_id")
+token = os.getenv("token")
 
 # Constantes pour les noms de tables et les champs de la base de données
 TABLE_USERS = "users"
@@ -78,7 +83,7 @@ def is_registered(user_id):
 # Bot Discord
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix="/", intents=intents)
+bot = commands.Bot(command_prefix="/", intents=intents, application_id=application_id)
 
 # Commandes
 @bot.tree.command(name="register", description="Register a new user")
@@ -283,7 +288,7 @@ async def delete_account(interaction: discord.Interaction, user: discord.User):
 
 # Lancement du bot
 async def main():
-    await bot.tree.sync()
-    bot.run(os.getenv("token"))
+    await bot.tree.sync(guild=discord.Object(id=guild_id))
+    bot.run(token)
 
 asyncio.run(main())
