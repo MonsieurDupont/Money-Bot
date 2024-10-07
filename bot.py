@@ -271,7 +271,7 @@ async def cancel(self, interaction: discord.Interaction, Button: discord.ui.Butt
 async def delete_account(interaction: discord.Interaction, user: discord.User):
     embed = discord.Embed(title="Confirmation de suppression", description=f"Voulez-vous vraiment supprimer le compte de {user.mention} ? Toute donnée sera perdue.", color=color_red)
     embed.add_field(name="Attention", value="Cette action est irréversible.", inline=False)
-    message = await interaction.response.send_message(embed=embed)
+    message = await interaction.response.send_message(embed=embed, view=DeleteAccView())
 
     def check(reaction, user_reaction):
         return user_reaction == interaction.user and reaction.message == message and (str(reaction.emoji) == "✅" or str(reaction.emoji) == "❌")
