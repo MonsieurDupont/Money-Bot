@@ -100,9 +100,9 @@ async def register(interaction: discord.Interaction):
 class TestButton(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
-@discord.ui.button(label="zebi", style=discord.ButtonStyle.blurple)
-async def buttontest(self, interaction: discord.Interaction, Button: discord.ui.Button):
-    await interaction.channel.send(content="zebiiiiii")
+    @discord.ui.button(label="zebi", style=discord.ButtonStyle.blurple)
+    async def buttontest(self, interaction: discord.Interaction, Button: discord.ui.Button):
+        await interaction.channel.send(content="zebiiiiii")
 
 @bot.tree.command(name="balance", description="Vérifier votre solde")
 async def balance(interaction: discord.Interaction):
