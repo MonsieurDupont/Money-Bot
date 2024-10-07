@@ -1,19 +1,15 @@
 import discord
-import os
-import mysql.connector
-import random
-import asyncio
 from discord.ext import commands
+import mysql.connector
+import asyncio
+import random
+import os
 from dotenv import load_dotenv
 
 load_dotenv()
+TOKEN = os.getenv("TOKEN")
 
-# Configuration
-TOKEN = os.getenv("token")
-APPLICATION_ID = int(os.getenv("application_id"))
-GUILD_ID = int(os.getenv("guild_id"))
-
-# Constantes pour la base de données
+# Constantes
 TABLE_USERS = "users"
 TABLE_TRANSACTIONS = "transactions"
 FIELD_ID = "id"
@@ -23,32 +19,41 @@ FIELD_TYPE = "type"
 FIELD_TIMESTAMP = "timestamp"
 FIELD_AMOUNT = "amount"
 
-# Configuration de la base de données
-DB_CONFIG = {
-    "host": os.getenv("host"),
-    "user": os.getenv("user"),
-    "password": os.getenv("password"),
-    "database": os.getenv("database")
-}
-
 # Fonction pour se connecter à la base de données
 def get_db_connection():
-    return mysql.connector.connect(**DB_CONFIG)
+    try:
+        return mysql.connector.connect(
+            host="localhost",
+            user="username",
+            password="password",
+            database="database"
+        )
+    except mysql.connector.Error as err:
+        print("Erreur de connexion à la base de données : {}".format(err))
+        return None
 
 # Fonction pour exécuter une requête SQL
 def execute_query(query, params=None):
-    with get_db_connection() as conn:
-        with conn.cursor() as cursor:
-            cursor.execute(query, params or ())
-            conn.commit()
-            return cursor.lastrowid
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(query, params or ())
+        conn.commit()
+        return cursor.lastrowid
+    except mysql.connector.Error as err:
+        print("Erreur de requête SQL : {}".format(err))
+        return None
 
 # Fonction pour récupérer des données de la base de données
 def fetch_data(query, params=None):
-    with get_db_connection() as conn:
-        with conn.cursor() as cursor:
-            cursor.execute(query, params or ())
-            return cursor.fetchall()
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(query, params or ())
+        return cursor.fetchall()
+    except mysql.connector.Error as err:
+        print("Erreur de requête SQL : {}".format(err))
+        return None
 
 # Fonction pour ajouter une transaction
 def add_transaction(user_id, amount, type):
@@ -64,35 +69,25 @@ def is_registered(user_id):
 # Bot Discord
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix="/", intents=intents, application_id=APPLICATION_ID)
+bot = commands.Bot(command_prefix="/", intents=intents)
 
-@bot.event
-async def on_ready():
-    print(f"{bot.user} est connecté à Discord!")
-    try:
-        synced = await bot.tree.sync()
-        print(f"Synced {len(synced)} command(s)")
-    except Exception as e:
-        print(f"Erreur lors de la synchronisation des commandes : {e}")
-
-@bot.tree.command(name="register", description="Register a new user")
+# Commande pour s'inscrire
+@bot.tree.command(name="register", description="S'inscrire")
 async def register(interaction: discord.Interaction):
     user_id = interaction.user.id
     if is_registered(user_id):
-        embed = discord.Embed(title="Erreur", description="Vous êtes déjà inscrit !", color=0xff0000)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message("Vous êtes déjà inscrit !", ephemeral=True)
         return
     
     execute_query(f"INSERT INTO {TABLE_USERS} ({FIELD_ID}, {FIELD_CASH}, {FIELD_BANK}) VALUES (%s, 0, 1000)", (user_id,))
-    embed = discord.Embed(title="Inscription réussie", description="Vous êtes désormais inscrit ! Vous avez reçu 1000 <:AploucheCoin:1286080674046152724> en banque.", color=0x00ff00)
-    await interaction.response.send_message(embed=embed, ephemeral=True)
+    await interaction.response.send_message("Vous êtes désormais inscrit ! Vous avez reçu 1000 <:AploucheCoin:1286080674046152724> en banque.", ephemeral=True)
 
-@bot.tree.command(name="balance", description="Check your balance")
+# Commande pour vérifier son solde
+@bot.tree.command(name="balance", description="Vérifier son solde")
 async def balance(interaction: discord.Interaction):
     user_id = interaction.user.id
     if not is_registered(user_id):
-        embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=0xff0000)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message("Vous devez vous inscrire avec `/register`.", ephemeral=True)
         return
     
     query = f"SELECT {FIELD_CASH}, {FIELD_BANK} FROM {TABLE_USERS} WHERE {FIELD_ID} = %s"
@@ -100,57 +95,17 @@ async def balance(interaction: discord.Interaction):
     if data:
         cash, bank = data[0]
         total = cash + bank
-        embed = discord.Embed(title="Solde", description=f"Votre solde actuel : {cash} <:AploucheCoin:1286080674046152724> en cash, {bank} <:AploucheCoin:1286080674046152724> en banque, pour un total de {total} <:AploucheCoin:1286080674046152724>.", color=0x00ff00)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(f"Votre solde actuel : {cash} <:AploucheCoin:1286080674046152724> en cash, {bank} <:AploucheCoin:1286080674046152724> en banque, pour un total de {total} <:AploucheCoin:1286080674046152724>.", ephemeral=True)
     else:
-        embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=0xff0000)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message("Erreur lors de la récupération de vos données.", ephemeral=True)
 
-@bot.tree.command(name="leaderboard", description="View the leaderboard")
-async def leaderboard(interaction: discord.Interaction):
-    query = f"SELECT {FIELD_ID}, {FIELD_CASH}, {FIELD_BANK} FROM {TABLE_USERS} ORDER BY {FIELD_CASH} + {FIELD_BANK} DESC"
-    data = fetch_data(query)
-    if data:
-        embed = discord.Embed(title="Classement des richesses", description="Voici le classement des utilisateurs les plus riches :", color=0x00ff00)
-        for i, (user_id, cash, bank) in enumerate(data):
-            user = await bot.fetch_user(user_id)
-            total = cash + bank
-            embed.add_field(name=f"#{i+1}", value=f"{user.mention} : {total} <:AploucheCoin:1286080674046152724>", inline=False)
-        await interaction.response.send_message(embed=embed)
-    else:
-        embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération des données.", color=0xff0000)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-@bot.tree.command(name="transaction_history", description="View your transaction history")
-async def transaction_history(interaction: discord.Interaction):
-    user_id = interaction.user.id
-    if not is_registered(user_id):
-        embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=0xff0000)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-        return
-    
-    query = f"SELECT {FIELD_AMOUNT}, {FIELD_TYPE}, {FIELD_TIMESTAMP} FROM {TABLE_TRANSACTIONS} WHERE {FIELD_ID} = %s ORDER BY {FIELD_TIMESTAMP} DESC"
-    try:
-        data = fetch_data(query, (user_id,))
-        if data:
-            embed = discord.Embed(title="Historique des transactions", description="Voici votre historique des transactions :", color=0x00ff00)
-            for transaction in data:
-                embed.add_field(name=f"{transaction[2]}", value=f"{transaction[1]} : {transaction[0]} <:AploucheCoin:1286080674046152724>", inline=False)
-            await interaction.response.send_message(embed=embed)
-        else:
-            embed = discord.Embed(title="Erreur", description="Vous n'avez pas de transactions.", color=0xff0000)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-    except Exception as e:
-        embed = discord.Embed(title="Erreur", description=f"Erreur lors de la récupération de vos données : {str(e)}", color=0xff0000)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-@bot.tree.command(name="steal", description="Rob another user")
+# Commande pour voler un utilisateur
+@bot.tree.command(name="steal", description="Volé un utilisateur")
 async def steal(interaction: discord.Interaction, user: discord.User):
     robber_id = interaction.user.id
     victim_id = user.id
     if not is_registered(robber_id) or not is_registered(victim_id):
-        embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=0xff0000)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message("Vous devez vous inscrire avec `/register`.", ephemeral=True)
         return
     
     query = f"SELECT {FIELD_CASH} FROM {TABLE_USERS} WHERE {FIELD_ID} = %s"
@@ -158,7 +113,7 @@ async def steal(interaction: discord.Interaction, user: discord.User):
     query = f"SELECT {FIELD_CASH} FROM {TABLE_USERS} WHERE {FIELD_ID} = %s"
     victim_cash = fetch_data(query, (victim_id,))[0][0]
     
-    # Calculate probability of success
+    # Calcul de la probabilité de réussite
     if victim_cash <= robber_cash:
         probability = 0.1
     else:
@@ -168,24 +123,22 @@ async def steal(interaction: discord.Interaction, user: discord.User):
         amount = int(victim_cash * random.uniform(0.1, 0.3))
         execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_ID} = %s", (amount, victim_id))
         execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_ID} = %s", (amount, robber_id))
-        embed = discord.Embed(title="Vol réussi", description=f"<@{robber_id}> a volé {amount} <:AploucheCoin:1286080674046152724> à <@{victim_id}> !", color=0x00ff00)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-        add_transaction(robber_id, amount, "Robbery")
-        add_transaction(victim_id, -amount, "Robbery")
+        await interaction.response.send_message(f"<@{robber_id}> a volé {amount} <:AploucheCoin:1286080674046152724> à <@{victim_id}> !", ephemeral=True)
+        add_transaction(robber_id, amount, "Vol")
+        add_transaction(victim_id, -amount, "Vol")
     else:
         loss = int(robber_cash * (1 - probability))
         execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_ID} = %s", (loss, robber_id))
-        embed = discord.Embed(title="Vol échoué", description=f"<@{robber_id}> a échoué à voler <@{victim_id}> et a perdu {loss} <:AploucheCoin:1286080674046152724> !", color=0xff0000)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-        add_transaction(robber_id, -loss, "Failed Robbery")
+        await interaction.response.send_message(f"<@{robber_id}> a échoué à voler <@{victim_id}> et a perdu {loss} <:AploucheCoin:1286080674046152724> !", ephemeral=True)
+        add_transaction(robber_id, -loss, "Échec de vol")
 
-@bot.tree.command(name="transaction", description="Send money to another user")
+# Commande pour envoyer de l'argent à un utilisateur
+@bot.tree.command(name="transaction", description="Envoyer de l'argent à un utilisateur")
 async def transaction(interaction: discord.Interaction, user: discord.User, amount: int):
     sender_id = interaction.user.id
     receiver_id = user.id
     if not is_registered(sender_id) or not is_registered(receiver_id):
-        embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=0xff0000)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message("Vous devez vous inscrire avec `/register`.", ephemeral=True)
         return
     
     query = f"SELECT {FIELD_CASH} FROM {TABLE_USERS} WHERE {FIELD_ID} = %s"
@@ -193,34 +146,68 @@ async def transaction(interaction: discord.Interaction, user: discord.User, amou
     if sender_cash >= amount:
         execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_ID} = %s", (amount, sender_id))
         execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_ID} = %s", (amount, receiver_id))
-        embed = discord.Embed(title="Transaction réussie", description=f"<@{sender_id}> a envoyé {amount} <:AploucheCoin:1286080674046152724> à <@{receiver_id}>.", color=0x00ff00)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-        add_transaction(sender_id, -amount, "Sent")
-        add_transaction(receiver_id, amount, "Received")
+        await interaction.response.send_message(f"<@{sender_id}> a envoyé {amount} <:AploucheCoin:1286080674046152724> à <@{receiver_id}>.", ephemeral=True)
+        add_transaction(sender_id, -amount, "Envoi")
+        add_transaction(receiver_id, amount, "Réception")
     else:
-        embed = discord.Embed(title="Erreur", description="Vous n'avez pas assez d'argent.", color=0xff0000)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message("Vous n'avez pas assez d'argent.", ephemeral=True)
 
-@bot.tree.command(name="withdraw", description="Withdraw money from your bank")
+# Commande pour retirer de l'argent de la banque
+@bot.tree.command(name="withdraw", description="Retirer de l'argent de la banque")
 async def withdraw(interaction: discord.Interaction, amount: int):
     user_id = interaction.user.id
     if not is_registered(user_id):
-        embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=0xff0000)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message("Vous devez vous inscrire avec `/register`.", ephemeral=True)
         return
     
     query = f"SELECT {FIELD_BANK} FROM {TABLE_USERS} WHERE {FIELD_ID} = %s"
     bank = fetch_data(query, (user_id,))[0][0]
     if bank >= amount:
         execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_BANK} = {FIELD_BANK} - %s, {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_ID} = %s", (amount, amount, user_id))
-        embed = discord.Embed(title="Retrait réussi", description=f"<@{user_id}> a retiré {amount} <:AploucheCoin:1286080674046152724> de sa banque.", color=0x00ff00)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-        add_transaction(user_id, -amount, "Withdrawal")
+        await interaction.response.send_message(f"<@{user_id}> a retiré {amount} <:AploucheCoin:1286080674046152724> de sa banque.", ephemeral=True)
+        add_transaction(user_id, -amount, "Retrait")
     else:
-        embed = discord.Embed(title="Erreur", description="Vous n'avez pas assez d'argent en banque.", color=0xff0000)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message("Vous n'avez pas assez d'argent en banque.", ephemeral=True)
 
-@bot.tree.command(name="delete_account", description="Supprimer le compte d'un utilisateur")
+# Commande pour afficher le leaderboard
+@bot.tree.command(name="leaderboard", description="Afficher le leaderboard")
+async def leaderboard(interaction: discord.Interaction):
+    try:
+        query = f"SELECT {FIELD_ID}, {FIELD_CASH}, {FIELD_BANK} FROM {TABLE_USERS} ORDER BY {FIELD_CASH} + {FIELD_BANK} DESC"
+        data = fetch_data(query)
+        if data:
+            embed = discord.Embed(title="Leaderboard", description="Voici le leaderboard des utilisateurs les plus riches :", color=0x00ff00)
+            for i, (user_id, cash, bank) in enumerate(data):
+                user = await bot.fetch_user(user_id)
+                total = cash + bank
+                embed.add_field(name=f"#{i+1}", value=f"{user.mention} : {total} <:AploucheCoin:1286080674046152724>", inline=False)
+            await interaction.response.send_message(embed=embed)
+        else:
+            await interaction.response.send_message("Erreur lors de la récupération des données.", ephemeral=True)
+    except Exception as e:
+        await interaction.response.send_message(f"Erreur : {str(e)}", ephemeral=True)
+
+# Commande pour afficher l'historique des transactions d'un utilisateur
+@bot.tree.command(name="transaction_history", description="Afficher l'historique des transactions d'un utilisateur")
+async def transaction_history(interaction: discord.Interaction, user: discord.User = None):
+    try:
+        if user is None:
+            user = interaction.user
+        query = f"SELECT {FIELD_AMOUNT}, {FIELD_TYPE}, {FIELD_TIMESTAMP} FROM {TABLE_TRANSACTIONS} WHERE {FIELD_ID} = %s ORDER BY {FIELD_TIMESTAMP} DESC"
+        data = fetch_data(query, (user.id,))
+        if data:
+            embed = discord.Embed(title="Historique des transactions", description=f"Historique des transactions de {user.mention} :", color=0x00ff00)
+            for transaction in data:
+                embed.add_field(name=f"{transaction[2]}", value=f"{transaction[1]} : {transaction[0]} <:AploucheCoin:1286080674046152724>", inline=False)
+            await interaction.response.send_message(embed=embed)
+        else:
+            await interaction.response.send_message("Erreur lors de la récupération des données.", ephemeral=True)
+    except Exception as e:
+        await interaction.response.send_message(f"Erreur : {str(e)}", ephemeral=True)
+
+
+# Commande pour supprimer un compte
+@bot.tree.command(name="delete_account", description="Supprimer un compte")
 @commands.has_permissions(administrator=True)
 async def delete_account(interaction: discord.Interaction, user: discord.User):
     embed = discord.Embed(title="Confirmation de suppression", description=f"Voulez-vous vraiment supprimer le compte de {user.mention} ? Toute donnée sera perdue.", color=0xff0000)
@@ -232,26 +219,20 @@ async def delete_account(interaction: discord.Interaction, user: discord.User):
     def check(reaction, user_reaction):
         return user_reaction == interaction.user and reaction.message == message and (str(reaction.emoji) == "✅" or str(reaction.emoji) == "❌")
 
-    reaction, user_reaction = await bot.wait_for("reaction_add", check=check)
+    try:
+        reaction, user_reaction = await bot.wait_for("reaction_add", check=check, timeout=60)
+    except asyncio.TimeoutError:
+        await message.edit(content="Temps écoulé, suppression annulée.")
+        return
 
     if str(reaction.emoji) == "✅":
         execute_query(f"DELETE FROM {TABLE_USERS} WHERE {FIELD_ID} = %s", (user.id,))
         execute_query(f"DELETE FROM {TABLE_TRANSACTIONS} WHERE {FIELD_ID} = %s", (user.id,))
-        embed = discord.Embed(title="Compte supprimé", description=f"Le compte de {user.mention} a été supprimé avec succès.", color=0x00ff00)
-        await interaction.followup.send(embed=embed, ephemeral=True)
+        await message.edit(content=f"Compte de {user.mention} supprimé avec succès.")
     elif str(reaction.emoji) == "❌":
-        embed = discord.Embed(title="Annulation", description=f"La suppression du compte de {user.mention} a été annulée.", color=0xff0000)
-        await interaction.followup.send(embed=embed, ephemeral=True)
+        await message.edit(content=f"Suppression annulée.")
 
-@bot.event
-async def on_ready():
-    print(f"{bot.user} est connecté à Discord!")
-    try:
-        await bot.tree.sync(force=True)
-        print(f"Synced {len(bot.tree)} command(s)")
-    except Exception as e:
-        print(f"Erreur lors de la synchronisation des commandes : {e}")
-
+# Lancement du bot
 async def main():
     await bot.start(TOKEN)
 
