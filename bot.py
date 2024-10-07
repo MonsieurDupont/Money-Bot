@@ -106,7 +106,7 @@ async def balance(interaction: discord.Interaction):
     if data:
         cash, bank = data[0]
         total = cash + bank
-        embed = discord.Embed(title="Solde", description=f" **Cash**    : {cash} <:AploucheCoin:1286080674046152724> \n **Banque** : {bank} <:AploucheCoin:1286080674046152724> \n **Total**    : {total} <:AploucheCoin:1286080674046152724>", color=0x00ff00)
+        embed = discord.Embed(title="Solde", description=f" **Cash** : {cash} <:AploucheCoin:1286080674046152724> \n **Banque** : {bank} <:AploucheCoin:1286080674046152724> \n **Total** : {total} <:AploucheCoin:1286080674046152724>", color=color_green)
         await interaction.response.send_message(embed=embed)
     else:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=0xff0000)
