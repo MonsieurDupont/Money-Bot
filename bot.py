@@ -108,7 +108,7 @@ async def balance(interaction: discord.Interaction):
         embed = discord.Embed(title="Solde", description=f" 
         Cash : {cash} <:AploucheCoin:1286080674046152724>
         Banque : {bank} <:AploucheCoin:1286080674046152724>
-        Total : {total} <:AploucheCoin:1286080674046152724>.", color=0x00ff00)
+        Total : {total} <:AploucheCoin:1286080674046152724>.", color=0x00ff00, inline=True)
         await interaction.response.send_message(embed=embed)
     else:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=0xff0000)
