@@ -145,7 +145,7 @@ async def leaderboard(interaction: discord.Interaction):
             for i, (user_id, cash, bank) in enumerate(data):
                 user = await bot.fetch_user(user_id)
                 total = cash + bank
-                embed.add_field(name=f"#{i+1} {user.name}", value=f"Total : {total} <:AploucheCoin:ID_DE_L_EMOJI>", inline=False)
+                embed.add_field(name=f"#{i+1} {user.name}", value=f"Total : {total} <:AploucheCoin:1286080674046152724>", inline=False)
             await interaction.response.send_message(embed=embed)
         else:
             embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register` pour accéder au leaderboard.", color=0xff0000)
