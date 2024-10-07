@@ -72,7 +72,7 @@ async def register(interaction: discord.Interaction):
             execute_query(query, (user_id,))
             query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = 0, {FIELD_BANK} = 1000 WHERE {FIELD_ID} = %s"
             execute_query(query, (user_id,))
-            embed = discord.Embed(title="Bienvenue !", description="Vous êtes désormais inscrit ! Vous avez reçu 0 <:AploucheCoin:1286080674046152724> en banque.", color=0x00ff00)
+            embed = discord.Embed(title="Bienvenue !", description="Vous êtes désormais inscrit ! Vous avez reçu 1000 <:AploucheCoin:1286080674046152724> en banque.", color=0x00ff00)
             await interaction.response.send_message(embed=embed)
         else:
             embed = discord.Embed(title="Erreur", description="Vous êtes déjà inscrit !", color=0xff0000)
