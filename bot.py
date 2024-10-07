@@ -2,6 +2,7 @@ import discord
 import os
 import mysql.connector
 import random
+import asyncio
 from discord.ext import commands
 from dotenv import load_dotenv
 load_dotenv()
