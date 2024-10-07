@@ -221,7 +221,7 @@ async def delete_account(interaction: discord.Interaction, user: discord.User):
         await interaction.followup.send(f"La suppression du compte de {user.mention} a été annulée.", ephemeral=True)
 
 async def main():
-    await bot.tree.sync()
+#    await bot.tree.sync(guild=discord.Object(id=GUILD_ID))
     await bot.start(TOKEN)
 
 asyncio.run(main())
