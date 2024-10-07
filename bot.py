@@ -28,8 +28,6 @@ FIELD_TYPE = "type"
 FIELD_TIMESTAMP = "timestamp"
 FIELD_AMOUNT = "amount"
 
-
-
 # Configuration du logging
 logging.basicConfig(level=logging.INFO)
 
