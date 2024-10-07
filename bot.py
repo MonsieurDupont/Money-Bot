@@ -1,9 +1,7 @@
 import discord
 import os
-from discord.ext import commands
 import mysql.connector
-
-# Load environment variables
+import random
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -22,19 +20,12 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="/", intents=intents)
 
 # --- Database setup ---
-cursor.execute("\\\\
-CREATE TABLE IF NOT EXISTS users (
-    id BIGINT PRIMARY KEY,
-    cash BIGINT DEFAULT 0,
-    bank BIGINT DEFAULT 0,
-    transactions TEXT DEFAULT '[]'
-);
-")
+cursor.execute("CREATE TABLE IF NOT EXISTS users (id BIGINT PRIMARY KEY, cash BIGINT DEFAULT 0, bank BIGINT DEFAULT 0, transactions TEXT DEFAULT '[]');")
 db.commit()
 
 # --- Commands ---
 @bot.command()
-def register(ctx):
+async def register(ctx):
     user_id = ctx.author.id
     cursor.execute("INSERT IGNORE INTO users (id) VALUES (%s)", (user_id,))
     cursor.execute("UPDATE users SET cash = 100, bank = 100 WHERE id = %s", (user_id,))
@@ -42,7 +33,7 @@ def register(ctx):
     await ctx.send(f"<@{user_id}>, vous êtes inscrit ! Vous avez 100 AploucheCoins en cash et 100 en banque.")
 
 @bot.command()
-def balance(ctx):
+async def balance(ctx):
     user_id = ctx.author.id
     cursor.execute("SELECT cash, bank FROM users WHERE id = %s", (user_id,))
     result = cursor.fetchone()
@@ -54,7 +45,7 @@ def balance(ctx):
         await ctx.send(f"<@{user_id}>, vous devez vous inscrire avec `/register`.")
 
 @bot.command()
-def withdraw(ctx, amount: int):
+async def withdraw(ctx, amount: int):
     user_id = ctx.author.id
     cursor.execute("SELECT bank FROM users WHERE id = %s", (user_id,))
     result = cursor.fetchone()
@@ -70,7 +61,7 @@ def withdraw(ctx, amount: int):
         await ctx.send(f"<@{user_id}>, vous devez vous inscrire avec `/register`.")
 
 @bot.command()
-def deposit(ctx, amount: int):
+async def deposit(ctx, amount: int):
     user_id = ctx.author.id
     cursor.execute("SELECT cash FROM users WHERE id = %s", (user_id,))
     result = cursor.fetchone()
@@ -86,34 +77,30 @@ def deposit(ctx, amount: int):
         await ctx.send(f"<@{user_id}>, vous devez vous inscrire avec `/register`.")
 
 @bot.command()
-def leaderboard(ctx):
+async def leaderboard(ctx):
     cursor.execute("SELECT id, cash, bank FROM users ORDER BY cash + bank DESC")
     leaderboard = cursor.fetchall()
-    message = "Classement des richesses:\
-"
+    message = "Classement des richesses:\n"
     for i, (user_id, cash, bank) in enumerate(leaderboard):
-        message += f"{i+1}. <@{user_id}>: {cash + bank} AploucheCoins\
-"
+        message += f"{i+1}. <@{user_id}>: {cash + bank} AploucheCoins\n"
     await ctx.send(message)
 
 @bot.command()
-def stats(ctx):
+async def stats(ctx):
     user_id = ctx.author.id
     cursor.execute("SELECT transactions FROM users WHERE id = %s", (user_id,))
     result = cursor.fetchone()
     if result:
         transactions = eval(result[0])
-        message = "Historique des transactions:\
-"
+        message = "Historique des transactions:\n"
         for transaction in transactions:
-            message += f"{transaction}\
-"
+            message += f"{transaction}\n"
         await ctx.send(message)
     else:
         await ctx.send(f"<@{user_id}>, vous devez vous inscrire avec `/register`.")
 
 @bot.command()
-def transaction(ctx, user: discord.User, amount: int):
+async def transaction(ctx, user: discord.User, amount: int):
     sender_id = ctx.author.id
     receiver_id = user.id
     cursor.execute("SELECT cash FROM users WHERE id = %s", (sender_id,))
@@ -125,7 +112,6 @@ def transaction(ctx, user: discord.User, amount: int):
             cursor.execute("UPDATE users SET cash = cash + %s WHERE id = %s", (amount, receiver_id))
             db.commit()
             await ctx.send(f"<@{sender_id}>, vous avez envoyé {amount} AploucheCoins à <@{receiver_id}>.")
-            # Add transaction to history
             add_transaction(sender_id, -amount, "Sent")
             add_transaction(receiver_id, amount, "Received")
         else:
@@ -134,7 +120,7 @@ def transaction(ctx, user: discord.User, amount: int):
         await ctx.send(f"<@{sender_id}>, vous devez vous inscrire avec `/register`.")
 
 @bot.command()
-def rob(ctx, user: discord.User):
+async def rob(ctx, user: discord.User):
     robber_id = ctx.author.id
     victim_id = user.id
     cursor.execute("SELECT cash FROM users WHERE id = %s", (robber_id,))
@@ -169,7 +155,5 @@ def add_transaction(user_id, amount, type):
     transactions.append({"amount": amount, "type": type})
     cursor.execute("UPDATE users SET transactions = %s WHERE id = %s", (str(transactions), user_id))
     db.commit()
-
-import random
 
 bot.run(os.getenv("token"))
