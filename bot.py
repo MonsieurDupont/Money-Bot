@@ -103,12 +103,13 @@ class TestButton(discord.ui.View):
 @discord.ui.button(label="zebi", style=discord.ButtonStyle.blurple)
 async def buttontest(self, interaction: discord.Interaction, Button: discord.ui.Button):
     await interaction.channel.send(content="zebiiiiii")
+
 @bot.tree.command(name="balance", description="Vérifier votre solde")
 async def balance(interaction: discord.Interaction):
     user_id = interaction.user.id
     if not is_registered(user_id):
         embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(embed=embed, view=TestButton())
         return
     
     query = f"SELECT {FIELD_CASH}, {FIELD_BANK} FROM {TABLE_USERS} WHERE {FIELD_ID} = %s"
