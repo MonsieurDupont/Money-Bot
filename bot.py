@@ -28,6 +28,8 @@ FIELD_TYPE = "type"
 FIELD_TIMESTAMP = "timestamp"
 FIELD_AMOUNT = "amount"
 
+
+
 # Configuration du logging
 logging.basicConfig(level=logging.INFO)
 
@@ -71,6 +73,12 @@ def fetch_data(query, params=None):
     except mysql.connector.Error as err:
         logging.error("Erreur de requête SQL : {}".format(err))
         return None
+
+# Fonction pour vérifier si un utilisateur est inscrit
+def is_registered(user_id):
+    query = f"SELECT * FROM {TABLE_USERS} WHERE {FIELD_ID} = %s"
+    data = fetch_data(query, (user_id,))
+    return len(data) > 0
 
 # Commande pour s'inscrire
 @bot.tree.command(name="register", description="S'inscrire")
