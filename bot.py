@@ -7,7 +7,13 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-TOKEN = os.getenv("token")
+TOKEN = os.getenv("TOKEN")
+HOST = os.getenv("HOST")
+USER = os.getenv("USER")
+PASSWORD = os.getenv("PASSWORD")
+DATABASE = os.getenv("DATABASE")
+GUILD_ID = os.getenv("GUILD_ID")
+APPLICATION_ID = os.getenv("APPLICATION_ID")
 
 # Constantes
 TABLE_USERS = "users"
@@ -23,10 +29,10 @@ FIELD_AMOUNT = "amount"
 def get_db_connection():
     try:
         return mysql.connector.connect(
-            host="host",
-            user="username",
-            password="password",
-            database="database"
+            host=HOST,
+            user=USER,
+            password=PASSWORD,
+            database=DATABASE
         )
     except mysql.connector.Error as err:
         print("Erreur de connexion à la base de données : {}".format(err))
