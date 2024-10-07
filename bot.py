@@ -25,7 +25,7 @@ cursor.execute("CREATE TABLE IF NOT EXISTS users (id BIGINT PRIMARY KEY, cash BI
 db.commit()
 
 # --- Commands ---
-@bot.slash_command(name="register", description="Register a new user")
+@bot.tree.command(name="register", description="Register a new user")
 async def register(ctx):
     user_id = ctx.author.id
     cursor.execute("INSERT IGNORE INTO users (id) VALUES (%s)", (user_id,))
@@ -33,7 +33,7 @@ async def register(ctx):
     db.commit()
     await ctx.respond(f"<@{user_id}>, vous êtes inscrit ! Vous avez 100 AploucheCoins en cash et 100 en banque.")
 
-@bot.slash_command(name="balance", description="Check your balance")
+@bot.tree.command(name="balance", description="Check your balance")
 async def balance(ctx):
     user_id = ctx.author.id
     cursor.execute("SELECT cash, bank FROM users WHERE id = %s", (user_id,))
@@ -45,7 +45,7 @@ async def balance(ctx):
     else:
         await ctx.respond(f"<@{user_id}>, vous devez vous inscrire avec `/register`.")
 
-@bot.slash_command(name="withdraw", description="Withdraw money from your bank")
+@bot.tree.command(name="withdraw", description="Withdraw money from your bank")
 async def withdraw(ctx, amount: int):
     user_id = ctx.author.id
     cursor.execute("SELECT bank FROM users WHERE id = %s", (user_id,))
@@ -62,7 +62,7 @@ async def withdraw(ctx, amount: int):
     else:
         await ctx.respond(f"<@{user_id}>, vous devez vous inscrire avec `/register`.")
 
-@bot.slash_command(name="deposit", description="Deposit money into your bank")
+@bot.tree.command(name="deposit", description="Deposit money into your bank")
 async def deposit(ctx, amount: int):
     user_id = ctx.author.id
     cursor.execute("SELECT cash FROM users WHERE id = %s", (user_id,))
@@ -79,7 +79,7 @@ async def deposit(ctx, amount: int):
     else:
         await ctx.respond(f"<@{user_id}>, vous devez vous inscrire avec `/register`.")
 
-@bot.slash_command(name="leaderboard", description="View the leaderboard")
+@bot.tree.command(name="leaderboard", description="View the leaderboard")
 async def leaderboard(ctx):
     cursor.execute("SELECT id, cash, bank FROM users ORDER BY cash + bank DESC")
     leaderboard = cursor.fetchall()
@@ -88,7 +88,7 @@ async def leaderboard(ctx):
         message += f"{i+1}. <@{user_id}>: {cash + bank} AploucheCoins\n"
     await ctx.respond(message)
 
-@bot.slash_command(name="stats", description="View your transaction history")
+@bot.tree.command(name="stats", description="View your transaction history")
 async def stats(ctx):
     user_id = ctx.author.id
     cursor.execute("SELECT transactions FROM users WHERE id = %s", (user_id,))
@@ -102,7 +102,7 @@ async def stats(ctx):
     else:
         await ctx.respond(f"<@{user_id}>, vous devez vous inscrire avec `/register`.")
 
-@bot.slash_command(name="transaction", description="Send money to another user")
+@bot.tree.command(name="transaction", description="Send money to another user")
 async def transaction(ctx, user: discord.User, amount: int):
     sender_id = ctx.author.id
     receiver_id = user.id
@@ -122,7 +122,7 @@ async def transaction(ctx, user: discord.User, amount: int):
     else:
         await ctx.respond(f"<@{sender_id}>, vous devez vous inscrire avec `/register`.")
 
-@bot.slash_command(name="rob", description="Rob another user")
+@bot.tree.command(name="rob", description="Rob another user")
 async def rob(ctx, user: discord.User):
     robber_id = ctx.author.id
     victim_id = user.id
