@@ -106,7 +106,7 @@ class TestButton(discord.ui.View):
         await interaction.channel.send(content="zebiiiiii")
     @discord.ui.button(label="zebi2", style=discord.ButtonStyle.danger)
     async def buttontest2(self, interaction: discord.Interaction, Button: discord.ui.Button):
-        await interaction.channel.send(content="grrrr")
+        await interaction.response.send_message(content="grrrr")
 
 @bot.tree.command(name="balance", description="Vérifier votre solde")
 async def balance(interaction: discord.Interaction):
