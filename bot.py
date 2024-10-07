@@ -18,41 +18,60 @@ FIELD_AMOUNT = "amount"
 
 # Fonction pour se connecter à la base de données
 def connect_to_database():
-    return mysql.connector.connect(
-        host=os.getenv("host"),
-        user=os.getenv("user"),
-        password=os.getenv("password"),
-        database=os.getenv("database")
-    )
+    try:
+        return mysql.connector.connect(
+            host=os.getenv("host"),
+            user=os.getenv("user"),
+            password=os.getenv("password"),
+            database=os.getenv("database")
+        )
+    except mysql.connector.Error as err:
+        print(f"Erreur lors de la connexion à la base de données : {err}")
+        return None
 
 # Fonction pour exécuter une requête SQL
 def execute_query(query, params):
-    db = connect_to_database()
-    cursor = db.cursor()
-    cursor.execute(query, params)
-    db.commit()
-    cursor.close()
-    db.close()
+    try:
+        db = connect_to_database()
+        if db is None:
+            return False
+        cursor = db.cursor()
+        cursor.execute(query, params)
+        db.commit()
+        cursor.close()
+        db.close()
+        return True
+    except mysql.connector.Error as err:
+        print(f"Erreur lors de l'exécution de la requête SQL : {err}")
+        return False
 
 # Fonction pour récupérer des données de la base de données
 def fetch_data(query, params):
-    db = connect_to_database()
-    cursor = db.cursor()
-    cursor.execute(query, params)
-    data = cursor.fetchall()
-    cursor.close()
-    db.close()
-    return data
+    try:
+        db = connect_to_database()
+        if db is None:
+            return None
+        cursor = db.cursor()
+        cursor.execute(query, params)
+        data = cursor.fetchall()
+        cursor.close()
+        db.close()
+        return data
+    except mysql.connector.Error as err:
+        print(f"Erreur lors de la récupération des données : {err}")
+        return None
 
 # Fonction pour ajouter une transaction
 def add_transaction(user_id, amount, type):
     query = f"INSERT INTO {TABLE_TRANSACTIONS} ({FIELD_ID}, {FIELD_AMOUNT}, {FIELD_TYPE}) VALUES (%s, %s, %s)"
-    execute_query(query, (user_id, amount, type))
+    return execute_query(query, (user_id, amount, type))
 
 # Fonction pour vérifier si un utilisateur est enregistré
 def is_registered(user_id):
     query = f"SELECT COUNT(*) FROM {TABLE_USERS} WHERE {FIELD_ID} = %s"
     result = fetch_data(query, (user_id,))
+    if result is None:
+        return False
     return result[0][0] > 0
 
 # Bot Discord
@@ -96,42 +115,11 @@ async def balance(interaction: discord.Interaction):
                 embed.add_field(name="Banque", value=f"{bank} <:AploucheCoin:1286080674046152724>", inline=False)
                 embed.add_field(name="Total", value=f"{total} <:AploucheCoin:1286080674046152724>", inline=False)
                 await interaction.response.send_message(embed=embed)
-            else:
-                embed = discord.Embed(title="Erreur", description=f"Erreur lors de la vérification du solde.", color=0xff0000)
-                await interaction.response.send_message(embed=embed)
         else:
             embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=0xff0000)
             await interaction.response.send_message(embed=embed)
     except mysql.connector.Error as err:
         embed = discord.Embed(title="Erreur", description=f"Erreur lors de la vérification du solde : {err}", color=0xff0000)
-        await interaction.response.send_message(embed=embed)
-
-@bot.tree.command(name="deposit", description="Deposit money into your bank")
-async def deposit(interaction: discord.Interaction, amount: int):
-    try:
-        user_id = interaction.user.id
-        if is_registered(user_id):
-            query = f"SELECT {FIELD_CASH} FROM {TABLE_USERS} WHERE {FIELD_ID} = %s"
-            data = fetch_data(query, (user_id,))
-            if data:
-                cash = data[0][0]
-                if cash >= amount:
-                    query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s, {FIELD_BANK} = {FIELD_BANK} + %s WHERE {FIELD_ID} = %s"
-                    execute_query(query, (amount, amount, user_id))
-                    embed = discord.Embed(title="Dépôt", description=f"Vous avez déposé {amount} <:AploucheCoin:1286080674046152724> dans votre banque.", color=0x00ff00)
-                    await interaction.response.send_message(embed=embed)
-                    add_transaction(user_id, amount, "Received")
-                else:
-                    embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez d'argent en cash.", color=0xff0000)
-                    await interaction.response.send_message(embed=embed)
-            else:
-                embed = discord.Embed(title="Erreur", description=f"Erreur lors du dépôt.", color=0xff0000)
-                await interaction.response.send_message(embed=embed)
-        else:
-            embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=0xff0000)
-            await interaction.response.send_message(embed=embed)
-    except mysql.connector.Error as err:
-        embed = discord.Embed(title="Erreur", description=f"Erreur lors du dépôt : {err}", color=0xff0000)
         await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="leaderboard", description="View the leaderboard")
@@ -293,4 +281,5 @@ async def delete_account(interaction: discord.Interaction, user: discord.User):
         await interaction.response.send_message(embed=embed)
 
 # Lancement du bot
+await bot.tree.sync()
 bot.run(os.getenv("token"))
