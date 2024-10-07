@@ -130,14 +130,18 @@ async def transaction_history(interaction: discord.Interaction):
         return
     
     query = f"SELECT {FIELD_AMOUNT}, {FIELD_TYPE}, {FIELD_TIMESTAMP} FROM {TABLE_TRANSACTIONS} WHERE {FIELD_ID} = %s ORDER BY {FIELD_TIMESTAMP} DESC"
-    data = fetch_data(query, (user_id,))
-    if data:
-        embed = discord.Embed(title="Historique des transactions", description="Voici votre historique des transactions :", color=0x00ff00)
-        for transaction in data:
-            embed.add_field(name=f"{transaction[2]}", value=f"{transaction[1]} : {transaction[0]} <:AploucheCoin:1286080674046152724>", inline=False)
-        await interaction.response.send_message(embed=embed)
-    else:
-        embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=0xff0000)
+    try:
+        data = fetch_data(query, (user_id,))
+        if data:
+            embed = discord.Embed(title="Historique des transactions", description="Voici votre historique des transactions :", color=0x00ff00)
+            for transaction in data:
+                embed.add_field(name=f"{transaction[2]}", value=f"{transaction[1]} : {transaction[0]} <:AploucheCoin:1286080674046152724>", inline=False)
+            await interaction.response.send_message(embed=embed)
+        else:
+            embed = discord.Embed(title="Erreur", description="Vous n'avez pas de transactions.", color=0xff0000)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+    except Exception as e:
+        embed = discord.Embed(title="Erreur", description=f"Erreur lors de la récupération de vos données : {str(e)}", color=0xff0000)
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 @bot.tree.command(name="steal", description="Rob another user")
