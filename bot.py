@@ -105,8 +105,7 @@ async def balance(interaction: discord.Interaction):
     if data:
         cash, bank = data[0]
         total = cash + bank
-        embed = discord.Embed(title="Solde", description=f" 
-        Cash : {cash} <:AploucheCoin:1286080674046152724>
+        embed = discord.Embed(title="Solde", description=f" Cash : {cash} <:AploucheCoin:1286080674046152724>
         Banque : {bank} <:AploucheCoin:1286080674046152724>
         Total : {total} <:AploucheCoin:1286080674046152724>.", color=0x00ff00, inline=True)
         await interaction.response.send_message(embed=embed)
