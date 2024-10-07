@@ -147,8 +147,23 @@ async def leaderboard(interaction: discord.Interaction):
         embed = discord.Embed(title="Erreur", description=f"Erreur lors de l'affichage du classement : {err}", color=0xff0000)
         await interaction.response.send_message(embed=embed)
 
-@bot.tree.command(name="stats", description="View your transaction history")
-async def stats(interaction: discord.Interaction):
+@bot.tree.command(name="transaction_history", description="View your transaction history")
+async def transaction_history(interaction: discord.Interaction):
+    try:
+        user_id = interaction.user.id
+        if is_registered(user_id):
+            query = f"SELECT {FIELD_AMOUNT}, {FIELD_TYPE}, {FIELD_TIMESTAMP} FROM {TABLE_TRANSACTIONS} WHERE {FIELD_ID} = %s ORDER BY {FIELD_TIMESTAMP} DESC"
+            data = fetch_data(query, (user_id,))
+            embed = discord.Embed(title="Transaction History", description="Voici votre historique des transactions :", color=0x00ff00)
+            for transaction in data:
+                embed.add_field(name=f"{transaction[2]}", value=f"{transaction[1]} : {transaction[0]} AploucheCoins", inline=False)
+            await interaction.response.send_message(embed=embed)
+        else:
+            embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=0xff0000)
+            await interaction.response.send_message(embed=embed)
+    except mysql.connector.Error as err:
+        embed = discord.Embed(title="Erreur", description=f"Erreur lors de l'affichage de l'historique des transactions : {err}", color=0xff0000)
+        await interaction.response.send_message(embed=embed)
     try:
         user_id = interaction.user.id
         if is_registered(user_id):
