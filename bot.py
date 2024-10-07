@@ -92,9 +92,9 @@ async def balance(interaction: discord.Interaction):
                 cash, bank = data[0]
                 total = cash + bank
                 embed = discord.Embed(title="Votre solde", description=f"Voici votre solde actuel :", color=0x00ff00)
-                embed.add_field(name="Cash", value=f"{cash} AploucheCoins", inline=False)
-                embed.add_field(name="Banque", value=f"{bank} AploucheCoins", inline=False)
-                embed.add_field(name="Total", value=f"{total} AploucheCoins", inline=False)
+                embed.add_field(name="Cash", value=f"{cash} <:AploucheCoin:1286080674046152724>", inline=False)
+                embed.add_field(name="Banque", value=f"{bank} <:AploucheCoin:1286080674046152724>", inline=False)
+                embed.add_field(name="Total", value=f"{total} <:AploucheCoin:1286080674046152724>", inline=False)
                 await interaction.response.send_message(embed=embed)
             else:
                 embed = discord.Embed(title="Erreur", description=f"Erreur lors de la vérification du solde.", color=0xff0000)
@@ -118,7 +118,7 @@ async def deposit(interaction: discord.Interaction, amount: int):
                 if cash >= amount:
                     query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s, {FIELD_BANK} = {FIELD_BANK} + %s WHERE {FIELD_ID} = %s"
                     execute_query(query, (amount, amount, user_id))
-                    embed = discord.Embed(title="Dépôt", description=f"Vous avez déposé {amount} AploucheCoins dans votre banque.", color=0x00ff00)
+                    embed = discord.Embed(title="Dépôt", description=f"Vous avez déposé {amount} <:AploucheCoin:1286080674046152724> dans votre banque.", color=0x00ff00)
                     await interaction.response.send_message(embed=embed)
                     add_transaction(user_id, amount, "Received")
                 else:
@@ -141,7 +141,7 @@ async def leaderboard(interaction: discord.Interaction):
         data = fetch_data(query, ())
         embed = discord.Embed(title="Classement des richesses", description="Voici le classement des utilisateurs les plus riches :", color=0x00ff00)
         for i, (user_id, cash, bank) in enumerate(data):
-            embed.add_field(name=f"#{i+1} <@{user_id}>", value=f"Cash : {cash} AploucheCoins\nBanque : {bank} AploucheCoins", inline=False)
+            embed.add_field(name=f"#{i+1} <@{user_id}>", value=f"Cash : {cash} <:AploucheCoin:1286080674046152724>\nBanque : {bank} <:AploucheCoin:1286080674046152724>", inline=False)
         await interaction.response.send_message(embed=embed)
     except mysql.connector.Error as err:
         embed = discord.Embed(title="Erreur", description=f"Erreur lors de l'affichage du classement : {err}", color=0xff0000)
@@ -156,22 +156,7 @@ async def transaction_history(interaction: discord.Interaction):
             data = fetch_data(query, (user_id,))
             embed = discord.Embed(title="Transaction History", description="Voici votre historique des transactions :", color=0x00ff00)
             for transaction in data:
-                embed.add_field(name=f"{transaction[2]}", value=f"{transaction[1]} : {transaction[0]} AploucheCoins", inline=False)
-            await interaction.response.send_message(embed=embed)
-        else:
-            embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=0xff0000)
-            await interaction.response.send_message(embed=embed)
-    except mysql.connector.Error as err:
-        embed = discord.Embed(title="Erreur", description=f"Erreur lors de l'affichage de l'historique des transactions : {err}", color=0xff0000)
-        await interaction.response.send_message(embed=embed)
-    try:
-        user_id = interaction.user.id
-        if is_registered(user_id):
-            query = f"SELECT {FIELD_AMOUNT}, {FIELD_TYPE}, {FIELD_TIMESTAMP} FROM {TABLE_TRANSACTIONS} WHERE {FIELD_ID} = %s ORDER BY {FIELD_TIMESTAMP} DESC"
-            data = fetch_data(query, (user_id,))
-            embed = discord.Embed(title="Historique des transactions", description="Voici votre historique des transactions :", color=0x00ff00)
-            for transaction in data:
-                embed.add_field(name=f"{transaction[2]}", value=f"{transaction[1]} : {transaction[0]} AploucheCoins", inline=False)
+                embed.add_field(name=f"{transaction[2]}", value=f"{transaction[1]} : {transaction[0]} <:AploucheCoin:1286080674046152724>", inline=False)
             await interaction.response.send_message(embed=embed)
         else:
             embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=0xff0000)
@@ -203,7 +188,7 @@ async def steal(interaction: discord.Interaction, user: discord.User):
                 execute_query(query, (amount, victim_id))
                 query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_ID} = %s"
                 execute_query(query, (amount, robber_id))
-                embed = discord.Embed(title="Vol", description=f"<@{robber_id}> a volé {amount} AploucheCoins à <@{victim_id}> !", color=0x00ff00)
+                embed = discord.Embed(title="Vol", description=f"<@{robber_id}> a volé {amount} <:AploucheCoin:1286080674046152724> à <@{victim_id}> !", color=0x00ff00)
                 await interaction.response.send_message(embed=embed)
                 add_transaction(robber_id, amount, "Robbery")
                 add_transaction(victim_id, -amount, "Robbery")
@@ -211,7 +196,7 @@ async def steal(interaction: discord.Interaction, user: discord.User):
                 loss = int(robber_cash * (1 - probability))
                 query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_ID} = %s"
                 execute_query(query, (loss, robber_id))
-                embed = discord.Embed(title="Erreur", description=f"<@{robber_id}> a échoué à voler <@{victim_id}> et a perdu {loss} AploucheCoins !", color=0xff0000)
+                embed = discord.Embed(title="Erreur", description=f"<@{robber_id}> a échoué à voler <@{victim_id}> et a perdu {loss} <:AploucheCoin:1286080674046152724> !", color=0xff0000)
                 await interaction.response.send_message(embed=embed)
                 add_transaction(robber_id, -loss, "Failed Robbery")
         else:
@@ -234,7 +219,7 @@ async def transaction(interaction: discord.Interaction, user: discord.User, amou
                 execute_query(query, (amount, sender_id))
                 query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_ID} = %s"
                 execute_query(query, (amount, receiver_id))
-                embed = discord.Embed(title="Transaction", description=f"<@{sender_id}> a envoyé {amount} AploucheCoins à <@{receiver_id}>.", color=0x00ff00)
+                embed = discord.Embed(title="Transaction", description=f"<@{sender_id}> a envoyé {amount} <:AploucheCoin:1286080674046152724> à <@{receiver_id}>.", color=0x00ff00)
                 await interaction.response.send_message(embed=embed)
                 add_transaction(sender_id, -amount, "Sent")
                 add_transaction(receiver_id, amount, "Received")
@@ -258,7 +243,7 @@ async def withdraw(interaction: discord.Interaction, amount: int):
             if bank >= amount:
                 query = f"UPDATE {TABLE_USERS} SET {FIELD_BANK} = {FIELD_BANK} - %s, {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_ID} = %s"
                 execute_query(query, (amount, amount, user_id))
-                embed = discord.Embed(title="Retrait", description=f"<@{user_id}> a retiré {amount} AploucheCoins de sa banque.", color=0x00ff00)
+                embed = discord.Embed(title="Retrait", description=f"<@{user_id}> a retiré {amount} <:AploucheCoin:1286080674046152724> de sa banque.", color=0x00ff00)
                 await interaction.response.send_message(embed=embed)
                 add_transaction(user_id, -amount, "Withdrawal")
             else:
