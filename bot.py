@@ -14,6 +14,7 @@ FIELD_CASH = "cash"
 FIELD_BANK = "bank"
 FIELD_TYPE = "type"
 FIELD_TIMESTAMP = "timestamp"
+FIELD_AMOUNT = "amount"
 
 # Fonction pour se connecter à la base de données
 def connect_to_database():
