@@ -113,7 +113,7 @@ async def balance(interaction: discord.Interaction):
         embed = discord.Embed(title="Solde", description=f" **Cash** : {cash} <:AploucheCoin:1286080674046152724> \n **Banque** : {bank} <:AploucheCoin:1286080674046152724> \n **Total** : {total} <:AploucheCoin:1286080674046152724>", color=color_blue)
         await interaction.response.send_message(embed=embed)
     else:
-        embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=0xff0000)
+        embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
         await interaction.response.send_message(embed=embed)
 
 # Commande pour voler un joueur
