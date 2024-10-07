@@ -220,8 +220,17 @@ async def delete_account(interaction: discord.Interaction, user: discord.User):
     elif str(reaction.emoji) == "❌":
         await interaction.followup.send(f"La suppression du compte de {user.mention} a été annulée.", ephemeral=True)
 
+@bot.event
+async def on_ready():
+    print(f"{bot.user} est connecté à Discord!")
+    try:
+        bot.tree.clear_cache()  # Clear command cache
+        await bot.tree.sync(guild=None)  # Synchronize commands globally
+        print(f"Synced {len(bot.tree)} command(s)")
+    except Exception as e:
+        print(f"Erreur lors de la synchronisation des commandes : {e}")
+
 async def main():
-#    await bot.tree.sync(guild=discord.Object(id=GUILD_ID))
     await bot.start(TOKEN)
 
 asyncio.run(main())
