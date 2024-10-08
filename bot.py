@@ -383,7 +383,7 @@ async def withdraw(interaction: discord.Interaction, amount: int):
     """
     result = execute_query(query, (amount, amount, user_id))
     if result:
-        embed = discord.Embed(title="Succès", description=f "Vous avez retiré {amount} pièces avec succès.", color=color_green)
+        embed = discord.Embed(title="Succès", description=f"Vous avez retiré {amount} pièces avec succès.", color=color_green)
         embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
     else:
