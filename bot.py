@@ -560,6 +560,14 @@ class DeleteAccountView(discord.ui.View):
 @bot.tree.command(name="delete_account", description="Supprimer le compte d'un utilisateur")
 @commands.has_permissions(administrator=True)
 async def delete_account(interaction: discord.Interaction, user: discord.Member):
+    if user.bot:
+        await interaction.response.send_message("Vous ne pouvez pas supprimer le compte d'un bot.")
+        return
+
+    if not is_registered(user.id):
+        await interaction.response.send_message("L'utilisateur n'a pas de compte.")
+        return
+
     view = DeleteAccountView()
     await interaction.response.send_message(f"Voulez-vous supprimer le compte de {user.mention} ?", view=view)
     await view.wait()
