@@ -6,7 +6,7 @@ import mysql.connector
 import discord
 from discord.ext import commands
 import asyncio
-
+#zebi ptnn
 # Chargement des variables d'environnement
 load_dotenv()
 
