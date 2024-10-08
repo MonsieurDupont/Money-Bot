@@ -404,7 +404,7 @@ async def steal(interaction: discord.Interaction, user: discord.Member, amount: 
         await interaction.response.send_message(embed=embed)
         return
 
-    if not is_registered(user.id):
+    if not is_registered(user_id):
         embed = discord.Embed(title="Erreur", description="L'utilisateur ciblé doit être inscrit.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
@@ -557,7 +557,6 @@ async def leaderboard(interaction: discord.Interaction):
         return
 
     embed = discord.Embed(title="Classement des utilisateurs", description="Voici le classement des 10 utilisateurs les plus riches :", color=color_blue)
-    embed.set_thumbnail(url="https://example.com/riches.png")  # Remplacez par une image de votre choix
     embed.add_field(name="**Rang**", value="**Utilisateur**", inline=False)
     for i, (user_id, total) in enumerate(data, start=1):
         user = bot.get_user(user_id)
