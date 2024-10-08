@@ -105,27 +105,27 @@ def add_transaction(user_id, amount, transaction_type):
 @bot.tree.command(name="register", description="S'inscrire")
 async def register(interaction: discord.Interaction):
     user_id = interaction.user.id
-    print(f"User  ID : {user_id}")
+    print(f"User ID : {user_id}")
     if is_registered(user_id):
-        print("User  est déjà inscrit")
+        print("User est déjà inscrit")
         embed = discord.Embed(title="Erreur", description=f"Vous êtes déjà inscrit, {interaction.user.mention}.", color=color_red)
         embed.add_field(name="Raison", value="Vous avez déjà un compte existant.", inline=False)
         embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
     else:
-        print("User  n'est pas inscrit")
+        print("User n'est pas inscrit")
         query = f"""
             INSERT INTO 
                 {TABLE_USERS} ({FIELD_USER_ID}, {FIELD_CASH}, {FIELD_BANK})
             VALUES 
-                (%s, 0, 0)
+                (%s, 1000, 0)
         """
         print(f"Requête SQL : {query}")
         result = execute_query(query, (user_id,))
         print(f"Résultat de la requête : {result}")
         if result:
             print("Données insérées avec succès")
-            embed = discord.Embed(title="Succès", description=f"Vous êtes maintenant inscrit, {interaction.user.mention}.", color=color_green)
+            embed = discord.Embed(title="Succès", description=f"Vous êtes maintenant inscrit, {interaction.user.mention}. Vous avez reçu 1000 pièces en cash.", color=color_green)
             embed.add_field(name="Prochaines étapes", value="Vous pouvez maintenant utiliser les commandes `/balance`, `/deposit`, `/withdraw` et `/transaction`.", inline=False)
             embed.add_field(name="Aide", value="Si vous avez des questions, n'hésitez pas à demander.", inline=False)
             embed.set_footer(text="Bienvenue dans notre communauté !")
@@ -228,7 +228,7 @@ async def balance(interaction: discord.Interaction):
         return
 
     total = cash + bank
-    embed = discord.Embed(title="Solde", description=f"**Cash** : {cash:,} <:AploucheCoin:1286080674046152724>\n**Banque** : {bank:,} <:AploucheCoin:1286080674046152724>\n**Total** : {total:,} <:A ploucheCoin:1286080674046152724>", color=color_blue)
+    embed = discord.Embed(title="Solde", description=f"**Cash** : {cash:,} <:AploucheCoin:1286080674046152724>\n**Banque** : {bank:,} <:AploucheCoin:1286080674046152724>\n**Total** : {total:,} <:AploucheCoin:1286080674046152724>", color=color_blue)
     embed.add_field(name="Aide", value="Pour voir les commandes disponibles, tapez `/help`.", inline=False)
     embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
     await interaction.response.send_message(embed=embed)
@@ -557,16 +557,16 @@ class DeleteAccountView(discord.ui.View):
         self.stop()
 
 # Commande pour supprimer un compte
-@bot.tree.command(name="delete_account", description="Supprimer votre compte")
+@bot.tree.command(name="delete_account", description="Supprimer le compte d'un utilisateur")
 @commands.has_permissions(administrator=True)
-async def delete_account(interaction: discord.Interaction):
+async def delete_account(interaction: discord.Interaction, user: discord.Member):
     view = DeleteAccountView()
-    await interaction.response.send_message("Voulez-vous supprimer votre compte ?", view=view)
+    await interaction.response.send_message(f"Voulez-vous supprimer le compte de {user.mention} ?", view=view)
     await view.wait()
     if view.value is True:
-        execute_query(f"DELETE FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s", (interaction.user.id,))
-        execute_query(f"DELETE FROM {TABLE_TRANSACTIONS} WHERE {FIELD_USER_ID} = %s", (interaction.user.id,))
-        await interaction.followup.send(content=f"Compte de {interaction.user.mention} supprimé avec succès.")
+        execute_query(f"DELETE FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s", (user.id,))
+        execute_query(f"DELETE FROM {TABLE_TRANSACTIONS} WHERE {FIELD_USER_ID} = %s", (user.id,))
+        await interaction.followup.send(content=f"Compte de {user.mention} supprimé avec succès.")
     else:
         await interaction.followup.send(content="Annuler")
 
