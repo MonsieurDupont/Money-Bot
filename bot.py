@@ -6,7 +6,7 @@ import mysql.connector
 import discord
 from discord.ext import commands
 import asyncio
-#zebi ptnn
+
 # Chargement des variables d'environnement
 load_dotenv()
 
@@ -27,7 +27,7 @@ color_red = 0xd44e44
 # Définition des tables et des champs
 TABLE_USERS = "users"
 TABLE_TRANSACTIONS = "transactions"
-FIELD_USER_ID = "id"
+FIELD_USER_ID = "user_id"
 FIELD_CASH = "cash"
 FIELD_BANK = "bank"
 FIELD_TYPE = "type"
@@ -87,12 +87,13 @@ def fetch_data(query, params=None):
 
 # Fonction pour vérifier si un utilisateur est inscrit
 def is_registered(user_id):
-    # Requête pour vérifier si l'utilisateur est inscrit
     query = f"SELECT * FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
     data = fetch_data(query, (user_id,))
     if data is None:
         return False
-    return len(data) > 0
+    if len(data) > 0:
+        return True
+    return False
 
 def add_transaction(user_id, amount, transaction_type):
     try:
@@ -105,27 +106,37 @@ def add_transaction(user_id, amount, transaction_type):
 @bot.tree.command(name="register", description="S'inscrire")
 async def register(interaction: discord.Interaction):
     user_id = interaction.user.id
-    if not is_registered(user_id):
-        if user_id is not None:
-            query = f"""
-                INSERT INTO 
-                    {TABLE_USERS} ({FIELD_USER_ID}, {FIELD_CASH}, {FIELD_BANK})
-                VALUES 
-                    (%s, 0, 0)
-            """
-            execute_query(query, (user_id,))
-            embed = discord.Embed(title="Succès", description="Vous êtes maintenant inscrit.", color=color_green)
-            embed.add_field(name="Prochaines étapes", value="Vous pouvez maintenant utiliser les commandes `/balance`, `/deposit`, `/withdraw` et `/transaction`.", inline=False)
-            embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
-            await interaction.response.send_message(embed=embed)
-        else:
-            embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de votre ID.", color=color_red )
-            embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
-            await interaction.response.send_message(embed=embed)
-    else:
-        embed = discord.Embed(title="Erreur", description="Vous êtes déjà inscrit.", color=color_red)
+    print(f"User  ID : {user_id}")
+    if is_registered(user_id):
+        print("User  est déjà inscrit")
+        embed = discord.Embed(title="Erreur", description=f"Vous êtes déjà inscrit, {interaction.user.mention}.", color=color_red)
+        embed.add_field(name="Raison", value="Vous avez déjà un compte existant.", inline=False)
         embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
+    else:
+        print("User  n'est pas inscrit")
+        query = f"""
+            INSERT INTO 
+                {TABLE_USERS} ({FIELD_USER_ID}, {FIELD_CASH}, {FIELD_BANK})
+            VALUES 
+                (%s, 0, 0)
+        """
+        print(f"Requête SQL : {query}")
+        result = execute_query(query, (user_id,))
+        print(f"Résultat de la requête : {result}")
+        if result is not None:
+            print("Données insérées avec succès")
+            embed = discord.Embed(title="Succès", description=f"Vous êtes maintenant inscrit, {interaction.user.mention}.", color=color_green)
+            embed.add_field(name="Prochaines étapes", value="Vous pouvez maintenant utiliser les commandes `/balance`, `/deposit`, `/withdraw` et `/transaction`.", inline=False)
+            embed.add_field(name="Aide", value="Si vous avez des questions, n'hésitez pas à demander.", inline=False)
+            embed.set_footer(text="Bienvenue dans notre communauté !")
+            await interaction.response.send_message(embed=embed)
+        else:
+            print("Erreur lors de l'insertion des données")
+            embed = discord.Embed(title="Erreur", description=f"Erreur lors de l'inscription, {interaction.user.mention}.", color=color_red)
+            embed.add_field(name="Raison", value="Veuillez réessayer plus tard.", inline=False)
+            embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
+            await interaction.response.send_message(embed=embed)
 
 # Commande pour afficher les statistiques
 @bot.tree.command(name="stats", description="Afficher les statistiques")
