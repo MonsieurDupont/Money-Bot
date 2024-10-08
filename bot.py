@@ -131,34 +131,6 @@ async def register(interaction: discord.Interaction):
             await interaction.response.send_message(embed=embed)
 
 # Commande pour afficher les statistiques
-@bot.tree.command(name="register", description="S'inscrire")
-async def register(interaction: discord.Interaction):
-    user_id = interaction.user.id
-    if is_registered(user_id):
-        embed = discord.Embed(title="Erreur", description=f"Vous êtes déjà inscrit, {interaction.user.mention}.", color=color_red)
-        embed.add_field(name="Raison", value="Vous avez déjà un compte existant.", inline=False)
-        embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
-        await interaction.response.send_message(embed=embed)
-    else:
-        query = f"""
-            INSERT INTO 
-                {TABLE_USERS} ({FIELD_USER_ID}, {FIELD_CASH}, {FIELD_BANK})
-            VALUES 
-                (%s, 1000, 0)
-        """
-        result = execute_query(query, (user_id,))
-        if result:
-            embed = discord.Embed(title="Succès", description=f"Vous êtes maintenant inscrit, {interaction.user.mention}. Vous avez reçu 1000 pièces en cash.", color=color_green)
-            embed.add_field(name="Prochaines étapes", value="Vous pouvez maintenant utiliser les commandes `/balance`, `/deposit`, `/withdraw` et `/transaction`.", inline=False)
-            embed.add_field(name="Aide", value="Si vous avez des questions, n'hésitez pas à demander.", inline=False)
-            embed.set_footer(text="Bienvenue dans notre communauté !")
-            await interaction.response.send_message(embed=embed)
-        else:
-            embed = discord.Embed(title="Erreur", description=f"Erreur lors de l'inscription, {interaction.user.mention}.", color=color_red)
-            embed.add_field(name="Raison", value="Veuillez réessayer plus tard.", inline=False)
-            embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
-            await interaction.response.send_message(embed=embed)
-
 @bot.tree.command(name="stats", description="Afficher les statistiques")
 async def stats(interaction: discord.Interaction):
     user_id = interaction.user.id
