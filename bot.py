@@ -27,7 +27,7 @@ color_red = 0xd44e44
 # Définition des tables et des champs
 TABLE_USERS = "users"
 TABLE_TRANSACTIONS = "transactions"
-FIELD_USER_ID = "user_id"
+FIELD_USER_ID = "id"
 FIELD_CASH = "cash"
 FIELD_BANK = "bank"
 FIELD_TYPE = "type"
