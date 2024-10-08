@@ -83,13 +83,15 @@ def fetch_data(query, params=None):
         return cursor.fetchall()
     except mysql.connector.Error as err:
         logging.error("Erreur de requête SQL : {}".format(err))
-        return None
+        return []
 
 # Fonction pour vérifier si un utilisateur est inscrit
 def is_registered(user_id):
     # Requête pour vérifier si l'utilisateur est inscrit
     query = f"SELECT * FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
     data = fetch_data(query, (user_id,))
+    if data is None:
+        return False
     return len(data) > 0
 
 def add_transaction(user_id, amount, transaction_type):
