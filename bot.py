@@ -105,39 +105,60 @@ def add_transaction(user_id, amount, transaction_type):
 @bot.tree.command(name="register", description="S'inscrire")
 async def register(interaction: discord.Interaction):
     user_id = interaction.user.id
-    print(f"User ID : {user_id}")
     if is_registered(user_id):
-        print("User est déjà inscrit")
         embed = discord.Embed(title="Erreur", description=f"Vous êtes déjà inscrit, {interaction.user.mention}.", color=color_red)
         embed.add_field(name="Raison", value="Vous avez déjà un compte existant.", inline=False)
         embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
     else:
-        print("User n'est pas inscrit")
         query = f"""
             INSERT INTO 
                 {TABLE_USERS} ({FIELD_USER_ID}, {FIELD_CASH}, {FIELD_BANK})
             VALUES 
                 (%s, 1000, 0)
         """
-        print(f"Requête SQL : {query}")
         result = execute_query(query, (user_id,))
-        print(f"Résultat de la requête : {result}")
         if result:
-            print("Données insérées avec succès")
             embed = discord.Embed(title="Succès", description=f"Vous êtes maintenant inscrit, {interaction.user.mention}. Vous avez reçu 1000 pièces en cash.", color=color_green)
             embed.add_field(name="Prochaines étapes", value="Vous pouvez maintenant utiliser les commandes `/balance`, `/deposit`, `/withdraw` et `/transaction`.", inline=False)
             embed.add_field(name="Aide", value="Si vous avez des questions, n'hésitez pas à demander.", inline=False)
             embed.set_footer(text="Bienvenue dans notre communauté !")
             await interaction.response.send_message(embed=embed)
         else:
-            print("Erreur lors de l'insertion des données")
             embed = discord.Embed(title="Erreur", description=f"Erreur lors de l'inscription, {interaction.user.mention}.", color=color_red)
             embed.add_field(name="Raison", value="Veuillez réessayer plus tard.", inline=False)
             embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
             await interaction.response.send_message(embed=embed)
 
 # Commande pour afficher les statistiques
+@bot.tree.command(name="register", description="S'inscrire")
+async def register(interaction: discord.Interaction):
+    user_id = interaction.user.id
+    if is_registered(user_id):
+        embed = discord.Embed(title="Erreur", description=f"Vous êtes déjà inscrit, {interaction.user.mention}.", color=color_red)
+        embed.add_field(name="Raison", value="Vous avez déjà un compte existant.", inline=False)
+        embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
+        await interaction.response.send_message(embed=embed)
+    else:
+        query = f"""
+            INSERT INTO 
+                {TABLE_USERS} ({FIELD_USER_ID}, {FIELD_CASH}, {FIELD_BANK})
+            VALUES 
+                (%s, 1000, 0)
+        """
+        result = execute_query(query, (user_id,))
+        if result:
+            embed = discord.Embed(title="Succès", description=f"Vous êtes maintenant inscrit, {interaction.user.mention}. Vous avez reçu 1000 pièces en cash.", color=color_green)
+            embed.add_field(name="Prochaines étapes", value="Vous pouvez maintenant utiliser les commandes `/balance`, `/deposit`, `/withdraw` et `/transaction`.", inline=False)
+            embed.add_field(name="Aide", value="Si vous avez des questions, n'hésitez pas à demander.", inline=False)
+            embed.set_footer(text="Bienvenue dans notre communauté !")
+            await interaction.response.send_message(embed=embed)
+        else:
+            embed = discord.Embed(title="Erreur", description=f"Erreur lors de l'inscription, {interaction.user.mention}.", color=color_red)
+            embed.add_field(name="Raison", value="Veuillez réessayer plus tard.", inline=False)
+            embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
+            await interaction.response.send_message(embed=embed)
+
 @bot.tree.command(name="stats", description="Afficher les statistiques")
 async def stats(interaction: discord.Interaction):
     user_id = interaction.user.id
@@ -184,15 +205,16 @@ async def stats(interaction: discord.Interaction):
 
     total = cash + bank
     moyenne_depenses = total_depenses / (total_revenus + abs(total_depenses)) if total_revenus + abs(total_depenses) > 0 else 0
-    moyenne_revenus = total_revenus / (total_revenus + abs(total_depenses)) if total_revenus + abs(total_depenses) > 0 else 0
+    moyenne_revenus = total_revenus / (total_revenus + abs(total _depenses)) if total_revenus + abs(total_depenses) > 0 else 0
 
-    embed = discord.Embed(title="Statistiques", description="", color=color_blue)
-    embed.add_field(name="**Total**", value=f"{total:,} <:AploucheCoin:1286080674046152724>", inline=False)
-    embed.add_field(name="**Transactions**", value=f"{total_revenus + abs(total_depenses)}", inline=False)
-    embed.add_field(name="**Dépenses totales**", value=f"{abs(total_depenses):,} <:AploucheCoin:1286080674046152724>", inline=False)
-    embed.add_field(name="**Revenus totaux**", value=f"{total_revenus:,} <:AploucheCoin:1286080674046152724>", inline =False)
-    embed.add_field(name="**Moyenne des dépenses**", value=f"{moyenne_depenses:.2%}", inline=False)
-    embed.add_field(name="**Moyenne des revenus**", value=f"{moyenne_revenus:.2%}", inline=False)
+    embed = discord.Embed(title="Statistiques", description=f"Voici vos statistiques, {interaction.user.mention}.", color=color_green)
+    embed.add_field(name="Cash", value=f"{cash} pièces", inline=False)
+    embed.add_field(name="Banque", value=f"{bank} pièces", inline=False)
+    embed.add_field(name="Total", value=f"{total} pièces", inline=False)
+    embed.add_field(name="Revenus", value=f"{total_revenus} pièces", inline=False)
+    embed.add_field(name="Dépenses", value=f"{total_depenses} pièces", inline=False)
+    embed.add_field(name="Moyenne des dépenses", value=f"{moyenne_depenses * 100:.2f}%", inline=False)
+    embed.add_field(name="Moyenne des revenus", value=f"{moyenne_revenus * 100:.2f}%", inline=False)
     embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
     await interaction.response.send_message(embed=embed)
 
@@ -233,7 +255,7 @@ async def balance(interaction: discord.Interaction):
     embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
     await interaction.response.send_message(embed=embed)
 
-@bot.tree.command(name="deposit", description="Déposer de l'argent dans la banque")
+@bot.tree.command(name="deposit", description="Déposer de l'argent")
 async def deposit(interaction: discord.Interaction, amount: int):
     user_id = interaction.user.id
     if not is_registered(user_id):
@@ -243,16 +265,23 @@ async def deposit(interaction: discord.Interaction, amount: int):
         return
 
     if amount <= 0:
-        embed = discord.Embed(title="Erreur", description="Le montant à déposer doit être positif.", color=color_red)
+        embed = discord.Embed(title="Erreur", description="Le montant doit être supérieur à 0.", color=color_red)
         embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
 
-    query = f"SELECT {FIELD_CASH} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
+    query = f"""
+        SELECT 
+            u.{FIELD_CASH}
+        FROM 
+            {TABLE_USERS} u
+        WHERE 
+            u.{FIELD_USER_ID} = %s
+    """
     data = fetch_data(query, (user_id,))
     if data is None:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
-        embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
+        embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander .")
         await interaction.response.send_message(embed=embed)
         return
 
@@ -270,15 +299,23 @@ async def deposit(interaction: discord.Interaction, amount: int):
         return
 
     if cash < amount:
-        embed = discord.Embed(title="Erreur", description="Vous n'avez pas assez d'argent pour effectuer ce dépôt.", color=color_red)
+        embed = discord.Embed(title="Erreur", description="Vous n'avez pas assez d'argent pour déposer.", color=color_red)
         embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
 
-    if amount is not None:
-        execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s, {FIELD_BANK} = {FIELD_BANK} + %s WHERE {FIELD_USER_ID} = %s", (amount, amount, user_id))
-        execute_query(f"INSERT INTO {TABLE_TRANSACTIONS} ({FIELD_USER_ID}, {FIELD_TYPE}, {FIELD_AMOUNT}) VALUES (%s, 'Dépôt', %s)", (user_id, amount))
-        embed = discord.Embed(title="Dépôt effectué", description=f"Vous avez déposé {amount:,} <:AploucheCoin:1286080674046152724> dans votre banque.", color=color_green)
+    query = f"""
+        UPDATE 
+            {TABLE_USERS} u
+        SET 
+            u.{FIELD_CASH} = u.{FIELD_CASH} - %s,
+            u.{FIELD_BANK} = u.{FIELD_BANK} + %s
+        WHERE 
+            u.{FIELD_USER_ID} = %s
+    """
+    result = execute_query(query, (amount, amount, user_id))
+    if result:
+        embed = discord.Embed(title="Succès", description=f"Vous avez déposé {amount} pièces avec succès.", color=color_green)
         embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
     else:
@@ -286,7 +323,7 @@ async def deposit(interaction: discord.Interaction, amount: int):
         embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
 
-@bot.tree.command(name="withdraw", description="Retirer de l'argent de la banque")
+@bot.tree.command(name="withdraw", description="Retirer de l'argent")
 async def withdraw(interaction: discord.Interaction, amount: int):
     user_id = interaction.user.id
     if not is_registered(user_id):
@@ -296,12 +333,19 @@ async def withdraw(interaction: discord.Interaction, amount: int):
         return
 
     if amount <= 0:
-        embed = discord.Embed(title="Erreur", description="Le montant à retirer doit être positif.", color=color_red)
+        embed = discord.Embed(title="Erreur", description="Le montant doit être supérieur à 0.", color=color_red)
         embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
 
-    query = f"SELECT {FIELD_BANK} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
+    query = f"""
+        SELECT 
+            u.{FIELD_BANK}
+        FROM 
+            {TABLE_USERS} u
+        WHERE 
+            u.{FIELD_USER_ID} = %s
+    """
     data = fetch_data(query, (user_id,))
     if data is None:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
@@ -323,15 +367,23 @@ async def withdraw(interaction: discord.Interaction, amount: int):
         return
 
     if bank < amount:
-        embed = discord.Embed(title="Erreur", description="Vous n'avez pas assez d'argent dans votre banque pour effectuer ce retrait.", color=color_red)
+        embed = discord.Embed(title="Erreur", description="Vous n'avez pas assez d'argent pour retirer.", color=color_red)
         embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
 
-    if amount is not None:
-        execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_BANK} = {FIELD_BANK} - %s, {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_USER_ID} = %s", (amount, amount, user_id))
-        execute_query(f"INSERT INTO {TABLE_TRANSACTIONS} ({FIELD_USER_ID}, {FIELD_TYPE}, {FIELD_AMOUNT}) VALUES (%s, 'Retrait', %s)", (user_id, amount))
-        embed = discord.Embed(title="Retrait effectué", description=f"Vous avez retiré {amount:,} <:AploucheCoin:1286080674046152724> de votre banque.", color=color_green)
+    query = f"""
+        UPDATE 
+            {TABLE_USERS} u
+        SET 
+            u.{FIELD_BANK} = u.{FIELD_BANK} - %s,
+            u.{FIELD_CASH} = u.{FIELD_CASH} + %s
+        WHERE 
+            u.{FIELD_USER_ID} = %s
+    """
+    result = execute_query(query, (amount, amount, user_id))
+    if result:
+        embed = discord.Embed(title="Succès", description=f "Vous avez retiré {amount} pièces avec succès.", color=color_green)
         embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
     else:
@@ -391,7 +443,7 @@ async def steal(interaction: discord.Interaction, user: discord.Member, amount: 
     await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="transaction", description="Effectuer une transaction")
-async def transaction(interaction: discord.Interaction, amount: int, user: discord.Member):
+async def transaction(interaction: discord.Interaction, user: discord.Member, amount: int):
     user_id = interaction.user.id
     if not is_registered(user_id):
         embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
@@ -400,7 +452,7 @@ async def transaction(interaction: discord.Interaction, amount: int, user: disco
         return
 
     if amount <= 0:
-        embed = discord.Embed(title="Erreur", description="Le montant à transférer doit être positif.", color=color_red)
+        embed = discord.Embed(title="Erreur", description="Le montant doit être supérieur à 0.", color=color_red)
         embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
@@ -411,7 +463,14 @@ async def transaction(interaction: discord.Interaction, amount: int, user: disco
         await interaction.response.send_message(embed=embed)
         return
 
-    query = f"SELECT {FIELD_CASH} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
+    query = f"""
+        SELECT 
+            u.{FIELD_CASH}
+        FROM 
+            {TABLE_USERS} u
+        WHERE 
+            u.{FIELD_USER_ID} = %s
+    """
     data = fetch_data(query, (user_id,))
     if data is None:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
@@ -433,19 +492,36 @@ async def transaction(interaction: discord.Interaction, amount: int, user: disco
         return
 
     if cash < amount:
-        embed = discord.Embed(title="Erreur", description="Vous n'avez pas assez d'argent pour effectuer cette transaction.", color=color_red)
+        embed = discord.Embed(title="Erreur", description="Vous n'avez pas assez d'argent pour effectuer la transaction.", color=color_red)
         embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
 
-    if amount is not None:
-        execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_USER_ID} = %s", (amount, user_id))
-        execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_USER_ID} = %s", (amount, user.id))
-        execute_query(f"INSERT INTO {TABLE_TRANSACTIONS} ({FIELD_USER_ID}, {FIELD_TYPE}, {FIELD_AMOUNT}) VALUES (%s, 'Transaction', %s)", (user_id, amount))
-        execute_query(f"INSERT INTO {TABLE_TRANSACTIONS} ({FIELD_USER_ID}, {FIELD_TYPE}, {FIELD_AMOUNT}) VALUES (%s, 'Transaction', %s)", (user.id, -amount))
-        embed = discord.Embed(title="Transaction effectuée", description=f"Vous avez transféré {amount:,} <:AploucheCoin:1286080674046152724> à {user.mention}.", color=color_green)
-        embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
-        await interaction.response.send_message(embed=embed)
+    query = f"""
+        UPDATE 
+            {TABLE_USERS} u
+        SET 
+            u.{FIELD_CASH} = u.{FIELD_CASH} - %s
+        WHERE 
+            u.{FIELD_USER_ID} = %s
+    """
+    result = execute_query(query, (amount, user_id))
+    if result:
+        query = f"""
+            INSERT INTO 
+                {TABLE_TRANSACTIONS} ({FIELD_USER_ID}, {FIELD_TYPE}, {FIELD_AMOUNT})
+            VALUES 
+                (%s, 'Transaction', %s)
+        """
+        result = execute_query(query, (user.id, amount))
+        if result:
+            embed = discord.Embed(title="Succès", description=f"Vous avez effectué une transaction de {amount} pièces avec succès.", color=color_green)
+            embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
+            await interaction.response.send_message(embed=embed)
+        else:
+            embed = discord.Embed(title="Erreur", description="Erreur lors de la transaction.", color=color_red)
+            embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
+            await interaction.response.send_message(embed=embed)
     else:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la transaction.", color=color_red)
         embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
@@ -557,26 +633,83 @@ class DeleteAccountView(discord.ui.View):
         self.stop()
 
 # Commande pour supprimer un compte
-@bot.tree.command(name="delete_account", description="Supprimer le compte d'un utilisateur")
-@commands.has_permissions(administrator=True)
+@bot.tree.command(name="delete_account", description="Supprimer le compte")
 async def delete_account(interaction: discord.Interaction, user: discord.Member):
-    if user.bot:
-        await interaction.response.send_message("Vous ne pouvez pas supprimer le compte d'un bot.")
+    user_id = interaction.user.id
+    if not is_registered(user _id):
+        embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
+        embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
+        await interaction.response.send_message(embed=embed)
         return
 
-    if not is_registered(user.id):
-        await interaction.response.send_message("L'utilisateur n'a pas de compte.")
+    if user == interaction.user:
+        embed = discord.Embed(title="Erreur", description="Vous ne pouvez pas supprimer votre propre compte.", color=color_red)
+        embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
+        await interaction.response.send_message(embed=embed)
+        return
+
+    if user.bot:
+        embed = discord.Embed(title="Erreur", description="Vous ne pouvez pas supprimer le compte d'un bot.", color=color_red)
+        embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
+        await interaction.response.send_message(embed=embed)
+        return
+
+    query = f"""
+        SELECT 
+            u.{FIELD_USER_ID}
+        FROM 
+            {TABLE_USERS} u
+        WHERE 
+            u.{FIELD_USER_ID} = %s
+    """
+    data = fetch_data(query, (user.id,))
+    if data is None:
+        embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération des données de l'utilisateur.", color=color_red)
+        embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
+        await interaction.response.send_message(embed=embed)
+        return
+
+    if len(data) == 0:
+        embed = discord.Embed(title="Erreur", description="L'utilisateur n'a pas de compte.", color=color_red)
+        embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
+        await interaction.response.send_message(embed=embed)
         return
 
     view = DeleteAccountView()
     await interaction.response.send_message(f"Voulez-vous supprimer le compte de {user.mention} ?", view=view)
     await view.wait()
     if view.value is True:
-        execute_query(f"DELETE FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s", (user.id,))
-        execute_query(f"DELETE FROM {TABLE_TRANSACTIONS} WHERE {FIELD_USER_ID} = %s", (user.id,))
-        await interaction.followup.send(content=f"Compte de {user.mention} supprimé avec succès.")
+        query = f"""
+            DELETE FROM 
+                {TABLE_USERS} u
+            WHERE 
+                u.{FIELD_USER_ID} = %s
+        """
+        result = execute_query(query, (user.id,))
+        if result:
+            query = f"""
+                DELETE FROM 
+                    {TABLE_TRANSACTIONS} t
+                WHERE 
+                    t.{FIELD_USER_ID} = %s
+            """
+            result = execute_query(query, (user.id,))
+            if result:
+                embed = discord.Embed(title="Succès", description=f"Le compte de {user.mention} a été supprimé avec succès.", color=color_green)
+                embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
+                await interaction.followup.send(embed=embed)
+            else:
+                embed = discord.Embed(title="Erreur", description="Erreur lors de la suppression du compte.", color=color_red)
+                embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
+                await interaction.followup.send(embed=embed)
+        else:
+            embed = discord.Embed(title="Erreur", description="Erreur lors de la suppression du compte.", color=color_red)
+            embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
+            await interaction.followup.send(embed=embed)
     else:
-        await interaction.followup.send(content="Annuler")
+        embed = discord.Embed(title="Annuler", description="La suppression du compte a été annulée.", color=color_green)
+        embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
+        await interaction.followup.send(embed=embed)
 
 async def main():
     await bot.start(TOKEN)
