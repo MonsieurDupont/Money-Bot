@@ -91,9 +91,7 @@ def is_registered(user_id):
     data = fetch_data(query, (user_id,))
     if data is None:
         return False
-    if len(data) > 0:
-        return True
-    return False
+    return len(data) > 0
 
 def add_transaction(user_id, amount, transaction_type):
     try:
