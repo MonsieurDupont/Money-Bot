@@ -106,15 +106,15 @@ def add_transaction(user_id, amount, transaction_type):
 @bot.tree.command(name="register", description="S'inscrire")
 async def register(interaction: discord.Interaction):
     user_id = interaction.user.id
-    print(f"User  ID : {user_id}")
+    print(f"User ID : {user_id}")
     if is_registered(user_id):
-        print("User  est déjà inscrit")
+        print("User est déjà inscrit")
         embed = discord.Embed(title="Erreur", description=f"Vous êtes déjà inscrit, {interaction.user.mention}.", color=color_red)
         embed.add_field(name="Raison", value="Vous avez déjà un compte existant.", inline=False)
         embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
     else:
-        print("User  n'est pas inscrit")
+        print("User n'est pas inscrit")
         query = f"""
             INSERT INTO 
                 {TABLE_USERS} ({FIELD_USER_ID}, {FIELD_CASH}, {FIELD_BANK})
