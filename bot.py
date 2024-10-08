@@ -66,10 +66,11 @@ def execute_query(query, params=None):
             cursor.execute(query, params)
         else:
             cursor.execute(query)
-        return cursor.lastrowid
+        conn.commit()
+        return True
     except mysql.connector.Error as err:
         logging.error("Erreur de requête SQL : {}".format(err))
-        return None
+        return False
 
 # Fonction pour récupérer des données de la base de données
 def fetch_data(query, params=None):
@@ -104,15 +105,15 @@ def add_transaction(user_id, amount, transaction_type):
 @bot.tree.command(name="register", description="S'inscrire")
 async def register(interaction: discord.Interaction):
     user_id = interaction.user.id
-    print(f"User ID : {user_id}")
+    print(f"User  ID : {user_id}")
     if is_registered(user_id):
-        print("User est déjà inscrit")
+        print("User  est déjà inscrit")
         embed = discord.Embed(title="Erreur", description=f"Vous êtes déjà inscrit, {interaction.user.mention}.", color=color_red)
         embed.add_field(name="Raison", value="Vous avez déjà un compte existant.", inline=False)
         embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
     else:
-        print("User n'est pas inscrit")
+        print("User  n'est pas inscrit")
         query = f"""
             INSERT INTO 
                 {TABLE_USERS} ({FIELD_USER_ID}, {FIELD_CASH}, {FIELD_BANK})
@@ -122,7 +123,7 @@ async def register(interaction: discord.Interaction):
         print(f"Requête SQL : {query}")
         result = execute_query(query, (user_id,))
         print(f"Résultat de la requête : {result}")
-        if result is not None:
+        if result:
             print("Données insérées avec succès")
             embed = discord.Embed(title="Succès", description=f"Vous êtes maintenant inscrit, {interaction.user.mention}.", color=color_green)
             embed.add_field(name="Prochaines étapes", value="Vous pouvez maintenant utiliser les commandes `/balance`, `/deposit`, `/withdraw` et `/transaction`.", inline=False)
