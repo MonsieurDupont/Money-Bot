@@ -635,7 +635,7 @@ class DeleteAccountView(discord.ui.View):
 @bot.tree.command(name="delete_account", description="Supprimer le compte")
 async def delete_account(interaction: discord.Interaction, user: discord.Member):
     user_id = interaction.user.id
-    if not is_registered(user _id):
+    if not is_registered(user_id):
         embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
         embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
