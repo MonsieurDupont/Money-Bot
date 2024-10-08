@@ -205,7 +205,7 @@ async def stats(interaction: discord.Interaction):
 
     total = cash + bank
     moyenne_depenses = total_depenses / (total_revenus + abs(total_depenses)) if total_revenus + abs(total_depenses) > 0 else 0
-    moyenne_revenus = total_revenus / (total_revenus + abs(total _depenses)) if total_revenus + abs(total_depenses) > 0 else 0
+    moyenne_revenus = total_revenus / (total_revenus + abs(total_depenses)) if total_revenus + abs(total_depenses) > 0 else 0
 
     embed = discord.Embed(title="Statistiques", description=f"Voici vos statistiques, {interaction.user.mention}.", color=color_green)
     embed.add_field(name="Cash", value=f"{cash} pièces", inline=False)
