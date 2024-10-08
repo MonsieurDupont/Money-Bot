@@ -472,7 +472,6 @@ async def help(interaction: discord.Interaction):
     embed.add_field(name="/help", value="Afficher les commandes disponibles", inline=False)
     await interaction.response.send_message(embed=embed)
 
-# Commande pour supprimer un compte
 class DeleteAccountView(discord.ui.View):
     def __init__(self):
         super().__init__()
@@ -488,6 +487,7 @@ class DeleteAccountView(discord.ui.View):
         self.value = False
         self.stop()
 
+# Commande pour supprimer un compte
 @bot.tree.command(name="delete_account", description="Supprimer votre compte")
 @commands.has_permissions(administrator=True)
 async def delete_account(interaction: discord.Interaction):
