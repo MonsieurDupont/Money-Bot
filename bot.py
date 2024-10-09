@@ -532,8 +532,8 @@ async def leaderboard(interaction: discord.Interaction):
     # embed.add_field(name="**Rang**", value="**Utilisateur**", inline=False)
     for i, (user_id, total) in enumerate(data, start=1):
         
-        user = bot.get_user("322045270164766723")
-        logging.error(bot.get_user("322045270164766723"))
+        user = bot.get_user("<@322045270164766723>")
+        logging.error(user)
         # if user is None:
         #    continue
         await interaction.response.send_message(f"#{i} {user.display_name} {total} ")
