@@ -647,7 +647,8 @@ async def delete_account(interaction: discord.Interaction, user: discord.Member)
         return
 
     view = DeleteAccountView()
-    await interaction.response.send_message(f"Voulez-vous supprimer le compte de {user.mention} ?", view=view)
+    embed = discord.Embed(title="Voulez-vous supprimer le compte de {user.mention} ?", color=color_blue)
+    await interaction.response.send_message(embed=embed, view=view)
     await view.wait()
     if view.value is True:
         query = f"""
@@ -680,7 +681,7 @@ async def delete_account(interaction: discord.Interaction, user: discord.Member)
     else:
         embed = discord.Embed(title="Annuler", description="La suppression du compte a été annulée.", color=color_green)
         # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
-        await interaction.followup.send(embed=embed, view=DeleteAccountView())
+        await interaction.followup.send(embed=embed, view=view)
 
 async def main():
     await bot.start(TOKEN)
