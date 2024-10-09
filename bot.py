@@ -654,7 +654,12 @@ async def delete_account(interaction: discord.Interaction, user: discord.Member)
     await interaction.response.send_message(embed=embed, view=view)
     await view.wait()
     if view.value is True:
-        query = f"""DELETE FROM {TABLE_USERS} u WHERE u.{FIELD_USER_ID} = %s"""
+        query = f"""
+            DELETE FROM 
+                {TABLE_USERS} u
+            WHERE 
+                u.{FIELD_USER_ID} = %s
+        """
         result = execute_query(query, (user.id,))
         if result:
             query = f"""
