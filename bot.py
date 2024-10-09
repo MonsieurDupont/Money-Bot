@@ -533,7 +533,7 @@ async def leaderboard(interaction: discord.Interaction):
     for i, (user_id, total) in enumerate(data, start=1):
         
         user = bot.get_user(user_id)
-        logging.error(user)
+        logging.error(user_id)
         # if user is None:
         #    continue
         await interaction.response.send_message(f"#{i} {user.display_name} {total} ")
