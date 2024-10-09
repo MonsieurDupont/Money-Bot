@@ -414,7 +414,7 @@ async def steal(interaction: discord.Interaction, user: discord.Member, amount: 
     embed = discord.Embed(title="Vol réussi", description=f"Vous avez volé {amount :,} <:AploucheCoin:1286080674046152724> à {user.mention}.", color=color_green)
     await interaction.response.send_message(embed=embed)
 
-@bot.tree.command(name="transaction", description="Effectuer une transaction")
+@bot.tree.command(name="send", description="Envoyer de l'argent")
 async def transaction(interaction: discord.Interaction, user: discord.Member, amount: int):
     user_id = interaction.user.id
     if not is_registered(user_id):
@@ -430,7 +430,7 @@ async def transaction(interaction: discord.Interaction, user: discord.Member, am
         return
 
     if user == interaction.user:
-        embed = discord.Embed(title="Erreur", description="Vous ne pouvez pas effectuer une transaction avec vous-même.", color=color_red)
+        embed = discord.Embed(title="Erreur", description="Vous ne pouvez pas vous envoyew de l'argent a vous-même.", color=color_red)
         # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
@@ -464,7 +464,7 @@ async def transaction(interaction: discord.Interaction, user: discord.Member, am
         return
 
     if cash < amount:
-        embed = discord.Embed(title="Erreur", description="Vous n'avez pas assez d'argent pour effectuer la transaction.", color=color_red)
+        embed = discord.Embed(title="Erreur", description="Vous n'avez pas assez d'argent.", color=color_red)
         # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
@@ -487,15 +487,15 @@ async def transaction(interaction: discord.Interaction, user: discord.Member, am
         """
         result = execute_query(query, (user.id, amount))
         if result:
-            embed = discord.Embed(title="Succès", description=f"Vous avez effectué une transaction de {amount} <:AploucheCoin:1286080674046152724> avec succès.", color=color_green)
+            embed = discord.Embed(title="Succès", description=f"Vous avez envoyé {amount} <:AploucheCoin:1286080674046152724> avec succès.", color=color_green)
             # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
             await interaction.response.send_message(embed=embed)
         else:
-            embed = discord.Embed(title="Erreur", description="Erreur lors de la transaction.", color=color_red)
+            embed = discord.Embed(title="Erreur", description="Erreur lors de l'envoi.", color=color_red)
             # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
             await interaction.response.send_message(embed=embed)
     else:
-        embed = discord.Embed(title="Erreur", description="Erreur lors de la transaction.", color=color_red)
+        embed = discord.Embed(title="Erreur", description="Erreur lors de l'envoi.", color=color_red)
         # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
 
@@ -682,9 +682,9 @@ async def delete_account(interaction: discord.Interaction, user: discord.Member)
             # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
             await interaction.followup.send(embed=embed)
     else:
-        embed = discord.Embed(title="Annuler", description="La suppression du compte a été annulée.", color=color_green)
+        embed = discord.Embed(description="La suppression du compte a été annulée.", color=color_green)
         # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
-        await interaction.followup.send(embed=embed, view=view)
+        await interaction.followup.send(embed=embed)
 
 async def main():
     await bot.start(TOKEN)
