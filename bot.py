@@ -530,16 +530,14 @@ async def leaderboard(interaction: discord.Interaction):
 
     embed = discord.Embed(title="Classement des utilisateurs", description="Voici le classement des 10 utilisateurs les plus riches :", color=color_blue)
     # embed.add_field(name="**Rang**", value="**Utilisateur**", inline=False)
-    for i, (user_id, total) in enumerate(data, start=1):
-        
+    for i, (user_id, total) in enumerate(data, start=1):       
         user = await bot.fetch_user(user_id)
-        logging.error(user)
-        # if user is None:
-        #    continue
-        # await interaction.response.send_message(f"#{i} {user.display_name} {total} ")
-        #embed.add_field(name=f"#{i}", value=f"{user.display_name} - {total:,} <:AploucheCoin:1286080674046152724>", inline=False)
+        if user is None:
+           continue
+        await interaction.response.send_message(f"#{i} {user.display_name} {total} ")
+        embed.add_field(name=f"#{i}", value=f"{user.display_name} - {total:,} <:AploucheCoin:1286080674046152724>", inline=False)
     # embed.set_footer(text="Note : Ce classement est mis à jour en temps réel.")
-    # await interaction.response.send_message(embed=embed)
+    await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="transaction_history", description="Historique des transactions")
 async def transaction_history(interaction: discord.Interaction):
