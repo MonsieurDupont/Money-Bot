@@ -532,7 +532,7 @@ async def leaderboard(interaction: discord.Interaction):
     # embed.add_field(name="**Rang**", value="**Utilisateur**", inline=False)
     for i, (user_id, total) in enumerate(data, start=1):
         
-        user = bot.fetch_user(user_id)
+        user = await bot.fetch_user(user_id)
         logging.error(user)
         # if user is None:
         #    continue
