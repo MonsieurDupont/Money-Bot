@@ -44,7 +44,7 @@ FIELD_AMOUNT = "amount"
 logging.basicConfig(level=logging.INFO)
 
 # Création du bot
-intents = discord.Intents.all()
+intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="/", intents=intents)
 
@@ -707,5 +707,6 @@ async def work(interaction: discord.Interaction, user: discord.Member):
 
 async def main():
     await bot.start(TOKEN)
+
 
 asyncio.run(main())
