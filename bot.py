@@ -531,6 +531,7 @@ async def leaderboard(interaction: discord.Interaction):
     embed = discord.Embed(title="Classement des utilisateurs", description="Voici le classement des 10 utilisateurs les plus riches :", color=color_blue)
     # embed.add_field(name="**Rang**", value="**Utilisateur**", inline=False)
     for i, (user_id, total) in enumerate(data, start=1):
+        logging.error(i)
         user = bot.get_user(user_id)
         if user is None:
             continue
