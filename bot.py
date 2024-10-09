@@ -499,7 +499,7 @@ async def transaction(interaction: discord.Interaction, user: discord.Member, am
         # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
 
-@bot.tree.command(name="leaderboard", description="Voir le classement des utilisateurs")
+@bot.tree.command(name="leaderboard", description="Voir le classement des joueurs")
 async def leaderboard(interaction: discord.Interaction):
     user_id = interaction.user.id
     if not is_registered(user_id):
@@ -529,11 +529,11 @@ async def leaderboard(interaction: discord.Interaction):
         return
 
     embed = discord.Embed(title="Classement des utilisateurs", description="Voici le classement des 10 utilisateurs les plus riches :", color=color_blue)
-    embed.add_field(name="**Rang**", value="**Utilisateur**", inline=False)
+    # embed.add_field(name="**Rang**", value="**Utilisateur**", inline=False)
     for i, (user_id, total) in enumerate(data, start=1):
         user = bot.get_user(user_id)
-        if user is None:
-            continue
+        # if user is None:
+        #    continue
         embed.add_field(name=f"#{i}", value=f"{user.name} - {total:,} <:AploucheCoin:1286080674046152724>", inline=False)
     # embed.set_footer(text="Note : Ce classement est mis à jour en temps réel.")
     await interaction.response.send_message(embed=embed)
