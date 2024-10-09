@@ -119,7 +119,7 @@ async def register(interaction: discord.Interaction):
         """
         result = execute_query(query, (user_id,))
         if result:
-            embed = discord.Embed(title="Succès", description=f"Vous êtes maintenant inscrit, {interaction.user.mention}. Vous avez reçu 1000 pièces en cash.", color=color_green)
+            embed = discord.Embed(title="Succès", description=f"Vous êtes maintenant inscrit, {interaction.user.mention}. Vous avez reçu 1000 <:AploucheCoin:1286080674046152724> en cash.", color=color_green)
             embed.add_field(name="Prochaines étapes", value="Vous pouvez maintenant utiliser les commandes `/balance`, `/deposit`, `/withdraw` et `/transaction`.", inline=False)
             embed.add_field(name="Aide", value="Si vous avez des questions, n'hésitez pas à demander.", inline=False)
             embed.set_footer(text="Bienvenue dans notre communauté !")
@@ -180,11 +180,11 @@ async def stats(interaction: discord.Interaction):
     moyenne_revenus = total_revenus / (total_revenus + abs(total_depenses)) if total_revenus + abs(total_depenses) > 0 else 0
 
     embed = discord.Embed(title="Statistiques", description=f"Voici vos statistiques, {interaction.user.mention}.", color=color_green)
-    embed.add_field(name="Cash", value=f"{cash} pièces", inline=False)
-    embed.add_field(name="Banque", value=f"{bank} pièces", inline=False)
-    embed.add_field(name="Total", value=f"{total} pièces", inline=False)
-    embed.add_field(name="Revenus", value=f"{total_revenus} pièces", inline=False)
-    embed.add_field(name="Dépenses", value=f"{total_depenses} pièces", inline=False)
+    embed.add_field(name="Cash", value=f"{cash} <:AploucheCoin:1286080674046152724>", inline=False)
+    embed.add_field(name="Banque", value=f"{bank} <:AploucheCoin:1286080674046152724>", inline=False)
+    embed.add_field(name="Total", value=f"{total} <:AploucheCoin:1286080674046152724>", inline=False)
+    embed.add_field(name="Revenus", value=f"{total_revenus} <:AploucheCoin:1286080674046152724>", inline=False)
+    embed.add_field(name="Dépenses", value=f"{total_depenses} <:AploucheCoin:1286080674046152724>", inline=False)
     embed.add_field(name="Moyenne des dépenses", value=f"{moyenne_depenses * 100:.2f}%", inline=False)
     embed.add_field(name="Moyenne des revenus", value=f"{moyenne_revenus * 100:.2f}%", inline=False)
     embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
@@ -287,7 +287,7 @@ async def deposit(interaction: discord.Interaction, amount: int):
     """
     result = execute_query(query, (amount, amount, user_id))
     if result:
-        embed = discord.Embed(title="Succès", description=f"Vous avez déposé {amount} pièces avec succès.", color=color_green)
+        embed = discord.Embed(title="Succès", description=f"Vous avez déposé {amount} <:AploucheCoin:1286080674046152724> avec succès.", color=color_green)
         embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
     else:
@@ -355,7 +355,7 @@ async def withdraw(interaction: discord.Interaction, amount: int):
     """
     result = execute_query(query, (amount, amount, user_id))
     if result:
-        embed = discord.Embed(title="Succès", description=f"Vous avez retiré {amount} pièces avec succès.", color=color_green)
+        embed = discord.Embed(title="Succès", description=f"Vous avez retiré {amount} <:AploucheCoin:1286080674046152724> avec succès.", color=color_green)
         embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
     else:
@@ -487,7 +487,7 @@ async def transaction(interaction: discord.Interaction, user: discord.Member, am
         """
         result = execute_query(query, (user.id, amount))
         if result:
-            embed = discord.Embed(title="Succès", description=f"Vous avez effectué une transaction de {amount} pièces avec succès.", color=color_green)
+            embed = discord.Embed(title="Succès", description=f"Vous avez effectué une transaction de {amount} <:AploucheCoin:1286080674046152724> avec succès.", color=color_green)
             embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
             await interaction.response.send_message(embed=embed)
         else:
