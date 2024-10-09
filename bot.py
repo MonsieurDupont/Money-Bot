@@ -38,7 +38,7 @@ FIELD_AMOUNT = "amount"
 logging.basicConfig(level=logging.INFO)
 
 # Création du bot
-intents = discord.Intents.default()
+intents = discord.Intents.all()
 intents.message_content = True
 bot = commands.Bot(command_prefix="/", intents=intents)
 
@@ -532,7 +532,7 @@ async def leaderboard(interaction: discord.Interaction):
     # embed.add_field(name="**Rang**", value="**Utilisateur**", inline=False)
     for i, (user_id, total) in enumerate(data, start=1):
         
-        user = bot.get_user("<@322045270164766723>")
+        user = bot.get_user(user_id)
         logging.error(user)
         # if user is None:
         #    continue
