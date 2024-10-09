@@ -536,7 +536,7 @@ async def leaderboard(interaction: discord.Interaction):
         logging.error(user)
         # if user is None:
         #    continue
-        await interaction.response.send_message(f"#{i} {user.display_name} {total} ")
+        # await interaction.response.send_message(f"#{i} {user.display_name} {total} ")
         #embed.add_field(name=f"#{i}", value=f"{user.display_name} - {total:,} <:AploucheCoin:1286080674046152724>", inline=False)
     # embed.set_footer(text="Note : Ce classement est mis à jour en temps réel.")
     # await interaction.response.send_message(embed=embed)
