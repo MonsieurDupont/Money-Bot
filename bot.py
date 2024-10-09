@@ -4,11 +4,17 @@ import logging
 from dotenv import load_dotenv
 import mysql.connector
 import discord
+import random
+import json
 from discord.ext import commands
 import asyncio
 
 # Chargement des variables d'environnement
 load_dotenv()
+
+# Chargement des fichiers JSON
+with open('workphrases.json', 'r', encoding='utf-8') as file:
+    workphrases = json.load(file)
 
 # Définition des constantes
 TOKEN = os.getenv("TOKEN")
@@ -689,6 +695,15 @@ async def delete_account(interaction: discord.Interaction, user: discord.Member)
         embed = discord.Embed(description="La suppression du compte a été annulée.", color=color_green)
         # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.followup.send(embed=embed)
+
+
+@bot.tree.command(name="work", description="Travailler")
+async def work(interaction: discord.Interaction, user: discord.Member):
+    random_key = random.choice(list(workphrases.keys()))
+    pay = random.randint(100, 2500)   # Nombre aleatoire definissant la paye
+
+    embed = discord.Embed(description=random_key.replace("{pay}", str(pay)))
+
 
 async def main():
     await bot.start(TOKEN)
