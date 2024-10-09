@@ -647,7 +647,7 @@ async def delete_account(interaction: discord.Interaction, user: discord.Member)
         return
 
     view = DeleteAccountView()
-    embed = discord.Embed(title="Voulez-vous supprimer le compte de {user.mention} ?", color=color_blue)
+    embed = discord.Embed(description=f"Voulez-vous supprimer le compte de {user.mention} ?", color=color_blue)
     await interaction.response.send_message(embed=embed, view=view)
     await view.wait()
     if view.value is True:
