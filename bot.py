@@ -264,7 +264,7 @@ async def balance(interaction: discord.Interaction, user: typing.Optional[discor
     total = cash + bank
     embed = discord.Embed(title=f"Solde de {user_name}", description=f"**Cash** : {cash:,} {CoinEmoji}\n**Banque** : {bank:,} {CoinEmoji}\n**Total** : {total:,} {CoinEmoji}", color=color_blue)
     if total < 0:
-        embed.add_field(name="", value="Wesh mon reuf faut se ressaisir la ", inline=False)
+        embed.add_field(name="", value="Wesh c'est la hess la ", inline=False)
     # embed.add_field(name="Aide", value="Pour voir les commandes disponibles, tapez `/help`.", inline=False)
     await interaction.response.send_message(embed=embed)
 
@@ -302,13 +302,14 @@ async def deposit(interaction: discord.Interaction, amount: typing.Optional[int]
             await interaction.response.send_message(embed=embed)
             return
 
-        amount = cash
-
     if amount <= 0:
         embed = discord.Embed(title="Erreur", description="Le montant doit être supérieur à 0.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
-
+    if amount < 0:
+        embed = discord.Embed(title="Erreur", description="T'es pauvre mec", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
     query = f"""
         SELECT 
             u.{FIELD_CASH}
@@ -615,8 +616,11 @@ async def leaderboard(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="transaction_history", description="Historique des transactions")
-async def transaction_history(interaction: discord.Interaction):
-    user_id = interaction.user.id
+async def transaction_history(interaction: discord.Interaction, user: typing.Optional[discord.Member]):
+    if user is None:
+        user_id = interaction.user.id
+    else:
+        user_id = user.id
     if not is_registered(user_id):
         embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
         await interaction.response.send_message(embed=embed)
@@ -646,9 +650,9 @@ async def transaction_history(interaction: discord.Interaction):
         await interaction.response.send_message(embed=embed)
         return
 
-    embed = discord.Embed(title="Historique des transactions", description="Voici l'historique de vos transactions :", color=color_blue)
+    embed = discord.Embed(title=f"Historique de <@{user_id}>", description="Voici la liste des 10 dernieres transactions :", color=color_blue)
     embed.add_field(name="**Transaction**", value="**Montant** | **Type**", inline=False)
-    for i, (transaction_id, amount, transaction_type) in enumerate(transactions[::-1], start=1):
+    for i, (transaction_id, amount, transaction_type) in enumerate(transactions[::-1][:10], start=1):
         embed.add_field(name="", value=f"**{i}** : {amount:,} {CoinEmoji} | {transaction_type}", inline=False)
     # embed.set_footer(text="Note : Ce classement est mis à jour en temps réel.")
     await interaction.response.send_message(embed=embed)
