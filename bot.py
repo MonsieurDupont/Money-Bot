@@ -648,8 +648,8 @@ async def transaction_history(interaction: discord.Interaction):
 
     embed = discord.Embed(title="Historique des transactions", description="Voici l'historique de vos transactions :", color=color_blue)
     embed.add_field(name="**Transaction**", value="**Montant** | **Type**", inline=False)
-    for i, (transaction_id, amount, transaction_type) in enumerate(transactions, start=1):
-        embed.add_field(name=f"#{i}", value=f"{amount:,} {CoinEmoji} | {transaction_type}", inline=False)
+    for i, (transaction_id, amount, transaction_type) in enumerate(transactions, start=len(transactions)-1):
+        embed.add_field(name="", value=f"**{i}** : {amount:,} {CoinEmoji} | {transaction_type}", inline=False)
     # embed.set_footer(text="Note : Ce classement est mis à jour en temps réel.")
     await interaction.response.send_message(embed=embed)
 
@@ -780,7 +780,7 @@ async def give(interaction: discord.Interaction, amount: int, user: typing.Optio
     """
     execute_query(query, (amount, user_id))
     try:
-        add_transaction(user_id, amount, 'Work')
+        add_transaction(user_id, amount, 'Give')
     except mysql.connector.Error as err:
         embed = discord.Embed(title="Erreur", description="Erreur lors de l'ajout de la transaction.", color=color_red)
         await interaction.response.send_message(embed=embed, ephemeral=True)
