@@ -608,7 +608,7 @@ async def leaderboard(interaction: discord.Interaction):
            continue
         # await interaction.response.send_message(f"#{i} {user.display_name} {total} ")
         if i <= 3:
-            embed.add_field(name=f"#{i}", value=f"<@{user.id}> - **{total:,}** {CoinEmoji}", inline=False)  
+            embed.add_field(name=f"#{i}", value=f"<@{user.id}> : **{total:,}** {CoinEmoji}", inline=False)  
         else:
             embed.add_field(name=f"", value=f"**{i}** • <@{user.id}> - **{total:,}** {CoinEmoji}", inline=False)
     # embed.set_footer(text="Note : Ce classement est mis à jour en temps réel.")
