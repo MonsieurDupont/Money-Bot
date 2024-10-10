@@ -481,11 +481,11 @@ async def steal(interaction: discord.Interaction, user: discord.Member):
         embed = discord.Embed(title="Erreur", description="L'utilisateur ciblé n'a pas assez d'argent pour être volé.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
-    print(stealer_cash)
-    print(victim_cash)
+    
+    proba = round( stealer_cash / (victim_cash + stealer_cash )) # Probabilité de réussite
+    
+    amount = random.randint(victim_cash)
 
-    amount = round( stealer_cash / (victim_cash + stealer_cash ))
-    print(amount)
     execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_USER_ID} = %s", (amount, user.id))
     execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_USER_ID} = %s", (amount, user_id))
     embed = discord.Embed(title="Vol réussi", description=f"Vous avez volé {amount :,} {CoinEmoji} à {user.mention}.", color=color_green)
