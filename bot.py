@@ -481,7 +481,7 @@ async def steal(interaction: discord.Interaction, user: discord.Member):
     print(stealer_cash)
     print(victim_cash)
 
-    amount = round(stealer_cash/victim_cash+stealer_cash)
+    amount = round( stealer_cash / (victim_cash + stealer_cash ))
     print(amount)
     execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_USER_ID} = %s", (amount, user.id))
     execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_USER_ID} = %s", (amount, user_id))
@@ -831,8 +831,8 @@ async def work(interaction: discord.Interaction):
             embed = discord.Embed(title="Erreur", description=f"Vous devez attendre {work_cooldown_time - int(time_diff)} secondes avant de travailler à nouveau.", color=color_red)
             await interaction.response.send_message(embed=embed)
             return
-
-    pay = random.randint(min_work_pay, max_work_pay)   # Nombre aleatoire definissant la paye
+    biased_pay = min_work_pay + (max_work_pay - min_work_pay) * (random.random() ** 2)
+    pay = int(biased_pay)   # Nombre aleatoire definissant la paye
     if pay <= 0:
         embed = discord.Embed(title="Erreur", description="La valeur de pay est invalide.", color=color_red)
         await interaction.response.send_message(embed=embed)
