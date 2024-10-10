@@ -14,11 +14,11 @@ import asyncio
 load_dotenv()
 
 # Chargement du fichier .ini 
-commandconfig = configparser.ConfigParser()
-commandconfig.read('settings.ini')
+commandsconfig = configparser.ConfigParser()
+commandsconfig.read('settings.ini')
 
 # Chargement des fichiers JSON
-with open('workphrases.json') as file:
+with open('commandphrases.json') as file:
     workdata = json.load(file)
     workphrases = workdata["workphrases"]
 
@@ -31,8 +31,11 @@ DATABASE = os.getenv("DATABASE")
 GUILD_ID = os.getenv("GUILD_ID")
 APPLICATION_ID = os.getenv("APPLICATION_ID")
 
-min_work_pay = commandconfig["Work"]["min_pay"]
-max_work_pay = commandconfig["Work"]["max_pay"]
+if 'Constants' in commandsconfig:
+    min_work_pay = commandsconfig["Constants"]["min_pay"]
+    max_work_pay = commandsconfig["Constants"]["max_pay"]
+else:
+    logging.ERROR("Cannot find 'Constants' in settings.ini")
 
 # Définition des couleurs
 color_green = 0x98d444
@@ -721,8 +724,8 @@ async def work(interaction: discord.Interaction):
     pay = random.randint(min_work_pay, max_work_pay)   # Nombre aleatoire definissant la paye
     random_phrase = random.choice(workphrases)
     print(random_phrase.format(pay=pay))
-    #embed = discord.Embed(description=random_phrase.format(pay=pay))
-    #await interaction.response.send_message(embed=embed)
+    embed = discord.Embed(description=random_phrase.format(pay=pay))
+    await interaction.response.send_message(embed=embed)
 
 
 async def main():
