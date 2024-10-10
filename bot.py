@@ -483,7 +483,7 @@ async def steal(interaction: discord.Interaction, user: discord.Member):
         return
     
     proba = round( stealer_cash / (victim_cash + stealer_cash )) # Probabilité de réussite
-    amount = random.randint(victim_cash)                         # Montant a voler
+    amount = random.randint(0, victim_cash)                         # Montant a voler
 
     if random.random() <= proba:
         execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_USER_ID} = %s", (amount, user.id))
