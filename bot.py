@@ -35,7 +35,7 @@ if 'Constants' in commandsconfig:
     min_work_pay = commandsconfig.getint('Constants', 'min_pay')
     max_work_pay = commandsconfig.getint('Constants', 'max_pay')
     # keys = commandsconfig.options('Constants') # Toujours laisser en dernier
-    print(f"Succesfully read {len(commandsconfig.options('Constants'))}'Constants' in 'settings.ini.")
+    print(f"Succesfully read {len(commandsconfig.options('Constants'))} 'Constants' in 'settings.ini.'")
 else:
     logging.ERROR("Cannot find 'Constants' in settings.ini")
 
@@ -726,7 +726,7 @@ async def work(interaction: discord.Interaction):
     pay = random.randint(min_work_pay, max_work_pay)   # Nombre aleatoire definissant la paye
     random_phrase = random.choice(workphrases)
     print(random_phrase.format(pay=pay))
-    embed = discord.Embed(description=random_phrase.format(pay=pay))
+    embed = discord.Embed(name=interaction.user.guild_avatar, description=random_phrase.format(pay=pay), color=color_green)
     await interaction.response.send_message(embed=embed)
 
 
