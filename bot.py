@@ -227,9 +227,10 @@ async def stats(interaction: discord.Interaction):
 async def balance(interaction: discord.Interaction, user: typing.Optional[discord.Member]):
     if user is None:
         user_id = interaction.user.id
+        user_name = interaction.user.display_name
     else:
-
         user_id = user.id
+        user_name = interaction.user.display_name
     if not is_registered(user_id):
         embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
         # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
@@ -258,7 +259,7 @@ async def balance(interaction: discord.Interaction, user: typing.Optional[discor
         return
 
     total = cash + bank
-    embed = discord.Embed(title=f"Solde de <@{user_id}>", description=f"**Cash** : {cash:,} {CoinEmoji}\n**Banque** : {bank:,} {CoinEmoji}\n**Total** : {total:,} {CoinEmoji}", color=color_blue)
+    embed = discord.Embed(title=f"Solde de {user_id}", description=f"**Cash** : {cash:,} {CoinEmoji}\n**Banque** : {bank:,} {CoinEmoji}\n**Total** : {total:,} {CoinEmoji}", color=color_blue)
     embed.add_field(name="Aide", value="Pour voir les commandes disponibles, tapez `/help`.", inline=False)
     # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
     await interaction.response.send_message(embed=embed)
