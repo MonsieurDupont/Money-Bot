@@ -262,7 +262,7 @@ async def balance(interaction: discord.Interaction, user: typing.Optional[discor
         return
 
     total = cash + bank
-    embed = discord.Embed(title=f"Solde de {user_name}", description=f"**Cash** : {cash:,} {CoinEmoji}\n**Banque** : {bank:,} {CoinEmoji}\n**Total** : {total:,} {CoinEmoji}", color=color_blue)
+    embed = discord.Embed(title=f"Solde de <@{bot.fetch_user(user_id)}>", description=f"**Cash** : {cash:,} {CoinEmoji}\n**Banque** : {bank:,} {CoinEmoji}\n**Total** : {total:,} {CoinEmoji}", color=color_blue)
     if total < 0:
         embed.add_field(name="", value="Wesh c'est la hess la ", inline=False)
     # embed.add_field(name="Aide", value="Pour voir les commandes disponibles, tapez `/help`.", inline=False)
@@ -650,8 +650,8 @@ async def transaction_history(interaction: discord.Interaction, user: typing.Opt
         await interaction.response.send_message(embed=embed)
         return
 
-    embed = discord.Embed(title=f"Historique de <@{user_id}>", description="Voici la liste des 10 dernieres transactions :", color=color_blue)
-    embed.add_field(name="**Transaction**", value="**Montant** | **Type**", inline=False)
+    embed = discord.Embed(title=f"Historique de <@{bot.fetch_user(user_id)}>", description="Voici la liste des 10 dernieres transactions :", color=color_blue)
+    embed.add_field(name="", value="**Montant** | **Type**", inline=False)
     for i, (transaction_id, amount, transaction_type) in enumerate(transactions[::-1][:10], start=1):
         embed.add_field(name="", value=f"**{i}** : {amount:,} {CoinEmoji} | {transaction_type}", inline=False)
     # embed.set_footer(text="Note : Ce classement est mis à jour en temps réel.")
