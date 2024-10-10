@@ -456,7 +456,7 @@ async def steal(interaction: discord.Interaction, user: discord.Member):
         await interaction.response.send_message(embed=embed)
         return
 
-    query = f"SELECT {FIELD_CASH} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
+    query = f"SELECT {FIELD_CASH}, {FIELD_BANK} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
     victim_data = fetch_data(query, (user.id,))
     stealer_data = fetch_data(query, (user_id,))
     if victim_data is None:
@@ -470,7 +470,7 @@ async def steal(interaction: discord.Interaction, user: discord.Member):
         return
 
     victim_cash = victim_data[0][0]
-    stealer_cash = stealer_data[0][0]
+    stealer_cash = stealer_data[0]
     if victim_cash is None:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération des données de l'utilisateur ciblé.", color=color_red)
         await interaction.response.send_message(embed=embed)
