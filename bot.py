@@ -338,6 +338,9 @@ async def deposit(interaction: discord.Interaction, amount: typing.Optional[int]
         embed = discord.Embed(title="Erreur", description="Vous n'avez pas assez d'argent pour déposer.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
+    if cash < 0:
+        embed = discord.Embed(title="Erreur", description="C'est la hess y a rien a déposer.", color=color_red)
+        await interaction.response.send_message(embed=embed)
 
     query = f"""
         UPDATE 
