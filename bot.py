@@ -648,7 +648,7 @@ async def transaction_history(interaction: discord.Interaction):
 
     embed = discord.Embed(title="Historique des transactions", description="Voici l'historique de vos transactions :", color=color_blue)
     embed.add_field(name="**Transaction**", value="**Montant** | **Type**", inline=False)
-    for i, (transaction_id, amount, transaction_type) in enumerate(transactions, start=len(transactions)-1):
+    for i, (transaction_id, amount, transaction_type) in enumerate(transactions[::-1], start=1):
         embed.add_field(name="", value=f"**{i}** : {amount:,} {CoinEmoji} | {transaction_type}", inline=False)
     # embed.set_footer(text="Note : Ce classement est mis à jour en temps réel.")
     await interaction.response.send_message(embed=embed)
