@@ -737,12 +737,107 @@ async def delete_account(interaction: discord.Interaction, user: discord.Member)
 
 @bot.tree.command(name="work", description="Travailler")
 async def work(interaction: discord.Interaction):
+    user_id = interaction.user.id
+    if not is_registered(user_id):
+        embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    cooldown_time = commandsconfig.getint('Constants', 'work_cooldown')
+    if cooldown_time <= 0:
+        embed = discord.Embed(title="Erreur", description="La valeur de cooldown est invalide.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    query = f"""
+        SELECT 
+            t.{FIELD_TIMESTAMP}
+        FROM 
+            {TABLE_TRANSACTIONS} t
+        WHERE 
+            t.{FIELD_USER_ID} = %s AND t.{FIELD_TYPE} = 'Work'
+        ORDER BY 
+            t.{FIELD_TIMESTAMP} DESC
+        LIMIT 1
+    """
+    data = fetch_data(query, (user_id,))
+    if data is not None and len(data) > 0:
+        last_work_time = data[0][0]
+        current_time = datetime.now()
+        time_diff = (current_time - last_work_time).total_seconds()
+        if time_diff < cooldown_time:
+            embed = discord.Embed(title="Erreur", description=f"Vous devez attendre {cooldown_time - int(time_diff)} secondes avant de travailler à nouveau.", color=color_red)
+            await interaction.response.send_message(embed=embed)
+            return
 
     pay = random.randint(min_work_pay, max_work_pay)   # Nombre aleatoire definissant la paye
+    if pay <= 0:
+        embed = discord.Embed(title="Erreur", description="La valeur de pay est invalide.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
     random_phrase = random.choice(workphrases) 
+
+    query = f"""
+        UPDATE 
+            {TABLE_USERS} u
+        SET 
+            u.{FIELD_CASH} = u.{FIELD_CASH} + %s
+        WHERE 
+            u.{FIELD_USER_ID} = %s
+    """
+    result = execute_query(query, (pay, user_id))
+
+    # Vérification si la table TABLE_USERS est vide ou si la colonne FIELD_CASH est vide
+    if result is None or result == 0:
+        embed = discord.Embed(title=" Erreur", description="Erreur lors de la mise à jour de votre solde.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    # Vérification si la colonne FIELD_CASH est vide
+    query = f"""
+        SELECT 
+            u.{FIELD_CASH}
+        FROM 
+            {TABLE_USERS} u
+        WHERE 
+            u.{FIELD_USER_ID} = %s
+    """
+    data = fetch_data(query, (user_id,))
+    if data is None or len(data) == 0 or data[0][0] is None:
+        embed = discord.Embed(title="Erreur", description="Erreur lors de la mise à jour de votre solde.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    try:
+        add_transaction(user_id, pay, 'Work')
+    except mysql.connector.Error as err:
+        embed = discord.Embed(title="Erreur", description="Erreur lors de l'ajout de la transaction.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    # Vérification si la transaction a été ajoutée avec succès
+    query = f"""
+        SELECT 
+            t.{FIELD_USER_ID}
+        FROM 
+            {TABLE_TRANSACTIONS} t
+        WHERE 
+            t.{FIELD_USER_ID} = %s AND t.{FIELD_TYPE} = 'Work'
+        ORDER BY 
+            t.{FIELD_TIMESTAMP} DESC
+        LIMIT 1
+    """
+    data = fetch_data(query, (user_id,))
+    if data is None or len(data) == 0 or data[0][0] is None:
+        embed = discord.Embed(title="Erreur", description="Erreur lors de l'ajout de la transaction.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
     embed = discord.Embed(title=(f"{interaction.user.display_name}"), description=random_phrase.format(pay=pay) + CoinEmoji, color=color_green)
     await interaction.response.send_message(embed=embed)
-
+    embed = discord.Embed(title="Confirmation", description="Votre solde a été mis à jour avec succès.", color=color_green)
+    await interaction.response.send_message(embed=embed)
 
 async def main():
     await bot.start(TOKEN)
