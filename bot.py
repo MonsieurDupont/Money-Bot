@@ -768,7 +768,7 @@ async def give(interaction: discord.Interaction, amount: int, user: typing.Optio
     if user is None:
         user_id = interaction.user.id
     else:
-        user_id = user
+        user_id = user.id
 
     query = f"""
     UPDATE 
