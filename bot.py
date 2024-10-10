@@ -900,8 +900,6 @@ async def work(interaction: discord.Interaction):
 
     embed = discord.Embed(title=(f"{interaction.user.display_name}"), description=random_phrase.format(pay=pay) + CoinEmoji, color=color_green)
     await interaction.response.send_message(embed=embed)
-    embed = discord.Embed(title="Confirmation", description="Votre solde a été mis à jour avec succès.", color=color_green)
-    await interaction.response.send_message(embed=embed)
 
 async def main():
     await bot.start(TOKEN)
