@@ -700,11 +700,12 @@ async def delete_account(interaction: discord.Interaction, user: discord.Member)
 
     query = f"""
         SELECT 
-            u.{FIELD_USER_ID}
+            {FIELD_USER_ID}, 
+            {FIELD_CASH} + {FIELD_BANK} AS total
         FROM 
-            {TABLE_USERS} u
+            {TABLE_USERS}
         WHERE 
-            u.{FIELD_USER_ID} = %s
+            {FIELD_USER_ID} = %s
     """
     data = fetch_data(query, (user.id,))
     if data is None:
