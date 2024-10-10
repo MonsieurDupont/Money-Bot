@@ -788,7 +788,7 @@ async def give(interaction: discord.Interaction, amount: int, user: typing.Optio
     if interaction.user.id == user_id:
         embed = discord.Embed(title="", description=f"{amount} {CoinEmoji} ont étés ajouté a votre compte", color=color_green)
     else:
-        embed = discord.Embed(title="", description=f"{amount} {CoinEmoji} ont étés ajouté au compte de {user.display_name}", color=color_green)
+        embed = discord.Embed(title="", description=f"{amount} {CoinEmoji} ont étés ajouté au compte de <@{user.id}>", color=color_green)
     await interaction.response.send_message(embed=embed)
 
 
