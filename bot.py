@@ -277,9 +277,9 @@ async def deposit(interaction: discord.Interaction, amount: typing.Optional[int]
             u.{FIELD_USER_ID} = %s
     """
     data = fetch_data(query, (user_id))
-    cash = data[0][0]
-    amount = cash
-    print(amount)
+    # cash = data[0][0]
+    # amount = cash
+    print(data)
 
     if amount <= 0:
         embed = discord.Embed(title="Erreur", description="Le montant doit être supérieur à 0.", color=color_red)
