@@ -10,6 +10,7 @@ import json
 import configparser
 from discord.ext import commands
 import asyncio
+from datetime import datetime
 
 # Chargement des variables d'environnement
 load_dotenv()
@@ -847,6 +848,5 @@ async def work(interaction: discord.Interaction):
 
 async def main():
     await bot.start(TOKEN)
-
 
 asyncio.run(main())
