@@ -4,6 +4,7 @@ import logging
 from dotenv import load_dotenv
 import mysql.connector
 import discord
+import typing
 import random
 import json
 import configparser
@@ -259,7 +260,7 @@ async def balance(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="deposit", description="Déposer de l'argent")
-async def deposit(interaction: discord.Interaction, amount: int):
+async def deposit(interaction: discord.Interaction, amount: typing.Optional[int]):
     user_id = interaction.user.id
     if not is_registered(user_id):
         embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
