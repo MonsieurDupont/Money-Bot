@@ -115,7 +115,7 @@ async def on_ready():
         print(f"Synced {len(synced)} command(s)")
     except Exception as e:
         print(e)
-        
+
 # Commande pour s'inscrire
 @bot.tree.command(name="register", description="S'inscrire")
 async def register(interaction: discord.Interaction):
@@ -707,11 +707,12 @@ async def delete_account(interaction: discord.Interaction, user: discord.Member)
 
 
 @bot.tree.command(name="work", description="Travailler")
-async def work(interaction: discord.Interaction, user: discord.Member):
+async def work(interaction: discord.Interaction):
     random_key = random.choice(list(workphrases.keys()))
     pay = random.randint(100, 2500)   # Nombre aleatoire definissant la paye
 
     embed = discord.Embed(description=random_key.replace("{pay}", str(pay)))
+    await interaction.response.send_message(embed=embed)
 
 
 async def main():
