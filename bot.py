@@ -470,7 +470,8 @@ async def steal(interaction: discord.Interaction, user: discord.Member):
         return
 
     victim_cash = victim_data[0][0]
-    stealer_cash = stealer_data[0]
+    cash, bank = stealer_data[0]
+    stealer_cash = cash + bank
     if victim_cash is None:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération des données de l'utilisateur ciblé.", color=color_red)
         await interaction.response.send_message(embed=embed)
