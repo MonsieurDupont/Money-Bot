@@ -30,7 +30,7 @@ PASSWORD = os.getenv("PASSWORD")
 DATABASE = os.getenv("DATABASE")
 GUILD_ID = os.getenv("GUILD_ID")
 APPLICATION_ID = os.getenv("APPLICATION_ID")
-CoinEmoji = "CoinEmoji"
+CoinEmoji = "<:AploucheCoin:1286080674046152724>"
 
 if 'Constants' in commandsconfig:
     min_work_pay = commandsconfig.getint('Constants', 'min_pay')
