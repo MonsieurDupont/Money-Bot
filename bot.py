@@ -276,7 +276,9 @@ async def deposit(interaction: discord.Interaction, amount: typing.Optional[int]
         WHERE 
             u.{FIELD_USER_ID} = %s
     """
-    amount = fetch_data(query, (cash))
+    data = fetch_data(query, (user_id))
+    cash = data[0][0]
+    amount = cash
     print(amount)
 
     if amount <= 0:
@@ -306,7 +308,7 @@ async def deposit(interaction: discord.Interaction, amount: typing.Optional[int]
         await interaction.response.send_message(embed=embed)
         return
 
-    cash = data[0][0]
+    
     if cash is None:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
         # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
