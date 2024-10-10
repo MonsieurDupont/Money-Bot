@@ -483,13 +483,17 @@ async def steal(interaction: discord.Interaction, user: discord.Member):
         return
     
     proba = round( stealer_cash / (victim_cash + stealer_cash )) # Probabilité de réussite
-    
-    amount = random.randint(victim_cash)
+    amount = random.randint(victim_cash)                         # Montant a voler
 
-    execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_USER_ID} = %s", (amount, user.id))
-    execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_USER_ID} = %s", (amount, user_id))
-    embed = discord.Embed(title="Vol réussi", description=f"Vous avez volé {amount :,} {CoinEmoji} à {user.mention}.", color=color_green)
-    await interaction.response.send_message(embed=embed)
+    if random.random() <= proba:
+        execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_USER_ID} = %s", (amount, user.id))
+        execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_USER_ID} = %s", (amount, user_id))
+        embed = discord.Embed(title="Vol réussi", description=f"Vous avez volé {amount :,} {CoinEmoji} à {user.mention}.", color=color_green)
+        await interaction.response.send_message(embed=embed)
+    else:
+        execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_USER_ID} = %s", (amount, user_id))
+        embed = discord.Embed(title="Vol raté", description=f"Vous avez essayé de voler <@{user.id}> mais vous vous etes fait choper. Vous avez reçu une amende de {amount}  ", color=color_green)
+
 
 @bot.tree.command(name="send", description="Envoyer de l'argent")
 async def transaction(interaction: discord.Interaction, user: discord.Member, amount: int):
@@ -811,7 +815,7 @@ async def work(interaction: discord.Interaction):
 
     if work_cooldown_time <= 0:
         embed = discord.Embed(title="Erreur", description="La valeur de cooldown est invalide.", color=color_red)
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
         return
 
     query = f"""
@@ -838,7 +842,7 @@ async def work(interaction: discord.Interaction):
     pay = int(biased_pay)   # Nombre aleatoire definissant la paye
     if pay <= 0:
         embed = discord.Embed(title="Erreur", description="La valeur de pay est invalide.", color=color_red)
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
         return
 
     random_phrase = random.choice(workphrases) 
@@ -856,7 +860,7 @@ async def work(interaction: discord.Interaction):
     # Vérification si la table TABLE_USERS est vide ou si la colonne FIELD_CASH est vide
     if result is None or result == 0:
         embed = discord.Embed(title=" Erreur", description="Erreur lors de la mise à jour de votre solde.", color=color_red)
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
         return
 
     # Vérification si la colonne FIELD_CASH est vide
@@ -871,14 +875,14 @@ async def work(interaction: discord.Interaction):
     data = fetch_data(query, (user_id,))
     if data is None or len(data) == 0 or data[0][0] is None:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la mise à jour de votre solde.", color=color_red)
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
         return
 
     try:
         add_transaction(user_id, pay, 'Work')
     except mysql.connector.Error as err:
         embed = discord.Embed(title="Erreur", description="Erreur lors de l'ajout de la transaction.", color=color_red)
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
         return
 
     # Vérification si la transaction a été ajoutée avec succès
@@ -896,7 +900,7 @@ async def work(interaction: discord.Interaction):
     data = fetch_data(query, (user_id,))
     if data is None or len(data) == 0 or data[0][0] is None:
         embed = discord.Embed(title="Erreur", description="Erreur lors de l'ajout de la transaction.", color=color_red)
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
         return
 
     embed = discord.Embed(title=(f"{interaction.user.display_name}"), description=random_phrase.format(pay=pay) + CoinEmoji, color=color_green)
