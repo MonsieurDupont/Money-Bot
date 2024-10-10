@@ -37,7 +37,7 @@ CoinEmoji = "<:AploucheCoin:1286080674046152724>"
 if 'Constants' in commandsconfig:
     min_work_pay = commandsconfig.getint('Constants', 'min_pay')
     max_work_pay = commandsconfig.getint('Constants', 'max_pay')
-    # keys = commandsconfig.options('Constants') # Toujours laisser en dernier
+    work_cooldown_time = commandsconfig.getint('Constants', 'work_cooldown')
     print(f"Succesfully read {len(commandsconfig.options('Constants'))} 'Constants' in 'settings.ini.'")
 else:
     logging.ERROR("Cannot find 'Constants' in settings.ini")
@@ -763,6 +763,29 @@ async def delete_account(interaction: discord.Interaction, user: discord.Member)
         # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.followup.send(embed=embed)
 
+@bot.tree.command(name="give", description="Se give de l'argent | ADMINS SEULEMENT")
+async def give(interaction: discord.Interaction, amount: int, user: typing.Optional[discord.Member]):
+    if user is None:
+        user_id = interaction.user.id
+    else:
+        user_id = user
+
+    query = f"""
+    UPDATE 
+        {TABLE_USERS} u
+    SET 
+        u.{FIELD_CASH}
+    WHERE 
+        u.{FIELD_USER_ID} = %s
+    """
+    execute_query(query, (amount, user_id))
+    if interaction.user.id == user_id:
+        embed = discord.Embed(title="", description=f"{amount} {CoinEmoji} ont étés ajouté a votre compte", color=color_green)
+    else:
+        embed = discord.Embed(title="", description=f"{amount} {CoinEmoji} ont étés ajouté au compte de {user.display_name}", color=color_green)
+    await interaction.response.send_message(embed=embed)
+
+
 @bot.tree.command(name="work", description="Travailler")
 async def work(interaction: discord.Interaction):
     user_id = interaction.user.id
@@ -771,8 +794,8 @@ async def work(interaction: discord.Interaction):
         await interaction.response.send_message(embed=embed)
         return
 
-    cooldown_time = commandsconfig.getint('Constants', 'work_cooldown')
-    if cooldown_time <= 0:
+
+    if work_cooldown_time <= 0:
         embed = discord.Embed(title="Erreur", description="La valeur de cooldown est invalide.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
@@ -793,8 +816,8 @@ async def work(interaction: discord.Interaction):
         last_work_time = data[0][0]
         current_time = datetime.now()
         time_diff = (current_time - last_work_time).total_seconds()
-        if time_diff < cooldown_time:
-            embed = discord.Embed(title="Erreur", description=f"Vous devez attendre {cooldown_time - int(time_diff)} secondes avant de travailler à nouveau.", color=color_red)
+        if time_diff < work_cooldown_time:
+            embed = discord.Embed(title="Erreur", description=f"Vous devez attendre {work_cooldown_time - int(time_diff)} secondes avant de travailler à nouveau.", color=color_red)
             await interaction.response.send_message(embed=embed)
             return
 
