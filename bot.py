@@ -264,8 +264,8 @@ async def balance(interaction: discord.Interaction, user: typing.Optional[discor
     total = cash + bank
     embed = discord.Embed(title=f"Solde de {user_name}", description=f"**Cash** : {cash:,} {CoinEmoji}\n**Banque** : {bank:,} {CoinEmoji}\n**Total** : {total:,} {CoinEmoji}", color=color_blue)
     if total < 0:
-        embed.add_field(name="Attention", value="Vous avez un solde négatif. Vous devriez peut-être essayer de gagner plus d'argent.", inline=False)
-    embed.add_field(name="Aide", value="Pour voir les commandes disponibles, tapez `/help`.", inline=False)
+        embed.add_field(name="Attention", value="Wesh mon reuf faut se ressaisir la ", inline=False)
+    # embed.add_field(name="Aide", value="Pour voir les commandes disponibles, tapez `/help`.", inline=False)
     await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="deposit", description="Déposer de l'argent")
