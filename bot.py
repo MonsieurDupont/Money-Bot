@@ -432,28 +432,30 @@ async def steal(interaction: discord.Interaction, user: discord.Member):
         return
 
     query = f"SELECT {FIELD_CASH} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
-    data = fetch_data(query, (user.id,))
-    if data is None:
+    victim_data = fetch_data(query, (user.id,))
+    stealer_data = fetch_data(query, (user_id,))
+    if victim_data is None:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération des données de l'utilisateur ciblé.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
 
-    if len(data) == 0:
+    if len(victim_data) == 0:
         embed = discord.Embed(title="Erreur", description="L'utilisateur ciblé n'a pas de données.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
 
-    cash = data[0][0]
-    if cash is None:
+    victim_cash = victim_data[0][0]
+    stealer_cash = stealer_data[0][0]
+    if victim_cash is None:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération des données de l'utilisateur ciblé.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
 
-    if cash < 0:
+    if victim_cash < 0:
         embed = discord.Embed(title="Erreur", description="L'utilisateur ciblé n'a pas assez d'argent pour être volé.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
-    amount = random.randint
+    amount = stealer_cash/stealer_data+stealer_cash
 
     execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_USER_ID} = %s", (amount, user.id))
     execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_USER_ID} = %s", (amount, user_id))
