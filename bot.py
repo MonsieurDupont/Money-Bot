@@ -651,7 +651,7 @@ async def transaction_history(interaction: discord.Interaction, user: typing.Opt
         await interaction.response.send_message(embed=embed)
         return
     foo = await bot.fetch_user(user_id)
-    embed = discord.Embed(title=f"Historique de <@{foo.id}>", description="Voici la liste des 10 dernieres transactions :", color=color_blue)
+    embed = discord.Embed(title=f"Historique de <@{foo.id}>", description=f"Voici la liste des 10 dernieres transactions <@{foo.id}>:", color=color_blue)
     embed.add_field(name="", value="**Montant** | **Type**", inline=False)
     for i, (transaction_id, amount, transaction_type) in enumerate(transactions[::-1][:10], start=1):
         embed.add_field(name="", value=f"**{i}** : {amount:,} {CoinEmoji} | {transaction_type}", inline=False)
