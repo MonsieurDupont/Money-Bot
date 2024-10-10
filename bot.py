@@ -770,13 +770,13 @@ async def give(interaction: discord.Interaction, amount: int, user: typing.Optio
     else:
         user_id = user
 
-        query = f"""
-        UPDATE 
-            {TABLE_USERS} u
-        SET 
-            u.{FIELD_CASH} = u.{FIELD_CASH} + %s
-        WHERE 
-            u.{FIELD_USER_ID} = %s
+    query = f"""
+    UPDATE 
+        {TABLE_USERS} u
+    SET 
+        u.{FIELD_CASH} = u.{FIELD_CASH} + %s
+    WHERE 
+        u.{FIELD_USER_ID} = %s
     """
     execute_query(query, (amount, user_id))
     try:
