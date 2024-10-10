@@ -30,6 +30,7 @@ PASSWORD = os.getenv("PASSWORD")
 DATABASE = os.getenv("DATABASE")
 GUILD_ID = os.getenv("GUILD_ID")
 APPLICATION_ID = os.getenv("APPLICATION_ID")
+CoinEmoji = "CoinEmoji"
 
 if 'Constants' in commandsconfig:
     min_work_pay = commandsconfig.getint('Constants', 'min_pay')
@@ -149,7 +150,7 @@ async def register(interaction: discord.Interaction):
         """
         result = execute_query(query, (user_id,))
         if result:
-            embed = discord.Embed(title="Succès", description=f"Vous êtes maintenant inscrit, {interaction.user.mention}. Vous avez reçu 1000 <:AploucheCoin:1286080674046152724> en cash.", color=color_green)
+            embed = discord.Embed(title="Succès", description=f"Vous êtes maintenant inscrit, {interaction.user.mention}. Vous avez reçu 1000 {CoinEmoji} en cash.", color=color_green)
             embed.add_field(name="Prochaines étapes", value="Vous pouvez maintenant utiliser les commandes `/balance`, `/deposit`, `/withdraw` et `/transaction`.", inline=False)
             embed.add_field(name="Aide", value="Si vous avez des questions, n'hésitez pas à demander.", inline=False)
             embed.set_footer(text="Bienvenue dans notre communauté !")
@@ -210,11 +211,11 @@ async def stats(interaction: discord.Interaction):
     moyenne_revenus = total_revenus / (total_revenus + abs(total_depenses)) if total_revenus + abs(total_depenses) > 0 else 0
 
     embed = discord.Embed(title="Statistiques", description=f"Voici vos statistiques, {interaction.user.mention}.", color=color_green)
-    embed.add_field(name="Cash", value=f"{cash} <:AploucheCoin:1286080674046152724>", inline=False)
-    embed.add_field(name="Banque", value=f"{bank} <:AploucheCoin:1286080674046152724>", inline=False)
-    embed.add_field(name="Total", value=f"{total} <:AploucheCoin:1286080674046152724>", inline=False)
-    embed.add_field(name="Revenus", value=f"{total_revenus} <:AploucheCoin:1286080674046152724>", inline=False)
-    embed.add_field(name="Dépenses", value=f"{total_depenses} <:AploucheCoin:1286080674046152724>", inline=False)
+    embed.add_field(name="Cash", value=f"{cash} {CoinEmoji}", inline=False)
+    embed.add_field(name="Banque", value=f"{bank} {CoinEmoji}", inline=False)
+    embed.add_field(name="Total", value=f"{total} {CoinEmoji}", inline=False)
+    embed.add_field(name="Revenus", value=f"{total_revenus} {CoinEmoji}", inline=False)
+    embed.add_field(name="Dépenses", value=f"{total_depenses} {CoinEmoji}", inline=False)
     embed.add_field(name="Moyenne des dépenses", value=f"{moyenne_depenses * 100:.2f}%", inline=False)
     embed.add_field(name="Moyenne des revenus", value=f"{moyenne_revenus * 100:.2f}%", inline=False)
     # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
@@ -252,7 +253,7 @@ async def balance(interaction: discord.Interaction):
         return
 
     total = cash + bank
-    embed = discord.Embed(title="Solde", description=f"**Cash** : {cash:,} <:AploucheCoin:1286080674046152724>\n**Banque** : {bank:,} <:AploucheCoin:1286080674046152724>\n**Total** : {total:,} <:AploucheCoin:1286080674046152724>", color=color_blue)
+    embed = discord.Embed(title="Solde", description=f"**Cash** : {cash:,} {CoinEmoji}\n**Banque** : {bank:,} {CoinEmoji}\n**Total** : {total:,} {CoinEmoji}", color=color_blue)
     embed.add_field(name="Aide", value="Pour voir les commandes disponibles, tapez `/help`.", inline=False)
     # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
     await interaction.response.send_message(embed=embed)
@@ -317,7 +318,7 @@ async def deposit(interaction: discord.Interaction, amount: int):
     """
     result = execute_query(query, (amount, amount, user_id))
     if result:
-        embed = discord.Embed(title="Succès", description=f"Vous avez déposé {amount} <:AploucheCoin:1286080674046152724> avec succès.", color=color_green)
+        embed = discord.Embed(title="Succès", description=f"Vous avez déposé {amount} {CoinEmoji} avec succès.", color=color_green)
         # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
     else:
@@ -385,7 +386,7 @@ async def withdraw(interaction: discord.Interaction, amount: int):
     """
     result = execute_query(query, (amount, amount, user_id))
     if result:
-        embed = discord.Embed(title="Succès", description=f"Vous avez retiré {amount} <:AploucheCoin:1286080674046152724> avec succès.", color=color_green)
+        embed = discord.Embed(title="Succès", description=f"Vous avez retiré {amount} {CoinEmoji} avec succès.", color=color_green)
         # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
     else:
@@ -441,7 +442,7 @@ async def steal(interaction: discord.Interaction, user: discord.Member, amount: 
 
     execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_USER_ID} = %s", (amount, user.id))
     execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_USER_ID} = %s", (amount, user_id))
-    embed = discord.Embed(title="Vol réussi", description=f"Vous avez volé {amount :,} <:AploucheCoin:1286080674046152724> à {user.mention}.", color=color_green)
+    embed = discord.Embed(title="Vol réussi", description=f"Vous avez volé {amount :,} {CoinEmoji} à {user.mention}.", color=color_green)
     await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="send", description="Envoyer de l'argent")
@@ -517,7 +518,7 @@ async def transaction(interaction: discord.Interaction, user: discord.Member, am
         """
         result = execute_query(query, (user.id, amount))
         if result:
-            embed = discord.Embed(title="Succès", description=f"Vous avez envoyé {amount} <:AploucheCoin:1286080674046152724> avec succès.", color=color_green)
+            embed = discord.Embed(title="Succès", description=f"Vous avez envoyé {amount} {CoinEmoji} avec succès.", color=color_green)
             # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
             await interaction.response.send_message(embed=embed)
         else:
@@ -566,9 +567,9 @@ async def leaderboard(interaction: discord.Interaction):
            continue
         # await interaction.response.send_message(f"#{i} {user.display_name} {total} ")
         if i <= 3:
-            embed.add_field(name=f"#{i}", value=f"<@{user.id}> - **{total:,}** <:AploucheCoin:1286080674046152724>", inline=False)  
+            embed.add_field(name=f"#{i}", value=f"<@{user.id}> - **{total:,}** {CoinEmoji}", inline=False)  
         else:
-            embed.add_field(name=f"", value=f"**{i}** • <@{user.id}> - **{total:,}** <:AploucheCoin:1286080674046152724>", inline=False)
+            embed.add_field(name=f"", value=f"**{i}** • <@{user.id}> - **{total:,}** {CoinEmoji}", inline=False)
     # embed.set_footer(text="Note : Ce classement est mis à jour en temps réel.")
     await interaction.response.send_message(embed=embed)
 
@@ -607,7 +608,7 @@ async def transaction_history(interaction: discord.Interaction):
     embed = discord.Embed(title="Historique des transactions", description="Voici l'historique de vos transactions :", color=color_blue)
     embed.add_field(name="**Transaction**", value="**Montant** | **Type**", inline=False)
     for i, (transaction_id, amount, transaction_type) in enumerate(transactions, start=1):
-        embed.add_field(name=f"#{i}", value=f"{amount:,} <:AploucheCoin:1286080674046152724> | {transaction_type}", inline=False)
+        embed.add_field(name=f"#{i}", value=f"{amount:,} {CoinEmoji} | {transaction_type}", inline=False)
     # embed.set_footer(text="Note : Ce classement est mis à jour en temps réel.")
     await interaction.response.send_message(embed=embed)
 
@@ -724,9 +725,8 @@ async def delete_account(interaction: discord.Interaction, user: discord.Member)
 async def work(interaction: discord.Interaction):
 
     pay = random.randint(min_work_pay, max_work_pay)   # Nombre aleatoire definissant la paye
-    random_phrase = random.choice(workphrases)
-    print(random_phrase.format(pay=pay))
-    embed = discord.Embed(title=(f"{interaction.user.display_name}"), description=random_phrase.format(pay=pay), color=color_green)
+    random_phrase = random.choice(workphrases) 
+    embed = discord.Embed(title=(f"{interaction.user.display_name}"), description=random_phrase.format(pay=pay) + CoinEmoji, color=color_green)
     await interaction.response.send_message(embed=embed)
 
 
