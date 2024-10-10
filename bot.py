@@ -258,7 +258,7 @@ async def balance(interaction: discord.Interaction, user: typing.Optional[discor
         return
 
     total = cash + bank
-    embed = discord.Embed(title="Solde", description=f"**Cash** : {cash:,} {CoinEmoji}\n**Banque** : {bank:,} {CoinEmoji}\n**Total** : {total:,} {CoinEmoji}", color=color_blue)
+    embed = discord.Embed(title=f"Solde de <@{user.id}>", description=f"**Cash** : {cash:,} {CoinEmoji}\n**Banque** : {bank:,} {CoinEmoji}\n**Total** : {total:,} {CoinEmoji}", color=color_blue)
     embed.add_field(name="Aide", value="Pour voir les commandes disponibles, tapez `/help`.", inline=False)
     # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
     await interaction.response.send_message(embed=embed)
