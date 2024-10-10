@@ -287,21 +287,23 @@ async def deposit(interaction: discord.Interaction, amount: typing.Optional[int]
                 u.{FIELD_USER_ID} = %s
         """
         data = fetch_data(query, (user_id,))
-        if data is None:
-            embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
-            await interaction.response.send_message(embed=embed)
-            return
+        amount = data[0][0]
 
-        if len(data) == 0:
-            embed = discord.Embed(title="Erreur", description="Vous n'avez pas de données.", color=color_red)
-            await interaction.response.send_message(embed=embed)
-            return
+    if data is None:
+        embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
 
-        cash = data[0][0]
-        if cash is None:
-            embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
-            await interaction.response.send_message(embed=embed)
-            return
+    if len(data) == 0:
+        embed = discord.Embed(title="Erreur", description="Vous n'avez pas de données.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    cash = data[0][0]
+    if cash is None:
+        embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
 
     if amount <= 0:
         embed = discord.Embed(title="Erreur", description="Le montant doit être supérieur à 0.", color=color_red)
