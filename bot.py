@@ -169,7 +169,6 @@ async def stats(interaction: discord.Interaction):
     user_id = interaction.user.id
     if not is_registered(user_id):
         embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
-        # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
 
@@ -191,20 +190,28 @@ async def stats(interaction: discord.Interaction):
     data = fetch_data(query, (user_id,))
     if data is None:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
-        # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
 
     if len(data) == 0:
         embed = discord.Embed(title="Erreur", description="Vous n'avez pas de données.", color=color_red)
-        # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
 
     cash, bank, total_revenus, total_depenses = data[0]
     if cash is None or bank is None or total_revenus is None or total_depenses is None:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
-        # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
+        await interaction.response.send_message(embed=embed)
+        return
+
+    # Vérification de la cohérence des données
+    if cash < 0 or bank < 0:
+        embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données. Veuillez contacter un administrateur.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    if total_revenus < 0 or total_depenses > 0:
+        embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données. Veuillez contacter un administrateur.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
 
@@ -220,7 +227,6 @@ async def stats(interaction: discord.Interaction):
     embed.add_field(name="Dépenses", value=f"{total_depenses} {CoinEmoji}", inline=False)
     embed.add_field(name="Moyenne des dépenses", value=f"{moyenne_depenses * 100:.2f}%", inline=False)
     embed.add_field(name="Moyenne des revenus", value=f"{moyenne_revenus * 100:.2f}%", inline=False)
-    # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
     await interaction.response.send_message(embed=embed)
 
 # Commande pour vérifier son solde
@@ -234,7 +240,6 @@ async def balance(interaction: discord.Interaction, user: typing.Optional[discor
         user_name = user.display_name
     if not is_registered(user_id):
         embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
-        # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
 
@@ -242,27 +247,25 @@ async def balance(interaction: discord.Interaction, user: typing.Optional[discor
     data = fetch_data(query, (user_id,))
     if data is None:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
-        # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
 
     if len(data) == 0:
         embed = discord.Embed(title="Erreur", description="Vous n'avez pas de données.", color=color_red)
-        # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
 
     cash, bank = data[0]
     if cash is None or bank is None:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
-        # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
 
     total = cash + bank
     embed = discord.Embed(title=f"Solde de {user_name}", description=f"**Cash** : {cash:,} {CoinEmoji}\n**Banque** : {bank:,} {CoinEmoji}\n**Total** : {total:,} {CoinEmoji}", color=color_blue)
+    if total < 0:
+        embed.add_field(name="Attention", value="Vous avez un solde négatif. Vous devriez peut-être essayer de gagner plus d'argent.", inline=False)
     embed.add_field(name="Aide", value="Pour voir les commandes disponibles, tapez `/help`.", inline=False)
-    # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
     await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="deposit", description="Déposer de l'argent")
@@ -270,26 +273,39 @@ async def deposit(interaction: discord.Interaction, amount: typing.Optional[int]
     user_id = interaction.user.id
     if not is_registered(user_id):
         embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
-        # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
+
     if amount is None:
-            query = f"""
-        SELECT 
-            u.{FIELD_CASH}
-        FROM 
-            {TABLE_USERS} u
-        WHERE 
-            u.{FIELD_USER_ID} = %s
-    """
-    data = fetch_data(query, (user_id))
-    # cash = data[0][0]
-    # amount = cash
-    print(data)
+        query = f"""
+            SELECT 
+                u.{FIELD_CASH}
+            FROM 
+                {TABLE_USERS} u
+            WHERE 
+                u.{FIELD_USER_ID} = %s
+        """
+        data = fetch_data(query, (user_id,))
+        if data is None:
+            embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
+            await interaction.response.send_message(embed=embed)
+            return
+
+        if len(data) == 0:
+            embed = discord.Embed(title="Erreur", description="Vous n'avez pas de données.", color=color_red)
+            await interaction.response.send_message(embed=embed)
+            return
+
+        cash = data[0][0]
+        if cash is None:
+            embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
+            await interaction.response.send_message(embed=embed)
+            return
+
+        amount = cash
 
     if amount <= 0:
         embed = discord.Embed(title="Erreur", description="Le montant doit être supérieur à 0.", color=color_red)
-        # mbed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
 
@@ -304,26 +320,22 @@ async def deposit(interaction: discord.Interaction, amount: typing.Optional[int]
     data = fetch_data(query, (user_id,))
     if data is None:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
-        # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander .")
         await interaction.response.send_message(embed=embed)
         return
 
     if len(data) == 0:
         embed = discord.Embed(title="Erreur", description="Vous n'avez pas de données.", color=color_red)
-        # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
 
-    
+    cash = data[0][0]
     if cash is None:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
-        # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
 
     if cash < amount:
         embed = discord.Embed(title="Erreur", description="Vous n'avez pas assez d'argent pour déposer.", color=color_red)
-        # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
 
@@ -339,11 +351,9 @@ async def deposit(interaction: discord.Interaction, amount: typing.Optional[int]
     result = execute_query(query, (amount, amount, user_id))
     if result:
         embed = discord.Embed(title="Succès", description=f"Vous avez déposé {amount} {CoinEmoji} avec succès.", color=color_green)
-        # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
     else:
         embed = discord.Embed(title="Erreur", description="Erreur lors du dépôt.", color=color_red)
-        # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="withdraw", description="Retirer de l'argent")
@@ -351,13 +361,11 @@ async def withdraw(interaction: discord.Interaction, amount: int):
     user_id = interaction.user.id
     if not is_registered(user_id):
         embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
-        # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
 
     if amount <= 0:
         embed = discord.Embed(title="Erreur", description="Le montant doit être supérieur à 0.", color=color_red)
-        # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
 
@@ -372,26 +380,37 @@ async def withdraw(interaction: discord.Interaction, amount: int):
     data = fetch_data(query, (user_id,))
     if data is None:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
-        # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
 
     if len(data) == 0:
         embed = discord.Embed(title="Erreur", description="Vous n'avez pas de données.", color=color_red)
-        # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
 
     bank = data[0][0]
     if bank is None:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
-        # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
 
     if bank < amount:
-        embed = discord.Embed(title="Erreur", description="Vous n'avez pas assez d'argent pour retirer.", color=color_red)
-        # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
+        embed = discord.Embed(title="Erreur", description="Vous n'avez pas assez d'argent dans la banque pour retirer.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    # Vérification des transactions en cours
+    query = f"""
+        SELECT 
+            t.{FIELD_USER_ID}
+        FROM 
+            {TABLE_TRANSACTIONS} t
+        WHERE 
+            t.{FIELD_USER_ID} = %s AND t.{FIELD_TYPE} = 'Transaction' AND t.{FIELD_TIMESTAMP} > NOW() - INTERVAL 1 MINUTE
+    """
+    data = fetch_data(query, (user_id,))
+    if data is not None and len(data) > 0:
+        embed = discord.Embed(title="Erreur", description="Vous avez déjà une transaction en cours. Veuillez attendre quelques instants avant de procéder à une nouvelle transaction.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
 
@@ -407,11 +426,9 @@ async def withdraw(interaction: discord.Interaction, amount: int):
     result = execute_query(query, (amount, amount, user_id))
     if result:
         embed = discord.Embed(title="Succès", description=f"Vous avez retiré {amount} {CoinEmoji} avec succès.", color=color_green)
-        # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
     else:
         embed = discord.Embed(title="Erreur", description="Erreur lors du retrait.", color=color_red)
-        # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="steal", description="Volé de l'argent à un utilisateur")
@@ -432,7 +449,7 @@ async def steal(interaction: discord.Interaction, user: discord.Member):
         await interaction.response.send_message(embed=embed)
         return
 
-    query = f"SELECT {FIELD_CASH}, {FIELD_BANK} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
+    query = f"SELECT {FIELD_CASH} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
     victim_data = fetch_data(query, (user.id,))
     stealer_data = fetch_data(query, (user_id,))
     if victim_data is None:
@@ -446,8 +463,7 @@ async def steal(interaction: discord.Interaction, user: discord.Member):
         return
 
     victim_cash = victim_data[0][0]
-    cash, bank = stealer_data[0]
-    stealer_cash = cash + bank
+    stealer_cash = stealer_data[0][0]
     if victim_cash is None:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération des données de l'utilisateur ciblé.", color=color_red)
         await interaction.response.send_message(embed=embed)
