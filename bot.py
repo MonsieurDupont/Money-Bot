@@ -610,7 +610,7 @@ async def leaderboard(interaction: discord.Interaction):
         if i <= 3:
             embed.add_field(name=f"#{i}", value=f"<@{user.id}> : **{total:,}** {CoinEmoji}", inline=False)  
         else:
-            embed.add_field(name=f"", value=f"**{i}** • <@{user.id}> - **{total:,}** {CoinEmoji}", inline=False)
+            embed.add_field(name=f"", value=f"**{i}** • <@{user.id}> : **{total:,}** {CoinEmoji}", inline=False)
     # embed.set_footer(text="Note : Ce classement est mis à jour en temps réel.")
     await interaction.response.send_message(embed=embed)
 
@@ -789,7 +789,7 @@ async def give(interaction: discord.Interaction, amount: int, user: typing.Optio
         embed = discord.Embed(title="", description=f"{amount} {CoinEmoji} ont étés ajouté a votre compte", color=color_green)
     else:
         embed = discord.Embed(title="", description=f"{amount} {CoinEmoji} ont étés ajouté au compte de <@{user.id}>", color=color_green)
-    await interaction.response.send_message(embed=embed)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 @bot.tree.command(name="work", description="Travailler")
