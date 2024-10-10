@@ -720,8 +720,9 @@ async def work(interaction: discord.Interaction):
 
     pay = random.randint(min_work_pay, max_work_pay)   # Nombre aleatoire definissant la paye
     random_phrase = random.choice(workphrases)
-    embed = discord.Embed(description=random_phrase.format(pay=pay))
-    await interaction.response.send_message(embed=embed)
+    print(random_phrase.format(pay=pay))
+    #embed = discord.Embed(description=random_phrase.format(pay=pay))
+    #await interaction.response.send_message(embed=embed)
 
 
 async def main():
