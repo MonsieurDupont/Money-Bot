@@ -1,3 +1,7 @@
 {
-    "1": "Vous avez travaillé et gagné {pay}"
+    "workphrases":[
+
+        "Vous avez travaillé et gagné {pay}"
+
+    ]
 }
