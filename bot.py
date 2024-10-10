@@ -224,8 +224,11 @@ async def stats(interaction: discord.Interaction):
 
 # Commande pour vérifier son solde
 @bot.tree.command(name="balance", description="Vérifier votre solde")
-async def balance(interaction: discord.Interaction):
-    user_id = interaction.user.id
+async def balance(interaction: discord.Interaction, user: typing.Optional[discord.Member]):
+    if user is None:
+        user_id = interaction.user.id
+    else:
+        user_id = user
     if not is_registered(user_id):
         embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
         # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
@@ -409,7 +412,7 @@ async def withdraw(interaction: discord.Interaction, amount: int):
         await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="steal", description="Volé de l'argent à un utilisateur")
-async def steal(interaction: discord.Interaction, user: discord.Member, amount: int):
+async def steal(interaction: discord.Interaction, user: discord.Member):
     user_id = interaction.user.id
     if not is_registered(user_id):
         embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
@@ -423,11 +426,6 @@ async def steal(interaction: discord.Interaction, user: discord.Member, amount: 
 
     if not is_registered(user_id):
         embed = discord.Embed(title="Erreur", description="L'utilisateur ciblé doit être inscrit.", color=color_red)
-        await interaction.response.send_message(embed=embed)
-        return
-
-    if amount <= 0:
-        embed = discord.Embed(title="Erreur", description="Le montant à voler doit être positif.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
 
@@ -449,10 +447,11 @@ async def steal(interaction: discord.Interaction, user: discord.Member, amount: 
         await interaction.response.send_message(embed=embed)
         return
 
-    if cash < amount:
+    if cash < 0:
         embed = discord.Embed(title="Erreur", description="L'utilisateur ciblé n'a pas assez d'argent pour être volé.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
+    amount = random.randint
 
     execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_USER_ID} = %s", (amount, user.id))
     execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_USER_ID} = %s", (amount, user_id))
