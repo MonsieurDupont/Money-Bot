@@ -34,6 +34,8 @@ APPLICATION_ID = os.getenv("APPLICATION_ID")
 if 'Constants' in commandsconfig:
     min_work_pay = commandsconfig["Constants"]["min_pay"]
     max_work_pay = commandsconfig["Constants"]["max_pay"]
+    # keys = commandsconfig.options('Constants') # Toujours laisser en dernier
+    print(f"Succesfully read {len(commandsconfig.options('Constants'))}'Constants' in 'settings.ini.")
 else:
     logging.ERROR("Cannot find 'Constants' in settings.ini")
 
