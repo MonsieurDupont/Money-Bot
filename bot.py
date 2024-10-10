@@ -228,6 +228,7 @@ async def balance(interaction: discord.Interaction, user: typing.Optional[discor
     if user is None:
         user_id = interaction.user.id
     else:
+        print(user)
         user_id = user
     if not is_registered(user_id):
         embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
