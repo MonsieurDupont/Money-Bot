@@ -107,6 +107,15 @@ def add_transaction(user_id, amount, transaction_type):
     except mysql.connector.Error as err:
         logging.error("Erreur lors de l'ajout d'une transaction : {}".format(err))
 
+@bot.event
+async def on_ready():
+    print(f"Logged in")
+    try:
+        synced = await bot.tree.sync()
+        print(f"Synced {len(synced)} command(s)")
+    except Exception as e:
+        print(e)
+        
 # Commande pour s'inscrire
 @bot.tree.command(name="register", description="S'inscrire")
 async def register(interaction: discord.Interaction):
