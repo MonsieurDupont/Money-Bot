@@ -458,7 +458,7 @@ async def steal(interaction: discord.Interaction, user: discord.Member):
     print(stealer_cash)
     print(victim_cash)
 
-    amount = stealer_cash/victim_cash+stealer_cash
+    amount = round(stealer_cash/victim_cash+stealer_cash)
     print(amount)
     execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_USER_ID} = %s", (amount, user.id))
     execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_USER_ID} = %s", (amount, user_id))
