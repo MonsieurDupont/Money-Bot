@@ -277,6 +277,7 @@ async def deposit(interaction: discord.Interaction, amount: typing.Optional[int]
             u.{FIELD_USER_ID} = %s
     """
     amount = fetch_data(query, (cash,))
+    print(amount)
 
 
     if amount <= 0:
