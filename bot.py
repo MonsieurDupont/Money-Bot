@@ -770,15 +770,21 @@ async def give(interaction: discord.Interaction, amount: int, user: typing.Optio
     else:
         user_id = user
 
-    query = f"""
-    UPDATE 
-        {TABLE_USERS} u
-    SET 
-        u.{FIELD_CASH}
-    WHERE 
-        u.{FIELD_USER_ID} = %s
+        query = f"""
+        UPDATE 
+            {TABLE_USERS} u
+        SET 
+            u.{FIELD_CASH} = u.{FIELD_CASH} + %s
+        WHERE 
+            u.{FIELD_USER_ID} = %s
     """
     execute_query(query, (amount, user_id))
+    try:
+        add_transaction(user_id, amount, 'Work')
+    except mysql.connector.Error as err:
+        embed = discord.Embed(title="Erreur", description="Erreur lors de l'ajout de la transaction.", color=color_red)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        return
     if interaction.user.id == user_id:
         embed = discord.Embed(title="", description=f"{amount} {CoinEmoji} ont étés ajouté a votre compte", color=color_green)
     else:
