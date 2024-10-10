@@ -6,15 +6,21 @@ import mysql.connector
 import discord
 import random
 import json
+import configparser
 from discord.ext import commands
 import asyncio
 
 # Chargement des variables d'environnement
 load_dotenv()
 
+# Chargement du fichier .ini 
+commandconfig = configparser.ConfigParser()
+commandconfig.read('settings.ini')
+
 # Chargement des fichiers JSON
-with open('workphrases.json', 'r', encoding='utf-8') as file:
-    workphrases = json.load(file)
+with open('workphrases.json') as file:
+    workdata = json.load(file)
+    workphrases = workdata["workphrases"]
 
 # Définition des constantes
 TOKEN = os.getenv("TOKEN")
@@ -24,6 +30,9 @@ PASSWORD = os.getenv("PASSWORD")
 DATABASE = os.getenv("DATABASE")
 GUILD_ID = os.getenv("GUILD_ID")
 APPLICATION_ID = os.getenv("APPLICATION_ID")
+
+min_work_pay = commandconfig["Work"]["min_pay"]
+max_work_pay = commandconfig["Work"]["max_pay"]
 
 # Définition des couleurs
 color_green = 0x98d444
@@ -107,6 +116,7 @@ def add_transaction(user_id, amount, transaction_type):
     except mysql.connector.Error as err:
         logging.error("Erreur lors de l'ajout d'une transaction : {}".format(err))
 
+# Synchronisation des commandes
 @bot.event
 async def on_ready():
     print(f"Logged in")
@@ -705,13 +715,12 @@ async def delete_account(interaction: discord.Interaction, user: discord.Member)
         # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.followup.send(embed=embed)
 
-
 @bot.tree.command(name="work", description="Travailler")
 async def work(interaction: discord.Interaction):
-    random_key = random.choice(list(workphrases.keys()))
-    pay = random.randint(100, 2500)   # Nombre aleatoire definissant la paye
 
-    embed = discord.Embed(description=random_key.replace("{pay}", str(pay)))
+    pay = random.randint(min_work_pay, max_work_pay)   # Nombre aleatoire definissant la paye
+    random_phrase = random.choice(workphrases)
+    embed = discord.Embed(description=random_phrase.format(pay=pay))
     await interaction.response.send_message(embed=embed)
 
 
