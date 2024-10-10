@@ -267,6 +267,17 @@ async def deposit(interaction: discord.Interaction, amount: typing.Optional[int]
         # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
         return
+    if amount is None:
+            query = f"""
+        SELECT 
+            u.{FIELD_CASH}
+        FROM 
+            {TABLE_USERS} u
+        WHERE 
+            u.{FIELD_USER_ID} = %s
+    """
+    amount = fetch_data(query, (cash,))
+
 
     if amount <= 0:
         embed = discord.Embed(title="Erreur", description="Le montant doit être supérieur à 0.", color=color_red)
