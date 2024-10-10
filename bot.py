@@ -111,15 +111,28 @@ def fetch_data(query, params=None):
 
 # Fonction pour vérifier si un utilisateur est inscrit
 def is_registered(user_id):
-    query = f"SELECT * FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
+    query = f"""
+        SELECT 
+            u.*
+        FROM 
+            {TABLE_USERS} AS u
+        WHERE 
+            u.{FIELD_USER_ID} = %s
+    """
     data = fetch_data(query, (user_id,))
     if data is None:
         return False
     return len(data) > 0
 
+# Fonction pour ajouter une transaction
 def add_transaction(user_id, amount, transaction_type):
     try:
-        query = f"INSERT INTO {TABLE_TRANSACTIONS} ({FIELD_USER_ID}, {FIELD_AMOUNT}, {FIELD_TYPE}) VALUES (%s, %s, %s)"
+        query = f"""
+            INSERT INTO 
+                {TABLE_TRANSACTIONS} (user_id, amount, type)
+            VALUES 
+                (%s, %s, %s)
+        """
         execute_query(query, (user_id, amount, transaction_type))
     except mysql.connector.Error as err:
         logging.error("Erreur lors de l'ajout d'une transaction : {}".format(err))
@@ -141,12 +154,11 @@ async def register(interaction: discord.Interaction):
     if is_registered(user_id):
         embed = discord.Embed(title="Erreur", description=f"Vous êtes déjà inscrit, {interaction.user.mention}.", color=color_red)
         embed.add_field(name="Raison", value="Vous avez déjà un compte existant.", inline=False)
-        # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
     else:
         query = f"""
             INSERT INTO 
-                {TABLE_USERS} ({FIELD_USER_ID}, {FIELD_CASH}, {FIELD_BANK})
+                {TABLE_USERS} (user_id, cash, bank)
             VALUES 
                 (%s, 1000, 0)
         """
@@ -160,7 +172,6 @@ async def register(interaction: discord.Interaction):
         else:
             embed = discord.Embed(title="Erreur", description=f"Erreur lors de l'inscription, {interaction.user.mention}.", color=color_red)
             embed.add_field(name="Raison", value="Veuillez réessayer plus tard.", inline=False)
-            # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
             await interaction.response.send_message(embed=embed)
 
 # Commande pour afficher les statistiques
@@ -171,21 +182,20 @@ async def stats(interaction: discord.Interaction):
         embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
-
     query = f"""
         SELECT 
-            u.{FIELD_CASH}, 
-            u.{FIELD_BANK}, 
-            SUM(CASE WHEN t.{FIELD_TYPE} = 'Transaction' AND t.{FIELD_AMOUNT} > 0 THEN t.{FIELD_AMOUNT} ELSE 0 END) AS total_revenus,
-            SUM(CASE WHEN t.{FIELD_TYPE} = 'Transaction' AND t.{FIELD_AMOUNT} < 0 THEN t.{FIELD_AMOUNT} ELSE 0 END) AS total_depenses
+            u.cash, 
+            u.bank, 
+            COALESCE(SUM(IFNULL(t.amount, 0)), 0) AS total_revenus,
+            COALESCE(SUM(IFNULL(-t.amount, 0)), 0) AS total_depenses
         FROM 
-            {TABLE_USERS} u
+            {TABLE_USERS} AS u
         LEFT JOIN 
-            {TABLE_TRANSACTIONS} t ON u.{FIELD_USER_ID} = t.{FIELD_USER_ID}
+            {TABLE_TRANSACTIONS} AS t ON u.user_id = t.user_id
         WHERE 
-            u.{FIELD_USER_ID} = %s
+            u.user_id = %s
         GROUP BY 
-            u.{FIELD_USER_ID}, u.{FIELD_CASH}, u.{FIELD_BANK}
+            u.user_id
     """
     data = fetch_data(query, (user_id,))
     if data is None:
@@ -243,7 +253,15 @@ async def balance(interaction: discord.Interaction, user: typing.Optional[discor
         await interaction.response.send_message(embed=embed)
         return
 
-    query = f"SELECT {FIELD_CASH}, {FIELD_BANK} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
+    query = f"""
+        SELECT 
+            COALESCE(u.{FIELD_CASH}, 0) AS cash,
+            COALESCE(u.{FIELD_BANK}, 0) AS bank
+        FROM 
+            {TABLE_USERS} u
+        WHERE 
+            u.{FIELD_USER_ID} = %s
+    """
     data = fetch_data(query, (user_id,))
     if data is None:
         embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
@@ -264,8 +282,8 @@ async def balance(interaction: discord.Interaction, user: typing.Optional[discor
     total = cash + bank
     embed = discord.Embed(title=f"Solde de {user_name}", description=f"**Cash** : {cash:,} {CoinEmoji}\n**Banque** : {bank:,} {CoinEmoji}\n**Total** : {total:,} {CoinEmoji}", color=color_blue)
     if total < 0:
-        embed.add_field(name="Attention", value="Wesh mon reuf faut se ressaisir la ", inline=False)
-    # embed.add_field(name="Aide", value="Pour voir les commandes disponibles, tapez `/help`.", inline=False)
+        embed.add_field(name="Attention", value="Vous avez un solde négatif. Vous devriez peut-être essayer de gagner plus d'argent.", inline=False)
+    embed.add_field(name="Aide", value="Pour voir les commandes disponibles, tapez `/help`.", inline=False)
     await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="deposit", description="Déposer de l'argent")
@@ -278,12 +296,15 @@ async def deposit(interaction: discord.Interaction, amount: typing.Optional[int]
 
     if amount is None:
         query = f"""
-            SELECT 
-                u.{FIELD_CASH}
-            FROM 
+            UPDATE 
                 {TABLE_USERS} u
+            SET 
+                u.{FIELD_CASH} = COALESCE(u.{FIELD_CASH}, 0) - %s,
+                u.{FIELD_BANK} = COALESCE(u.{FIELD_BANK}, 0) + %s
             WHERE 
                 u.{FIELD_USER_ID} = %s
+            AND u.{FIELD_CASH} >= %s
+            AND u.{FIELD_BANK} >= 0
         """
         data = fetch_data(query, (user_id,))
         if data is None:
@@ -338,9 +359,6 @@ async def deposit(interaction: discord.Interaction, amount: typing.Optional[int]
         embed = discord.Embed(title="Erreur", description="Vous n'avez pas assez d'argent pour déposer.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
-    if cash < 0:
-        embed = discord.Embed(title="Erreur", description="C'est la hess y a rien a déposer.", color=color_red)
-        await interaction.response.send_message(embed=embed)
 
     query = f"""
         UPDATE 
@@ -373,12 +391,15 @@ async def withdraw(interaction: discord.Interaction, amount: int):
         return
 
     query = f"""
-        SELECT 
-            u.{FIELD_BANK}
-        FROM 
+        UPDATE 
             {TABLE_USERS} u
+        SET 
+            u.{FIELD_BANK} = COALESCE(u.{FIELD_BANK}, 0) - %s,
+            u.{FIELD_CASH} = COALESCE(u.{FIELD_CASH}, 0) + %s
         WHERE 
             u.{FIELD_USER_ID} = %s
+        AND u.{FIELD_BANK} >= %s
+        AND u.{FIELD_CASH} >= 0
     """
     data = fetch_data(query, (user_id,))
     if data is None:
@@ -543,11 +564,11 @@ async def transaction(interaction: discord.Interaction, user: discord.Member, am
 
     query = f"""
         UPDATE 
-            {TABLE_USERS} u
+            {TABLE_USERS}
         SET 
-            u.{FIELD_CASH} = u.{FIELD_CASH} - %s
+            {FIELD_CASH} = {FIELD_CASH} - %s
         WHERE 
-            u.{FIELD_USER_ID} = %s
+            {FIELD_USER_ID} = %s
     """
     result = execute_query(query, (amount, user_id))
     if result:
@@ -733,17 +754,17 @@ async def delete_account(interaction: discord.Interaction, user: discord.Member)
     if view.value is True:
         query = f"""
             DELETE FROM 
-                {TABLE_USERS} u
+                {TABLE_USERS}
             WHERE 
-                u.{FIELD_USER_ID} = %s
+                {FIELD_USER_ID} = %s
         """
         result = execute_query(query, (user.id,))
         if result:
             query = f"""
                 DELETE FROM 
-                    {TABLE_TRANSACTIONS} t
+                    {TABLE_TRANSACTIONS}
                 WHERE 
-                    t.{FIELD_USER_ID} = %s
+                    {FIELD_USER_ID} = %s
             """
             result = execute_query(query, (user.id,))
             if result:
