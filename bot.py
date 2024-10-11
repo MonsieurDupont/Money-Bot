@@ -813,7 +813,6 @@ async def give(interaction: discord.Interaction, amount: int, user: typing.Optio
         embed = discord.Embed(title="", description=f"{amount} {CoinEmoji} ont étés ajouté au compte de <@{user.id}>", color=color_green)
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
-
 @bot.tree.command(name="work", description="Travailler")
 async def work(interaction: discord.Interaction):
     user_id = interaction.user.id
