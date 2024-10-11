@@ -1000,10 +1000,10 @@ roulette_game = RouletteGame()
 @bot.tree.command(name="roulette", description="Jouer a la roulette")
 
 @app_commands.choices(options = [
-    app_commands.Choice(name="red", value=""),
-    app_commands.Choice(name="black", value="")
+    discord.app_commands.Choice(name="red", value=""),
+    discord.app_commands.Choice(name="black", value="")
 ])
-async def roulette(interaction: discord.Interaction, amount: int, space:app_commands.Choice[str]):
+async def roulette(interaction: discord.Interaction, amount: int, space:discord.app_commands.Choice[str]):
     user_id = interaction.user.id
 
     query = f"""
