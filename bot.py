@@ -35,6 +35,7 @@ async def on_command_error(ctx, error):
         await ctx.send("Une erreur inattendue s'est produite.")
         logger.error(f"Erreur inattendue: {error}")
 
+
 @bot.event
 async def on_ready():
     logger.info(f"Bot connecté en tant que {bot.user.name}")
@@ -78,4 +79,5 @@ async def main():
             logger.info("Connexion fermée. Le bot s'arrête.")
 
 if __name__ == "__main__":
+    setup_commands(bot)
     asyncio.run(main())
