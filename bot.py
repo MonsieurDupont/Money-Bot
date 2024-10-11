@@ -484,7 +484,7 @@ async def steal(interaction: discord.Interaction, user: discord.Member):
     
     proba = max(0.2, min(0.8, stealer_cash / (victim_cash + stealer_cash)))
      # Probabilité de réussite
-    amount = random.randint(0, victim_cash) 
+    amount = proba * victim_cash 
     print(proba)
     randoma = random.random()
     print(randoma)                       # Montant a voler
@@ -496,7 +496,7 @@ async def steal(interaction: discord.Interaction, user: discord.Member):
         await interaction.response.send_message(embed=embed)
     else:
         execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_USER_ID} = %s", (amount, user_id))
-        embed = discord.Embed(title="Vol raté", description=f"Vous avez essayé de voler <@{user.id}> mais vous vous etes fait choper. Vous avez reçu une amende de {amount}  ", color=color_green)
+        embed = discord.Embed(title="Vol raté", description=f"Vous avez essayé de voler <@{user.id}> mais vous vous etes fait choper. Vous avez reçu une amende de {amount}  ", color=color_red)
         await interaction.response.send_message(embed=embed)
     try:
         add_transaction(user_id, amount, 'Steal')
