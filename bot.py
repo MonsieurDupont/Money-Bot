@@ -497,6 +497,7 @@ async def steal(interaction: discord.Interaction, user: discord.Member):
     else:
         execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_USER_ID} = %s", (amount, user_id))
         embed = discord.Embed(title="Vol raté", description=f"Vous avez essayé de voler <@{user.id}> mais vous vous etes fait choper. Vous avez reçu une amende de {amount}  ", color=color_green)
+        await interaction.response.send_message(embed=embed)
     try:
         add_transaction(user_id, amount, 'Steal')
     except mysql.connector.Error as err:
