@@ -1,6 +1,5 @@
 asyncio==3.4.3
 discord==2.3.2
 discord.py==2.4.0
-mysql-connector==2.2.9
 mysql-connector-python==9.0.0
 python-dotenv==1.0.1
