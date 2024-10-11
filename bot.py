@@ -484,7 +484,7 @@ async def steal(interaction: discord.Interaction, user: discord.Member):
     
     proba = max(0.2, min(0.8, stealer_cash / (victim_cash + stealer_cash)))
      # Probabilité de réussite
-    amount = proba * victim_cash 
+    amount = round(proba * victim_cash)
     print(proba)
     randoma = random.random()
     print(randoma)                       # Montant a voler
