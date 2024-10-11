@@ -949,7 +949,7 @@ class RouletteGame:
         self.players = []  
         self.time_remaining = 10  
         self.max_time = 60  
-        self.game_running = False  
+        self.game_running = False 
 
     async def start_game(self, interaction: discord.Interaction, amount, user, space): # Lancer la partie
         
@@ -996,7 +996,7 @@ class RouletteGame:
 roulette_game = RouletteGame()
 
 @bot.tree.command(name="roulette", description="Jouer a la roulette")
-async def roulette(interaction: discord.Interaction, amount: int):
+async def roulette(interaction: discord.Interaction, amount: int, space):
     user_id = interaction.user.id
 
     query = f"""
@@ -1014,9 +1014,9 @@ async def roulette(interaction: discord.Interaction, amount: int):
         await interaction.response.send_message(embed=embed)
     else:
         if not roulette_game.game_running:
-            await roulette_game.start_game(interaction, amount)
+            await roulette_game.start_game(interaction, amount, user_id, space)
         else:
-            await roulette_game.join_game(interaction, amount)
+            await roulette_game.join_game(interaction, amount, user_id, space)
         await interaction.response.send_message(embed=embed)
 async def main():
     await bot.start(TOKEN)
