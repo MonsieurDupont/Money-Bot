@@ -943,6 +943,25 @@ async def work(interaction: discord.Interaction):
     embed = discord.Embed(title=(f"{interaction.user.display_name}"), description=random_phrase.format(pay=pay) + CoinEmoji, color=color_green)
     await interaction.response.send_message(embed=embed)
 
+# ROULETTE
+@bot.tree.command(name="roulette", description="Jouer a la roulette")
+async def roulette(interaction: discord.Interaction, amount: int):
+    user_id = interaction.user.id
+
+    query = f"""
+        SELECT 
+            {FIELD_CASH}
+        FROM 
+            {TABLE_USERS}
+        WHERE 
+            {FIELD_USER_ID} = %s
+    """    
+    data = fetch_data(query, (user_id,))
+    user_cash = data[0][0] 
+    if user_cash < amount:
+        embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez de cash pour participer a la roulette", color=color_red)
+    else:
+        embed = discord.Embed(title="roulette", description=f"", color=color_green)
 async def main():
     await bot.start(TOKEN)
 
