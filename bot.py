@@ -944,6 +944,57 @@ async def work(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 # ROULETTE
+class RouletteGame:
+    def __init__(self):
+        self.players = []  
+        self.time_remaining = 10  
+        self.max_time = 60  
+        self.game_running = False  
+
+    async def start_game(self, interaction: discord.Interaction, amount, user, space): # Lancer la partie
+        
+        self.players.append({"user_id": interaction.user.id, "amount": amount, "color": None})
+        self.game_running = True
+        embed = discord.Embed(title="Une nouvelle roulette a été lancée", description=f"{user} a misé {amount} {CoinEmoji} sur {space}", color=color_green)
+        embed.set_footer(f"Temps restant {self.time_remaining} secondes. Max {self.max_time} secondes")
+        await interaction.response.send_message(embed=embed)
+        await self.countdown(interaction)
+
+    async def join_game(self, interaction: discord.Interaction, amount, user, space): # Rejoindre une partie existante
+
+        self.players.append({"user_id": interaction.user.id, "amount": amount, "space": space})
+        embed = discord.Embed(title="Nouveau joueur", description=f"{user} a misé {amount} {CoinEmoji} sur {space}", color=color_green)
+        await interaction.response.send_message(embed=embed)        
+        if self.time_remaining + 10 <= self.max_time:
+            self.time_remaining += 10
+        await interaction.followup.send(f"Time extended! {self.time_remaining} seconds left to join.")
+
+    async def countdown(self, interaction: discord.Interaction,): # Chrono
+        while self.time_remaining > 0:
+            await asyncio.sleep(1)  
+            self.time_remaining -= 1
+        await self.end_game(interaction)
+
+    async def end_game(self, interaction: discord.Interaction,): # Fin de la partie
+        # Randomly pick a winning color
+        winning_color = random.choice(["red", "black"])
+        embed = discord.Embed(title="Roulette", description=f"La couleur gagnante est {winning_color}", color=color_green)
+
+        # Notify players about wins and losses
+        for player in self.players:
+            if player["color"] == winning_color:
+                embed = discord.Embed(title="", description=f"{player['user_id']} gagne {player['amount'] * 2}!")
+            else:
+                embed = discord.Embed(title="", description=f"{player['user_id']} perd {player['amount']}.")
+            await interaction.response.send_message(embed=embed)   
+
+        # Reset the game state
+        self.players = []
+        self.time_remaining = 10
+        self.game_running = False
+
+roulette_game = RouletteGame()
+
 @bot.tree.command(name="roulette", description="Jouer a la roulette")
 async def roulette(interaction: discord.Interaction, amount: int):
     user_id = interaction.user.id
@@ -962,7 +1013,10 @@ async def roulette(interaction: discord.Interaction, amount: int):
         embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez de cash pour participer a la roulette", color=color_red)
         await interaction.response.send_message(embed=embed)
     else:
-        embed = discord.Embed(title="roulette", description=f"", color=color_green)
+        if not roulette_game.game_running:
+            await roulette_game.start_game(interaction, amount)
+        else:
+            await roulette_game.join_game(interaction, amount)
         await interaction.response.send_message(embed=embed)
 async def main():
     await bot.start(TOKEN)
