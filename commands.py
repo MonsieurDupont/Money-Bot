@@ -49,7 +49,7 @@ class Bot(commands.Bot):
         await self.tree.sync()
 
     # Commande pour s'inscrire
-    @bot.tree.command(name="register", description="S'inscrire")
+    @commands.command(name="register", description="S'inscrire")
     async def register(interaction: discord.Interaction):
         user_id = interaction.user.id
         if is_registered(user_id):
@@ -60,7 +60,7 @@ class Bot(commands.Bot):
         await interaction.response.send_message("Vous êtes maintenant inscrit !", ephemeral=True)
 
     # Commande pour vérifier la solde d'un utilisateur
-    @bot.tree.command(name="balance", description="Vérifier votre solde")
+    @commands.command(name="balance", description="Vérifier votre solde")
     async def balance(interaction: discord.Interaction, user: typing.Optional[discord.Member]):
         if user is None:
             user_id = interaction.user.id
@@ -100,7 +100,7 @@ class Bot(commands.Bot):
         await interaction.response.send_message(embed=embed)
 
     # Commande pour déposer de l'argent dans sa banque
-    @bot.tree.command(name="deposit", description="Déposer de l'argent")
+    @commands.command(name="deposit", description="Déposer de l'argent")
     async def deposit(interaction: discord.Interaction, amount: typing.Optional[int]):
         user_id = interaction.user.id
         if not is_registered(user_id):
@@ -195,7 +195,7 @@ class Bot(commands.Bot):
             await interaction.response.send_message(embed=embed)
 
     # Commande pour retirer de l'argent de sa banque
-    @bot.tree.command(name="work", description="Travailler")
+    @commands.command(name="work", description="Travailler")
     async def work(interaction: discord.Interaction):
         user_id = interaction.user.id
         if not is_registered(user_id):
@@ -298,7 +298,7 @@ class Bot(commands.Bot):
         await interaction.response.send_message(embed=embed)
 
     # Commande pour afficher les statistiques d'un utilisateur
-    @bot.tree.command(name="stats", description="Afficher les statistiques")
+    @commands.command(name="stats", description="Afficher les statistiques")
     async def stats(interaction: discord.Interaction):
         user_id = interaction.user.id
         if not is_registered(user_id):
@@ -364,7 +364,7 @@ class Bot(commands.Bot):
         await interaction.response.send_message(embed=embed)
 
     # Commande pour voler du cash à un utilisateur
-    @bot.tree.command(name="steal", description="Volé de l'argent à un utilisateur")
+    @commands.command(name="steal", description="Volé de l'argent à un utilisateur")
     async def steal(interaction: discord.Interaction, user: discord.Member):
         user_id = interaction.user.id
         if not is_registered(user_id):
@@ -431,7 +431,7 @@ class Bot(commands.Bot):
             embed = discord.Embed(title="Vol raté", description=f"Vous avez essayé de voler <@{user.id}> mais vous vous etes fait choper. Vous avez reçu une amende de {amount}  ", color=color_green)
 
     # Commande pour envoyer de l'argent à un utilisateur
-    @bot.tree.command(name="send", description="Envoyer de l'argent")
+    @commands.command(name="send", description="Envoyer de l'argent")
     async def send(interaction: discord.Interaction, user: discord.Member, amount: int):
         user_id = interaction.user.id
         if not is_registered(user_id):
@@ -509,7 +509,7 @@ class Bot(commands.Bot):
             await interaction.response.send_message(embed=embed)
 
     # Commande pour afficher le leaderboard
-    @bot.tree.command(name="leaderboard", description="Voir le classement des joueurs")
+    @commands.command(name="leaderboard", description="Voir le classement des joueurs")
     async def leaderboard(interaction: discord.Interaction):
         user_id = interaction.user.id
         if not is_registered(user_id):
@@ -550,7 +550,7 @@ class Bot(commands.Bot):
         await interaction.response.send_message(embed=embed)
 
     # Commande pour afficher l'historique des transactions d'un utilisateur
-    @bot.tree.command(name="transaction_history", description="Historique des transactions")
+    @commands.command(name="transaction_history", description="Historique des transactions")
     async def transaction_history(interaction: discord.Interaction, user: typing.Optional[discord.Member]):
         if user is None:
             user_id = interaction.user.id
@@ -592,7 +592,7 @@ class Bot(commands.Bot):
         await interaction.response.send_message(embed=embed)
 
     # Commande pour afficher la liste des commandes
-    @bot.tree.command(name="help", description="Afficher les commandes disponibles")
+    @commands.command(name="help", description="Afficher les commandes disponibles")
     async def help(interaction: discord.Interaction):
         embed = discord.Embed(title="Aide", description="Bienvenue dans l'aide de notre bot !", color=color_blue)
         embed.add_field(name="Commandes", value="Voici les commandes disponibles :", inline=False)
@@ -603,7 +603,7 @@ class Bot(commands.Bot):
         await interaction.response.send_message(embed=embed)
 
     # Commands pour give de l'argent à un utilisateur
-    @bot.tree.command(name="give", description="Se give de l'argent | ADMINS SEULEMENT")
+    @commands.command(name="give", description="Se give de l'argent | ADMINS SEULEMENT")
     async def give(interaction: discord.Interaction, amount: int, user: typing.Optional[discord.Member]):
         if user is None:
             user_id = interaction.user.id
@@ -632,7 +632,7 @@ class Bot(commands.Bot):
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     # Commande pour supprimer le compte d'un utilisateur
-    @bot.tree.command(name="delete_account", description="Supprimer le compte")
+    @commands.command(name="delete_account", description="Supprimer le compte")
     async def delete_account(interaction: discord.Interaction, user: discord.Member):
         user_id = interaction.user.id
         if not is_registered(user_id):
