@@ -3,39 +3,24 @@ from discord.ext import commands
 from settings import *
 import asyncio
 import logging
+import sys
+import traceback
 from commands import *
 
-logging.basicConfig(level=logging.INFO)
+# Configuration du logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
+# Création du bot
 bot = commands.Bot(command_prefix="/", intents=intents)
 
+# Gestion des erreurs globale
 @bot.event
-async def on_ready():
-    print("Bot prêt")
-    try:
-        await bot.tree.sync()
-    except discord.HTTPException as e:
-        print(f"Erreur lors de la synchronisation des commandes : {e}")
-        await bot.close()
-        return
-
-    print("Commandes chargées :")
-    commands_loaded = False
-    commands = await bot.tree.fetch_commands()
-    for command in commands:
-        print(f"- {command.name} ({command.description})")
-        commands_loaded = True
-
-    if not commands_loaded:
-        print("Erreur : aucune commande n'a été chargée.")
-        if not os.path.exists("commands.py"):
-            print("Erreur : le fichier commands.py n'existe pas.")
-        elif not os.path.isfile("commands.py"):
-            print("Erreur : le fichier commands.py n'est pas un fichier.")
-        else:
-            print("Erreur : les commandes ne sont pas correctement définies dans le fichier commands.py")
-        await bot.close()
-        return
+async def on_error(event, *args, **kwargs):
+    logger.error(f"Une erreur s'est produite dans l'événement {event}")
+    error_type, error_value, error_traceback = sys.exc_info()
+    tb_lines = traceback.format_exception(error_type, error_value, error_traceback)
+    logger.error(''.join(tb_lines))
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -44,25 +29,53 @@ async def on_command_error(ctx, error):
     elif isinstance(error, commands.MissingRequiredArgument):
         await ctx.send("Il manque un argument requis pour cette commande.")
     elif isinstance(error, commands.CommandInvokeError):
-        await ctx.send("Erreur lors de l'exécution de la commande.")
+        await ctx.send("Une erreur s'est produite lors de l'exécution de la commande.")
+        logger.error(f"Erreur lors de l'exécution de la commande {ctx.command}: {error}")
     else:
-        await ctx.send("Erreur inconnue.")
-        logging.error(f"Erreur inconnue : {error}")
+        await ctx.send("Une erreur inattendue s'est produite.")
+        logger.error(f"Erreur inattendue: {error}")
+
+@bot.event
+async def on_ready():
+    logger.info(f"Bot connecté en tant que {bot.user.name}")
+    try:
+        synced = await bot.tree.sync()
+        logger.info(f"Synchronisé {len(synced)} commande(s)")
+    except Exception as e:
+        logger.error(f"Erreur lors de la synchronisation des commandes : {e}")
+
+    logger.info("Commandes chargées :")
+    commands = await bot.tree.fetch_commands()
+    if commands:
+        for command in commands:
+            logger.info(f"- {command.name} ({command.description})")
+    else:
+        logger.warning("Aucune commande n'a été chargée.")
 
 @bot.event
 async def on_command(ctx):
-    print(f"Commande reçue : {ctx.command.name} ({ctx.command.description})")
+    logger.info(f"Commande reçue : {ctx.command.name} ({ctx.command.description})")
 
 @bot.event
 async def on_command_completion(ctx):
-    print(f"Commande exécutée : {ctx.command.name} ({ctx.command.description})")
+    logger.info(f"Commande exécutée : {ctx.command.name} ({ctx.command.description})")
+
+# Commande de test pour vérifier si les commandes sont correctement chargées
+@bot.tree.command(name="test", description="Commande de test")
+async def test(interaction: discord.Interaction):
+    await interaction.response.send_message("Test réussi!")
 
 async def main():
     try:
+        logger.info("Démarrage du bot...")
         await bot.start(TOKEN)
-    except discord.HTTPException as e:
-        print(f"Erreur lors de la connexion au serveur Discord : {e}")
+    except discord.LoginFailure:
+        logger.error("Échec de la connexion. Vérifiez le token.")
     except Exception as e:
-        print(f"Erreur inconnue : {e}")
+        logger.error(f"Une erreur s'est produite lors du démarrage du bot : {e}")
+    finally:
+        if bot.is_closed():
+            logger.info("Connexion fermée. Le bot s'arrête.")
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

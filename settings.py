@@ -44,5 +44,7 @@ FIELD_TYPE = "type"
 FIELD_TIMESTAMP = "timestamp"
 FIELD_AMOUNT = "amount"
 
+# Configuration des intents
 intents = discord.Intents.default()
 intents.message_content = True
+intents.guilds = True
