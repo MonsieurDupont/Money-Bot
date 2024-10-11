@@ -1,4 +1,5 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 from datetime import datetime
 from settings import *
@@ -9,6 +10,7 @@ import logging
 
 print("Début de l'exécution de commands.py")
 
+logger = logging.getLogger(__name__)
 workphrases = load_work_data()
 
 class DeleteAccountView(discord.ui.View):
@@ -54,43 +56,58 @@ def setup_commands(bot):
 
     # Commande pour vérifier la solde d'un utilisateur
     @bot.tree.command(name="balance", description="Vérifier votre solde")
-    async def balance(interaction: discord.Interaction, user: typing.Optional[discord.Member]):
-        if user is None:
-            user_id = interaction.user.id
-            user_name = interaction.user.display_name
-        else:
-            user_id = user.id
-            user_name = user.display_name
-        if not is_registered(user_id):
-            embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
-            await interaction.response.send_message(embed=embed)
-            return
+    @app_commands.describe(user="L'utilisateur dont vous voulez vérifier le solde (optionnel)")
+    async def balance(interaction: discord.Interaction, user: typing.Optional[discord.Member] = None):
+        try:
+            await interaction.response.defer(ephemeral=True)
+            logger.info(f"Commande balance appelée par {interaction.user.id}")
 
-        query = f"SELECT {FIELD_CASH}, {FIELD_BANK} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
-        data = fetch_data(query, (user_id,))
-        if data is None:
-            embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
-            await interaction.response.send_message(embed=embed)
-            return
+            if user is None:
+                user_id = interaction.user.id
+                user_name = interaction.user.display_name
+            else:
+                user_id = user.id
+                user_name = user.display_name
 
-        if len(data) == 0:
-            embed = discord.Embed(title="Erreur", description="Vous n'avez pas de données.", color=color_red)
-            await interaction.response.send_message(embed=embed)
-            return
+            logger.info(f"Vérification du solde pour l'utilisateur {user_id}")
 
-        cash, bank = data[0]
-        if cash is None or bank is None:
-            embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
-            await interaction.response.send_message(embed=embed)
-            return
+            if not is_registered(user_id):
+                embed = discord.Embed(title="Erreur", description=f"{'Vous devez' if user is None else f'{user_name} doit'} vous inscrire avec `/register`.", color=color_red)
+                await interaction.followup.send(embed=embed, ephemeral=True)
+                return
 
-        total = cash + bank
-        foo = await bot.fetch_user(user_id)
-        embed = discord.Embed(title=f"Solde de {foo.name}", description=f"**Cash** : {cash:,} {CoinEmoji}\n**Banque** : {bank:,} {CoinEmoji}\n**Total** : {total:,} {CoinEmoji}", color=color_blue)
-        if total < 0:
-            embed.add_field(name="", value="Wesh c'est la hess la ", inline=False)
-        # embed.add_field(name="Aide", value="Pour voir les commandes disponibles, tapez `/help`.", inline=False)
-        await interaction.response.send_message(embed=embed)
+            query = f"SELECT {FIELD_CASH}, {FIELD_BANK} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
+            data = fetch_data(query, (user_id,))
+
+            if data is None or len(data) == 0:
+                embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération des données.", color=color_red)
+                await interaction.followup.send(embed=embed, ephemeral=True)
+                return
+
+            cash, bank = data[0]
+            if cash is None or bank is None:
+                embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération des données.", color=color_red)
+                await interaction.followup.send(embed=embed, ephemeral=True)
+                return
+
+            total = cash + bank
+            foo = await bot.fetch_user(user_id)
+            embed = discord.Embed(title=f"Solde de {foo.name}", color=color_blue)
+            embed.add_field(name="Cash", value=f"{cash:,} {CoinEmoji}", inline=False)
+            embed.add_field(name="Banque", value=f"{bank:,} {CoinEmoji}", inline=False)
+            embed.add_field(name="Total", value=f"{total:,} {CoinEmoji}", inline=False)
+
+            if total < 0:
+                embed.add_field(name="", value="Wesh c'est la hess la ", inline=False)
+
+            logger.info(f"Solde récupéré avec succès pour l'utilisateur {user_id}")
+            await interaction.followup.send(embed=embed, ephemeral=True)
+
+        except discord.errors.NotFound:
+            logger.error(f"L'interaction a expiré avant que nous puissions répondre pour l'utilisateur {interaction.user.id}")
+        except Exception as e:
+            logger.error(f"Une erreur s'est produite dans la commande balance pour l'utilisateur {interaction.user.id}: {str(e)}")
+            await interaction.followup.send("Une erreur s'est produite. Veuillez réessayer plus tard.", ephemeral=True)
 
     # Commande pour déposer de l'argent dans sa banque
     @bot.tree.command(name="deposit", description="Déposer de l'argent")
