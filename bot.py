@@ -483,9 +483,12 @@ async def steal(interaction: discord.Interaction, user: discord.Member):
         return
     
     proba = round( stealer_cash / (victim_cash + stealer_cash )) # Probabilité de réussite
-    amount = random.randint(0, victim_cash)                         # Montant a voler
+    amount = random.randint(0, victim_cash) 
+    print(proba)
+    randoma = random.random()
+    print(randoma)                       # Montant a voler
 
-    if random.random() <= proba:
+    if randoma <= proba:
         execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_USER_ID} = %s", (amount, user.id))
         execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_USER_ID} = %s", (amount, user_id))
         embed = discord.Embed(title="Vol réussi", description=f"Vous avez volé {amount :,} {CoinEmoji} à {user.mention}.", color=color_green)
