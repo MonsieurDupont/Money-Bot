@@ -8,8 +8,6 @@ from utils import *
 import typing
 import logging
 
-bot = commands.Bot(command_prefix="/", intents=intents)
-
 workphrases = load_work_data()
 
 
