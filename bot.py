@@ -5,7 +5,7 @@ import asyncio
 import logging
 import sys
 import traceback
-from commands import *
+from commands import setup_commands
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
