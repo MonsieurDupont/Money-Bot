@@ -9,6 +9,7 @@ import random
 import json
 import configparser
 from discord.ext import commands
+from discord import app_commands
 import asyncio
 from datetime import datetime
 
@@ -994,11 +995,16 @@ class RouletteGame:
         self.game_running = False
 
 roulette_game = RouletteGame()
+  
 
 @bot.tree.command(name="roulette", description="Jouer a la roulette")
-async def roulette(interaction: discord.Interaction, amount: int, space: str):
+
+@app_commands.choices(options = [
+    app_commands.Choice(name="red", value=""),
+    app_commands.Choice(name="black", value="")
+])
+async def roulette(interaction: discord.Interaction, amount: int, space:app_commands.Choice[str]):
     user_id = interaction.user.id
-    space = ["red", "black"]
 
     query = f"""
         SELECT 
