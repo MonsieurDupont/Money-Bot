@@ -771,18 +771,3 @@ async def delete_account(interaction: discord.Interaction, user: discord.Member)
     else:
         embed = discord.Embed(description="La suppression du compte a été annulée.", color=color_green)
         await interaction.followup.send(embed=embed)
-
-
-# Ajout des commandes à l'arbre de commandes
-bot.tree.add_command(register)
-bot.tree.add_command(balance)
-bot.tree.add_command(deposit)
-bot.tree.add_command(withdraw)
-bot.tree.add_command(work)
-bot.tree.add_command(steal)
-bot.tree.add_command(send)
-bot.tree.add_command(leaderboard)
-bot.tree.add_command(transaction_history)
-bot.tree.add_command(help)
-bot.tree.add_command(give)
-bot.tree.add_command(delete_account)
