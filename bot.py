@@ -482,7 +482,7 @@ async def steal(interaction: discord.Interaction, user: discord.Member):
         await interaction.response.send_message(embed=embed)
         return
     
-    proba = round( stealer_cash / (victim_cash + stealer_cash )) # Probabilité de réussite
+    proba = max(0.2, min(0.8(round( stealer_cash / (victim_cash + stealer_cash ))))) # Probabilité de réussite
     amount = random.randint(0, victim_cash) 
     print(proba)
     randoma = random.random()
