@@ -42,7 +42,7 @@ def add_transaction(user_id, amount, transaction_type):
         logging.error("Erreur lors de l'ajout d'une transaction : {}".format(err))
 
 # Commande pour s'inscrire
-@bot.tree.command()(name="register", description="S'inscrire")
+@bot.tree.command(name="register", description="S'inscrire")
 async def register(interaction: discord.Interaction):
     user_id = interaction.user.id
     if is_registered(user_id):
@@ -53,7 +53,7 @@ async def register(interaction: discord.Interaction):
     await interaction.response.send_message("Vous êtes maintenant inscrit !", ephemeral=True)
 
 # Commande pour vérifier la solde d'un utilisateur
-@bot.tree.command()(name="balance", description="Vérifier votre solde")
+@bot.tree.command(name="balance", description="Vérifier votre solde")
 async def balance(interaction: discord.Interaction, user: typing.Optional[discord.Member]):
     if user is None:
         user_id = interaction.user.id
@@ -93,7 +93,7 @@ async def balance(interaction: discord.Interaction, user: typing.Optional[discor
     await interaction.response.send_message(embed=embed)
 
 # Commande pour déposer de l'argent dans sa banque
-@bot.tree.command()(name="deposit", description="Déposer de l'argent")
+@bot.tree.command(name="deposit", description="Déposer de l'argent")
 async def deposit(interaction: discord.Interaction, amount: typing.Optional[int]):
     user_id = interaction.user.id
     if not is_registered(user_id):
@@ -188,7 +188,7 @@ async def deposit(interaction: discord.Interaction, amount: typing.Optional[int]
         await interaction.response.send_message(embed=embed)
 
 # Commande pour retirer de l'argent de sa banque
-@bot.tree.command()(name="work", description="Travailler")
+@bot.tree.command(name="work", description="Travailler")
 async def work(interaction: discord.Interaction):
     user_id = interaction.user.id
     if not is_registered(user_id):
@@ -291,7 +291,7 @@ async def work(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 # Commande pour afficher les statistiques d'un utilisateur
-@bot.tree.command()(name="stats", description="Afficher les statistiques")
+@bot.tree.command(name="stats", description="Afficher les statistiques")
 async def stats(interaction: discord.Interaction):
     user_id = interaction.user.id
     if not is_registered(user_id):
@@ -357,7 +357,7 @@ async def stats(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 # Commande pour voler du cash à un utilisateur
-@bot.tree.command()(name="steal", description="Volé de l'argent à un utilisateur")
+@bot.tree.command(name="steal", description="Volé de l'argent à un utilisateur")
 async def steal(interaction: discord.Interaction, user: discord.Member):
     user_id = interaction.user.id
     if not is_registered(user_id):
@@ -424,7 +424,7 @@ async def steal(interaction: discord.Interaction, user: discord.Member):
         embed = discord.Embed(title="Vol raté", description=f"Vous avez essayé de voler <@{user.id}> mais vous vous etes fait choper. Vous avez reçu une amende de {amount}  ", color=color_green)
 
 # Commande pour envoyer de l'argent à un utilisateur
-@bot.tree.command()(name="send", description="Envoyer de l'argent")
+@bot.tree.command(name="send", description="Envoyer de l'argent")
 async def send(interaction: discord.Interaction, user: discord.Member, amount: int):
     user_id = interaction.user.id
     if not is_registered(user_id):
@@ -502,7 +502,7 @@ async def send(interaction: discord.Interaction, user: discord.Member, amount: i
         await interaction.response.send_message(embed=embed)
 
 # Commande pour afficher le leaderboard
-@bot.tree.command()(name="leaderboard", description="Voir le classement des joueurs")
+@bot.tree.command(name="leaderboard", description="Voir le classement des joueurs")
 async def leaderboard(interaction: discord.Interaction):
     user_id = interaction.user.id
     if not is_registered(user_id):
@@ -543,7 +543,7 @@ async def leaderboard(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 # Commande pour afficher l'historique des transactions d'un utilisateur
-@bot.tree.command()(name="transaction_history", description="Historique des transactions")
+@bot.tree.command(name="transaction_history", description="Historique des transactions")
 async def transaction_history(interaction: discord.Interaction, user: typing.Optional[discord.Member]):
     if user is None:
         user_id = interaction.user.id
@@ -585,7 +585,7 @@ async def transaction_history(interaction: discord.Interaction, user: typing.Opt
     await interaction.response.send_message(embed=embed)
 
 # Commande pour afficher la liste des commandes
-@bot.tree.command()(name="help", description="Afficher les commandes disponibles")
+@bot.tree.command(name="help", description="Afficher les commandes disponibles")
 async def help(interaction: discord.Interaction):
     embed = discord.Embed(title="Aide", description="Bienvenue dans l'aide de notre bot !", color=color_blue)
     embed.add_field(name="Commandes", value="Voici les commandes disponibles :", inline=False)
@@ -596,7 +596,7 @@ async def help(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 # Commands pour give de l'argent à un utilisateur
-@bot.tree.command()(name="give", description="Se give de l'argent | ADMINS SEULEMENT")
+@bot.tree.command(name="give", description="Se give de l'argent | ADMINS SEULEMENT")
 async def give(interaction: discord.Interaction, amount: int, user: typing.Optional[discord.Member]):
     if user is None:
         user_id = interaction.user.id
@@ -625,7 +625,7 @@ async def give(interaction: discord.Interaction, amount: int, user: typing.Optio
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 # Commande pour supprimer le compte d'un utilisateur
-@bot.tree.command()(name="delete_account", description="Supprimer le compte")
+@bot.tree.command(name="delete_account", description="Supprimer le compte")
 async def delete_account(interaction: discord.Interaction, user: discord.Member):
     user_id = interaction.user.id
     if not is_registered(user_id):
