@@ -8,9 +8,10 @@ from utils import *
 import typing
 import logging
 
+bot = commands.Bot(command_prefix="/", intents=intents)
+
 workphrases = load_work_data()
 
-bot = commands.Bot(command_prefix="/", intents=intents)
 
 class DeleteAccountView(discord.ui.View):
     def __init__(self):
@@ -40,6 +41,7 @@ def add_transaction(user_id, amount, transaction_type):
         execute_query(query, (user_id, amount, transaction_type))
     except mysql.connector.Error as err:
         logging.error("Erreur lors de l'ajout d'une transaction : {}".format(err))
+
 
 # Commande pour s'inscrire
 @bot.tree.command(name="register", description="S'inscrire")
@@ -188,6 +190,82 @@ async def deposit(interaction: discord.Interaction, amount: typing.Optional[int]
         await interaction.response.send_message(embed=embed)
 
 # Commande pour retirer de l'argent de sa banque
+@bot.tree.command(name="withdraw", description="Retirer de l'argent")
+async def withdraw(interaction: discord.Interaction, amount: int):
+    user_id = interaction.user.id
+    if not is_registered(user_id):
+        embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    if amount <= 0:
+        embed = discord.Embed(title="Erreur", description="Le montant doit être supérieur à 0.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    query = f"""
+        SELECT 
+            u.{FIELD_BANK}
+        FROM 
+            {TABLE_USERS} u
+        WHERE 
+            u.{FIELD_USER_ID} = %s
+    """
+    data = fetch_data(query, (user_id,))
+    if data is None:
+        embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    if len(data) == 0:
+        embed = discord.Embed(title="Erreur", description="Vous n'avez pas de données.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    bank = data[0][0]
+    if bank is None:
+        embed = discord.Embed(title="Erreur", description="Erreur lors de la récupération de vos données.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    if bank < amount:
+        embed = discord.Embed(title="Erreur", description="Vous n'avez pas assez d'argent dans la banque pour retirer.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    # Vérification des transactions en cours
+    query = f"""
+        SELECT 
+            t.{FIELD_USER_ID}
+        FROM 
+            {TABLE_TRANSACTIONS} t
+        WHERE 
+            t.{FIELD_USER_ID} = %s AND t.{FIELD_TYPE} = 'Transaction' AND t.{FIELD_TIMESTAMP} > NOW() - INTERVAL 1 MINUTE
+    """
+    data = fetch_data(query, (user_id,))
+    if data is not None and len(data) > 0:
+        embed = discord.Embed(title="Erreur", description="Vous avez déjà une transaction en cours. Veuillez attendre quelques instants avant de procéder à une nouvelle transaction.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    query = f"""
+        UPDATE 
+            {TABLE_USERS} u
+        SET 
+            u.{FIELD_BANK} = u.{FIELD_BANK} - %s,
+            u.{FIELD_CASH} = u.{FIELD_CASH} + %s
+        WHERE 
+            u.{FIELD_USER_ID} = %s
+    """
+    result = execute_query(query, (amount, amount, user_id))
+    if result:
+        embed = discord.Embed(title="Succès", description=f"Vous avez retiré {amount} {CoinEmoji} avec succès.", color=color_green)
+        await interaction.response.send_message(embed=embed)
+    else:
+        embed = discord.Embed(title="Erreur", description="Erreur lors du retrait.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+
+# Commande pour travailler
 @bot.tree.command(name="work", description="Travailler")
 async def work(interaction: discord.Interaction):
     user_id = interaction.user.id
@@ -693,3 +771,18 @@ async def delete_account(interaction: discord.Interaction, user: discord.Member)
     else:
         embed = discord.Embed(description="La suppression du compte a été annulée.", color=color_green)
         await interaction.followup.send(embed=embed)
+
+
+# Ajout des commandes à l'arbre de commandes
+bot.tree.add_command(register)
+bot.tree.add_command(balance)
+bot.tree.add_command(deposit)
+bot.tree.add_command(withdraw)
+bot.tree.add_command(work)
+bot.tree.add_command(steal)
+bot.tree.add_command(send)
+bot.tree.add_command(leaderboard)
+bot.tree.add_command(transaction_history)
+bot.tree.add_command(help)
+bot.tree.add_command(give)
+bot.tree.add_command(delete_account)
