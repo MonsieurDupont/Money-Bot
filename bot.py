@@ -813,6 +813,34 @@ async def give(interaction: discord.Interaction, amount: int, user: typing.Optio
         embed = discord.Embed(title="", description=f"{amount} {CoinEmoji} ont étés ajouté au compte de <@{user.id}>", color=color_green)
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
+@bot.tree.command(name="remove", description="Se retirer de l'argent | ADMINS SEULEMENT")
+async def remove(interaction: discord.Interaction, amount: int, user: typing.Optional[discord.Member]):
+    if user is None:
+        user_id = interaction.user.id
+    else:
+        user_id = user.id
+
+    query = f"""
+    UPDATE 
+        {TABLE_USERS} u
+    SET 
+        u.{FIELD_CASH} = u.{FIELD_CASH} - %s
+    WHERE 
+        u.{FIELD_USER_ID} = %s
+    """
+    execute_query(query, (amount, user_id))
+    try:
+        add_transaction(user_id, amount, 'Remove')
+    except mysql.connector.Error as err:
+        embed = discord.Embed(title="Erreur", description="Erreur lors de l'ajout de la transaction.", color=color_red)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        return
+    if interaction.user.id == user_id:
+        embed = discord.Embed(title="", description=f"{amount} {CoinEmoji} ont étés retirés a votre compte", color=color_green)
+    else:
+        embed = discord.Embed(title="", description=f"{amount} {CoinEmoji} ont étés retirés au compte de <@{user.id}>", color=color_green)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
 @bot.tree.command(name="work", description="Travailler")
 async def work(interaction: discord.Interaction):
     user_id = interaction.user.id
