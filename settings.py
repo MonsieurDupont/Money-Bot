@@ -1,6 +1,7 @@
 import os
 import configparser
 import mysql.connector
+import discord
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -42,3 +43,6 @@ FIELD_BANK = "bank"
 FIELD_TYPE = "type"
 FIELD_TIMESTAMP = "timestamp"
 FIELD_AMOUNT = "amount"
+
+intents = discord.Intents.default()
+intents.message_content = True
