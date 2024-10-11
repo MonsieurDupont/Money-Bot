@@ -477,7 +477,7 @@ async def steal(interaction: discord.Interaction, user: discord.Member):
         await interaction.response.send_message(embed=embed)
         return
 
-    if victim_cash < 0:
+    if victim_cash <= 0:
         embed = discord.Embed(title="Erreur", description="L'utilisateur ciblé n'a pas assez d'argent pour être volé.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
