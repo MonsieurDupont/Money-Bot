@@ -960,8 +960,10 @@ async def roulette(interaction: discord.Interaction, amount: int):
     user_cash = data[0][0] 
     if user_cash < amount:
         embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez de cash pour participer a la roulette", color=color_red)
+        await interaction.response.send_message(embed=embed)
     else:
         embed = discord.Embed(title="roulette", description=f"", color=color_green)
+        await interaction.response.send_message(embed=embed)
 async def main():
     await bot.start(TOKEN)
 
