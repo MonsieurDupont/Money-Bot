@@ -5,14 +5,17 @@ import asyncio
 import logging
 import sys
 import traceback
-from commands import setup_commands
+
+print("Tous les modules ont été importés avec succès")
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+print("Logging configuré")
 
 # Création du bot
 bot = commands.Bot(command_prefix="/", intents=intents)
+print("Bot créé")
 
 # Gestion des erreurs globale
 @bot.event
@@ -78,6 +81,9 @@ async def main():
         if bot.is_closed():
             logger.info("Connexion fermée. Le bot s'arrête.")
 
+print("Prêt à lancer le bot")
+
 if __name__ == "__main__":
+    from commands import setup_commands
     setup_commands(bot)
     asyncio.run(main())

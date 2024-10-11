@@ -7,8 +7,9 @@ from utils import *
 import typing
 import logging
 
-workphrases = load_work_data()
+print("Début de l'exécution de commands.py")
 
+workphrases = load_work_data()
 
 class DeleteAccountView(discord.ui.View):
     def __init__(self):

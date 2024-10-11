@@ -48,3 +48,5 @@ FIELD_AMOUNT = "amount"
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
+
+print("Fin de l'exécution de settings.py")
