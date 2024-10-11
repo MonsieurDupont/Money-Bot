@@ -998,6 +998,7 @@ roulette_game = RouletteGame()
 @bot.tree.command(name="roulette", description="Jouer a la roulette")
 async def roulette(interaction: discord.Interaction, amount: int, space: str):
     user_id = interaction.user.id
+    space = ["red", "black"]
 
     query = f"""
         SELECT 
