@@ -9,7 +9,7 @@ import random
 import json
 import configparser
 from discord.ext import commands
-from discord import Option
+from discord import app_commands
 import asyncio
 from datetime import datetime
 
