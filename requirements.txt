@@ -1,11 +1,6 @@
 asyncio==3.4.3
-configparser==7.1.0
-dateTime==5.5
 discord==2.3.2
 discord.py==2.4.0
-logging==0.4.9.6
 mysql-connector==2.2.9
 mysql-connector-python==9.0.0
 python-dotenv==1.0.1
-typing==3.7.4.3
-typing_extensions==4.12.2
