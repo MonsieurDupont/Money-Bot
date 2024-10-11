@@ -9,7 +9,7 @@ import random
 import json
 import configparser
 from discord.ext import commands
-from discord import app_commands
+from discord import Option
 import asyncio
 from datetime import datetime
 
@@ -1003,7 +1003,7 @@ roulette_game = RouletteGame()
     discord.app_commands.Choice(name="red", value=""),
     discord.app_commands.Choice(name="black", value="")
 ])
-async def roulette(interaction: discord.Interaction, amount: int, space:discord.app_commands.Choice[str]):
+async def roulette(interaction: discord.Interaction, amount: int, space: str, choices=['red', 'black', 'green']):
     user_id = interaction.user.id
 
     query = f"""
