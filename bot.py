@@ -20,7 +20,8 @@ async def on_ready():
 
     print("Commandes chargées :")
     commands_loaded = False
-    for command in bot.tree.commands:
+    commands = await bot.tree.fetch_commands()
+    for command in commands:
         print(f"- {command.name} ({command.description})")
         commands_loaded = True
 
