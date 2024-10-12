@@ -1126,18 +1126,30 @@ from treys import Card, Evaluator, Deck
 @bot.tree.command(name="poker", description="Jouer au poker")
 async def poker(interaction: discord.Interaction, mise: int):
     user_id = interaction.user.id
-    deck = Deck()
-    board = deck.draw(5)
-    p1_deck = deck.draw(2)
-    p2 = deck.draw(2)
-    p1_cards = [card_to_emoji(Card.int_to_str(card)) for card in p1_deck]
-    formatted_cards = " ".join(p1_cards)
-    # embed = discord.Embed(title="Poker", description=f"Vos cartes : {formatted_cards}", color=color_green)
-    card_list = ""
-    for card, emoji in card_map.items():
-        card_list += f"{card_to_name(card)} : {emoji}\n"   
-    embed = discord.Embed(title="Poker", description=f"{card_list}", color=color_green)
-    await interaction.response.send_message(embed=embed)
+
+    query = f"SELECT {FIELD_CASH}, {FIELD_BANK} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
+    user_data = fetch_data(query, (user_id))
+    # Verifier si le joueur a assez d'argent pour lancer la partie
+    if user_data[0] < mise:
+        embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez de cash pour miser", color=color_red)
+        return
+    else:
+
+
+
+
+        deck = Deck()
+        board = deck.draw(5)
+        p1_deck = deck.draw(2)
+        p2 = deck.draw(2)
+        p1_cards = [card_to_emoji(Card.int_to_str(card)) for card in p1_deck]
+        formatted_cards = " ".join(p1_cards)
+        # embed = discord.Embed(title="Poker", description=f"Vos cartes : {formatted_cards}", color=color_green)
+        card_list = ""
+        for card, emoji in card_map.items():
+            card_list += f"{card_to_name(card)} : {emoji}\n"   
+        embed = discord.Embed(title="Poker", description=f"{card_list}", color=color_green)
+        await interaction.response.send_message(embed=embed)
 
 
 if __name__ == "__main__":
