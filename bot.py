@@ -1128,10 +1128,11 @@ async def poker(interaction: discord.Interaction, mise: int):
     user_id = interaction.user.id
 
     query = f"SELECT {FIELD_CASH}, {FIELD_BANK} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
-    data = fetch_data(query, (user_id))
+    data = fetch_data(query, (user_id,))
     # Verifier si le joueur a assez d'argent pour lancer la partie
     cash, bank = data[0]
-    if cash + bank < mise:
+    total = cash + bank
+    if total < mise:
         embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez de cash pour miser", color=color_red)
         return
     else:
