@@ -977,9 +977,10 @@ def card_to_name(card):
     'c': 'Trefle', 'd': 'Carré', 'h': 'Coeur', 's': 'Pique'
     }
 
-    full_value = value_map.get(card[:-1].lower())
-    full_suit = suit_map.get(card[-1].lower(), 'Unknown Suit')
+    value = value_map.get(card[:-1].lower())
+    suit = suit_map.get(card[-1].lower(), 'Unknown Suit')
 
+    return f"{suit} de {value}"
 
 # Commande pour jouer à la roulette
 @bot.tree.command(name="roulette", description="Jouer à la roulette")
