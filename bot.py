@@ -1,17 +1,17 @@
 # Importation des bibliothèques nécessaires
 import os
 import logging
-from dotenv import load_dotenv
+import asyncio
+import datetime
 import mysql.connector
 import discord
 import typing
 import random
 import json
 import configparser
+from dotenv import load_dotenv
 from discord.ext import commands
 from discord import app_commands
-import asyncio
-from datetime import datetime
 
 # Chargement des variables d'environnement
 load_dotenv()
@@ -134,6 +134,9 @@ async def on_ready():
         print(f"Synced {len(synced)} command(s)")
     except Exception as e:
         print(e)
+
+
+# BASIC COMMANDS
 
 # Commande pour s'inscrire
 @bot.tree.command(name="register", description="S'inscrire")
@@ -270,6 +273,7 @@ async def balance(interaction: discord.Interaction, user: typing.Optional[discor
     # embed.add_field(name="Aide", value="Pour voir les commandes disponibles, tapez `/help`.", inline=False)
     await interaction.response.send_message(embed=embed)
 
+# Commande pour déposer de l'argent dans sa banque
 @bot.tree.command(name="deposit", description="Déposer de l'argent")
 async def deposit(interaction: discord.Interaction, amount: typing.Optional[int]):
     user_id = interaction.user.id
@@ -364,6 +368,7 @@ async def deposit(interaction: discord.Interaction, amount: typing.Optional[int]
         embed = discord.Embed(title="Erreur", description="Erreur lors du dépôt.", color=color_red)
         await interaction.response.send_message(embed=embed)
 
+# Commande pour retirer de l'argent de sa banque
 @bot.tree.command(name="withdraw", description="Retirer de l'argent")
 async def withdraw(interaction: discord.Interaction, amount: int):
     user_id = interaction.user.id
@@ -439,6 +444,7 @@ async def withdraw(interaction: discord.Interaction, amount: int):
         embed = discord.Embed(title="Erreur", description="Erreur lors du retrait.", color=color_red)
         await interaction.response.send_message(embed=embed)
 
+# Commande pour voler de l'argent à un u
 @bot.tree.command(name="steal", description="Volé de l'argent à un utilisateur")
 async def steal(interaction: discord.Interaction, user: discord.Member):
     user_id = interaction.user.id
@@ -506,6 +512,7 @@ async def steal(interaction: discord.Interaction, user: discord.Member):
         await interaction.response.send_message(embed=embed, ephemeral=True)
         return   
 
+# Commande pour envoyer de l'argent à un utilisateur
 @bot.tree.command(name="send", description="Envoyer de l'argent")
 async def transaction(interaction: discord.Interaction, user: discord.Member, amount: int):
     user_id = interaction.user.id
@@ -591,6 +598,7 @@ async def transaction(interaction: discord.Interaction, user: discord.Member, am
         # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
 
+# Commande pour afficher le leaderboard
 @bot.tree.command(name="leaderboard", description="Voir le classement des joueurs")
 async def leaderboard(interaction: discord.Interaction):
     user_id = interaction.user.id
@@ -634,6 +642,7 @@ async def leaderboard(interaction: discord.Interaction):
     # embed.set_footer(text="Note : Ce classement est mis à jour en temps réel.")
     await interaction.response.send_message(embed=embed)
 
+# Commande pour afficher l'historique des transactions
 @bot.tree.command(name="transaction_history", description="Historique des transactions")
 async def transaction_history(interaction: discord.Interaction, user: typing.Optional[discord.Member]):
     if user is None:
@@ -676,6 +685,7 @@ async def transaction_history(interaction: discord.Interaction, user: typing.Opt
     # embed.set_footer(text="Note : Ce classement est mis à jour en temps réel.")
     await interaction.response.send_message(embed=embed)
 
+# Commande pour afficher la liste des commandes
 @bot.tree.command(name="help", description="Afficher les commandes disponibles")
 async def help(interaction: discord.Interaction):
     embed = discord.Embed(title="Aide", description="Bienvenue dans l'aide de notre bot !", color=color_blue)
@@ -686,21 +696,6 @@ async def help(interaction: discord.Interaction):
     embed.add_field(name="/withdraw", value="Retirer de l'argent de la banque", inline=False)
     # embed.add_field(name="/help", value="Afficher les commandes disponibles", inline=False)
     await interaction.response.send_message(embed=embed)
-
-class DeleteAccountView(discord.ui.View):
-    def __init__(self):
-        super().__init__()
-        self.value = None
-
-    @discord.ui.button(label="Confirmer", style=discord.ButtonStyle.green)
-    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.value = True
-        self.stop()
-
-    @discord.ui.button(label="Annuler", style=discord.ButtonStyle.red)
-    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.value = False
-        self.stop()
 
 # Commande pour supprimer un compte
 @bot.tree.command(name="delete_account", description="Supprimer le compte")
@@ -786,6 +781,7 @@ async def delete_account(interaction: discord.Interaction, user: discord.Member)
         # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.followup.send(embed=embed)
 
+# Commande pour give de l'argent à un utilisateur
 @bot.tree.command(name="give", description="Se give de l'argent | ADMINS SEULEMENT")
 async def give(interaction: discord.Interaction, amount: int, user: typing.Optional[discord.Member]):
     if user is None:
@@ -814,6 +810,7 @@ async def give(interaction: discord.Interaction, amount: int, user: typing.Optio
         embed = discord.Embed(title="", description=f"{amount} {CoinEmoji} ont étés ajouté au compte de <@{user.id}>", color=color_green)
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
+# Commande pour retirer l'argent d'un utilisateur
 @bot.tree.command(name="remove", description="Se retirer de l'argent | ADMINS SEULEMENT")
 async def remove(interaction: discord.Interaction, amount: int, user: typing.Optional[discord.Member]):
     if user is None:
@@ -842,6 +839,7 @@ async def remove(interaction: discord.Interaction, amount: int, user: typing.Opt
         embed = discord.Embed(title="", description=f"{amount} {CoinEmoji} ont étés retirés au compte de <@{user.id}>", color=color_green)
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
+# Commande pour travailler
 @bot.tree.command(name="work", description="Travailler")
 async def work(interaction: discord.Interaction):
     user_id = interaction.user.id
@@ -944,88 +942,102 @@ async def work(interaction: discord.Interaction):
     embed = discord.Embed(title=(f"{interaction.user.display_name}"), description=random_phrase.format(pay=pay) + CoinEmoji, color=color_green)
     await interaction.response.send_message(embed=embed)
 
-# ROULETTE
-class RouletteGame:
-    def __init__(self):
-        self.players = []  
-        self.time_remaining = 10  
-        self.max_time = 60  
-        self.game_running = False 
 
-    async def start_game(self, interaction: discord.Interaction, amount, user, space): # Lancer la partie
-        
-        self.players.append({"user_id": interaction.user.id, "amount": amount, "color": None})
-        self.game_running = True
-        embed = discord.Embed(title="Une nouvelle roulette a été lancée", description=f"{user} a misé {amount} {CoinEmoji} sur {space}", color=color_green)
-        embed.set_footer(f"Temps restant {self.time_remaining} secondes. Max {self.max_time} secondes")
-        await interaction.response.send_message(embed=embed)
-        await self.countdown(interaction)
+# GAMES
 
-    async def join_game(self, interaction: discord.Interaction, amount, user, space): # Rejoindre une partie existante
-
-        self.players.append({"user_id": interaction.user.id, "amount": amount, "space": space})
-        embed = discord.Embed(title="Nouveau joueur", description=f"{user} a misé {amount} {CoinEmoji} sur {space}", color=color_green)
-        await interaction.response.send_message(embed=embed)        
-        if self.time_remaining + 10 <= self.max_time:
-            self.time_remaining += 10
-        await interaction.followup.send(f"Time extended! {self.time_remaining} seconds left to join.")
-
-    async def countdown(self, interaction: discord.Interaction,): # Chrono
-        while self.time_remaining > 0:
-            await asyncio.sleep(1)  
-            self.time_remaining -= 1
-        await self.end_game(interaction)
-
-    async def end_game(self, interaction: discord.Interaction,): # Fin de la partie
-        # Randomly pick a winning color
-        winning_color = random.choice(["red", "black"])
-        embed = discord.Embed(title="Roulette", description=f"La couleur gagnante est {winning_color}", color=color_green)
-
-        # Notify players about wins and losses
-        for player in self.players:
-            if player["color"] == winning_color:
-                embed = discord.Embed(title="", description=f"{player['user_id']} gagne {player['amount'] * 2}!")
-            else:
-                embed = discord.Embed(title="", description=f"{player['user_id']} perd {player['amount']}.")
-            await interaction.response.send_message(embed=embed)   
-
-        # Reset the game state
-        self.players = []
-        self.time_remaining = 10
-        self.game_running = False
-
-roulette_game = RouletteGame()
-  
-
-@bot.tree.command(name="roulette", description="Jouer a la roulette")
-
-@app_commands.choices(options = [
-    discord.app_commands.Choice(name="red", value=""),
-    discord.app_commands.Choice(name="black", value="")
-])
-async def roulette(interaction: discord.Interaction, amount: int, space: str, choices=['red', 'black', 'green']):
+# Commande pour jouer à la roulette
+@bot.tree.command(name="roulette", description="Jouer à la roulette")
+@app_commands.describe(
+    amount="Montant à miser",
+    bet_type="Type de mise (numéro, rouge, noir, pair, impair, 1-18, 19-36, douzaine, colonne, carré, sixain, transversale)",
+    choice="Votre choix spécifique basé sur le type de mise"
+)
+async def roulette(interaction: discord.Interaction, amount: int, bet_type: str, choice: str):
     user_id = interaction.user.id
 
-    query = f"""
-        SELECT 
-            {FIELD_CASH}
-        FROM 
-            {TABLE_USERS}
-        WHERE 
-            {FIELD_USER_ID} = %s
-    """    
-    data = fetch_data(query, (user_id,))
-    user_cash = data[0][0] 
-    if user_cash < amount:
-        embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez de cash pour participer a la roulette", color=color_red)
+    if not is_registered(user_id):
+        embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
         await interaction.response.send_message(embed=embed)
-    else:
-        if not roulette_game.game_running:
-            await roulette_game.start_game(interaction, amount, user_id, space)
-        else:
-            await roulette_game.join_game(interaction, amount, user_id, space)
-        await interaction.response.send_message(embed=embed)
-async def main():
-    await bot.start(TOKEN)
+        return
 
-asyncio.run(main())
+    if amount <= 0:
+        embed = discord.Embed(title="Erreur", description="Le montant doit être supérieur à 0.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    query = f"SELECT {FIELD_CASH} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
+    data = fetch_data(query, (user_id,))
+    user_cash = data[0][0] if data and data[0] else 0
+
+    if user_cash < amount:
+        embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez de cash pour participer à la roulette. Votre solde : {user_cash} {CoinEmoji}", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    # Générer un numéro aléatoire pour la roulette (0-36)
+    result = random.randint(0, 36)
+
+    # Définir la couleur du résultat
+    if result == 0:
+        result_color = "vert"
+    elif result in [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]:
+        result_color = "rouge"
+    else:
+        result_color = "noir"
+
+    # Vérifier si le joueur a gagné et calculer les gains
+    won = False
+    multiplier = 0
+
+    if bet_type == "numéro":
+        if choice.isdigit() and 0 <= int(choice) <= 36 and int(choice) == result:
+            won = True
+            multiplier = 35
+    elif bet_type in ["rouge", "noir"]:
+        if choice == result_color:
+            won = True
+            multiplier = 1
+    elif bet_type in ["pair", "impair"]:
+        if (bet_type == "pair" and result % 2 == 0 and result != 0) or (bet_type == "impair" and result % 2 != 0):
+            won = True
+            multiplier = 1
+    elif bet_type in ["1-18", "19-36"]:
+        if (bet_type == "1-18" and 1 <= result <= 18) or (bet_type == "19-36" and 19 <= result <= 36):
+            won = True
+            multiplier = 1
+    elif bet_type == "douzaine":
+        if choice in ["1-12", "13-24", "25-36"] and ((choice == "1-12" and 1 <= result <= 12) or (choice == "13-24" and 13 <= result <= 24) or (choice == "25-36" and 25 <= result <= 36)):
+            won = True
+            multiplier = 2
+    elif bet_type == "col onne":
+        if choice in ["1", "2", "3"] and ((choice == "1" and result in [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34]) or (choice == "2" and result in [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35]) or (choice == "3" and result in [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36])):
+            won = True
+            multiplier = 2
+    elif bet_type == "carré":
+        if choice.isdigit() and 0 <= int(choice) <= 36 and result in [(int(choice) - 3) % 36, (int(choice) - 2) % 36, (int(choice) - 1) % 36, int(choice)]:
+            won = True
+            multiplier = 8
+    elif bet_type == "sixain":
+        if choice.isdigit() and 0 <= int(choice) <= 36 and result in [(int(choice) - 5) % 36, (int(choice) - 4) % 36, (int(choice) - 3) % 36, (int(choice) - 2) % 36, (int(choice) - 1) % 36, int(choice)]:
+            won = True
+            multiplier = 5
+    elif bet_type == "transversale":
+        if choice.isdigit() and 0 <= int(choice) <= 36 and result in [(int(choice) - 2) % 36, (int(choice) - 1) % 36, int(choice), (int(choice) + 1) % 36, (int(choice) + 2) % 36]:
+            won = True
+            multiplier = 11
+
+    if won:
+        winnings = amount * multiplier
+        query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_USER_ID} = %s"
+        execute_query(query, (winnings, user_id))
+        embed = discord.Embed(title="Résultat", description=f"Félicitations ! Vous avez gagné {winnings} {CoinEmoji} !", color=color_green)
+    else:
+        query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_USER_ID} = %s"
+        execute_query(query, (amount, user_id))
+        embed = discord.Embed(title="Résultat", description=f"Désolé, vous avez perdu {amount} {CoinEmoji}.", color=color_red)
+
+    embed.add_field(name="Résultat", value=f"Le numéro gagnant est {result} {result_color}.", inline=False)
+    await interaction.response.send_message(embed=embed)
+
+if __name__ == "__main__":
+    bot.run(TOKEN)
