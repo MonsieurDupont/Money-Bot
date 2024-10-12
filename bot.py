@@ -1131,7 +1131,6 @@ class PokerSession:
     def add_poker_player(self, player_id):
         self.players.append(PokerPlayer(player_id))
 
-@app_commands.describe(mise="Mise de départ")
 @bot.tree.command(name="poker", description=f"Jouer au poker. La mise initiale est de {initial_bet} {CoinEmoji}")
 async def poker(interaction: discord.Interaction):
     user_id = interaction.user.id
