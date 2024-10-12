@@ -129,7 +129,7 @@ def add_transaction(user_id, amount, transaction_type):
 # Synchronisation des commandes
 @bot.event
 async def on_ready():
-    print(f"Logged in")
+    print(f"Logged in as {bot.user}")
     try:
         synced = await bot.tree.sync()
         print(f"Synced {len(synced)} command(s)")
