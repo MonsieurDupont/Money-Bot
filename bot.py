@@ -1140,7 +1140,7 @@ class PokerSessionClass:
 Poker_game_in_progress = False
 poker_session = None
 
-@bot.tree.command(name="poker", description=f"Jouer au poker. La mise initiale est de {initial_bet} {CoinEmoji}")
+@bot.tree.command(name="poker", description=f"Jouer au poker. La mise initiale est de {initial_bet}")
 async def poker(interaction: discord.Interaction):
     user_id = interaction.user.id
     global Poker_game_in_progress, poker_session
@@ -1186,6 +1186,19 @@ async def poker(interaction: discord.Interaction):
         # embed = discord.Embed(title="Poker", description=f"{card_list}", color=color_green)
         # await interaction.response.send_message(embed=embed)
 
+@bot.tree.command(name="poker_start", description=f"Démarrer la partie de poker lorsque tous les joueurs ont rejoint")
+async def poker_start(interaction: discord.Interaction):
+    global Poker_game_in_progress, poker_session
 
+    if not Poker_game_in_progress:
+        embed = discord.Embed(title="Erreur", description=f"Aucune partie de poker n'a été démarée. Faites ***/poker***", color=color_red)
+        await interaction.response.send_message(embed=embed) 
+        return
+    if poker_session.num_players() < 2:
+        embed = discord.Embed(title="Erreur", description=f"Il faut au moins 2 joueurs pour commencer la partie", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+    embed = discord.Embed(title="Poker", description=f"", color=color_green)
+    await interaction.response.send_message(embed=embed)
 if __name__ == "__main__":
     bot.run(TOKEN)
