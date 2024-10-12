@@ -1124,10 +1124,10 @@ class PokerPlayerClass:
     def __init__(self, id):
         self.id = id
 class PokerSessionClass:
-    def __init__(self, host_user, game_started): # Variables
+    def __init__(self, host_user, game_started=False): # Variables
         self.players = []
         self.host_user = host_user
-        game_started = False
+        game_started = game_started
    
     def add_poker_player(self, player_id): # Ajouter un joueur
         self.players.append(PokerPlayerClass(player_id))
@@ -1135,6 +1135,8 @@ class PokerSessionClass:
     def player_exists(self, player_id): # Verifier si un joueur a deja rejoint
         return any(player.id == player_id for player in self.players)
 
+Poker_game_in_progress = False
+poker_session = None
 
 @bot.tree.command(name="poker", description=f"Jouer au poker. La mise initiale est de {initial_bet} {CoinEmoji}")
 async def poker(interaction: discord.Interaction):
