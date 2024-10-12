@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 from discord.ext import commands
 from discord import app_commands
 from typing import Literal
+from datetime import datetime
 
 # Chargement des variables d'environnement
 load_dotenv()
