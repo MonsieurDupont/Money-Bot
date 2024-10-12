@@ -1129,9 +1129,11 @@ class PokerSessionClass:
         self.host_user = host_user
         game_started = False
    
-    def add_poker_player(self, player_id):
+    def add_poker_player(self, player_id): # Ajouter un joueur
         self.players.append(PokerPlayerClass(player_id))
 
+    def player_exists(self, player_id): # Verifier si un joueur a deja rejoint
+        return any(player.id == player_id for player in self.players)
 Poker_game_in_progress = False
 
 @bot.tree.command(name="poker", description=f"Jouer au poker. La mise initiale est de {initial_bet} {CoinEmoji}")
@@ -1149,12 +1151,16 @@ async def poker(interaction: discord.Interaction):
         await interaction.response.send_message(embed=embed)
         return
     else:
-        if Poker_game_in_progress == False:
+        if not Poker_game_in_progress:
             poker_session = PokerSessionClass(host_user=user_id, game_started=False)
-            Poker_game_in_progress == True
+            Poker_game_in_progress = True
             embed = discord.Embed(title="Poker", description=f"Vous avez lancé la partie de poker", color=color_green)
         else: 
-            embed = discord.Embed(title="Poker", description=f"Vous avez rejoint une partie de poker", color=color_green)
+            if poker_session.player_exists(user_id):
+                embed = discord.Embed(title="Erreur", description=f"Vous avez déja rejoint la partie", color=color_red)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+
+        embed = discord.Embed(title="Poker", description=f"Vous avez rejoint une partie de poker", color=color_green)
         poker_session.add_poker_player(user_id)
         print([player.id for player in poker_session.players])
         embed.add_field(name="", value="Pour lancer la partie, faites ***/poker_start***")
