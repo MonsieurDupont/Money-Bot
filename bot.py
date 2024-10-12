@@ -1156,7 +1156,7 @@ async def poker(interaction: discord.Interaction):
         else: 
             embed = discord.Embed(title="Poker", description=f"Vous avez rejoint une partie de poker", color=color_green)
         poker_session.add_poker_player(user_id)
-        print(poker_session.players)
+        print([player.id for player in poker_session.players])
         embed.add_field(name="", value="Pour lancer la partie, faites ***/poker_start***")
         embed.set_footer(text=f"Nombre de joueurs dans la partie : {len(poker_session.players)}")
         await interaction.response.send_message(embed=embed)
