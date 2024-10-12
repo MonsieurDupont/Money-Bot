@@ -12,6 +12,7 @@ import configparser
 from dotenv import load_dotenv
 from discord.ext import commands
 from discord import app_commands
+from typing import Literal
 
 # Chargement des variables d'environnement
 load_dotenv()
@@ -949,9 +950,21 @@ async def work(interaction: discord.Interaction):
 @bot.tree.command(name="roulette", description="Jouer à la roulette")
 @app_commands.describe(
     amount="Montant à miser",
-    bet_type="Type de mise (numéro, rouge, noir, pair, impair, 1-18, 19-36, douzaine, colonne, carré, sixain, transversale)",
-    choice="Votre choix spécifique basé sur le type de mise"
-)
+    bet_type="Type de mise",
+    choice="Votre choix spécifique basé sur le type de mise")
+@app_commands.choices(bet_type=[
+    app_commands.Choice(name="Numéro (0-36)", value="numéro"),
+    app_commands.Choice(name="Rouge", value="rouge"),
+    app_commands.Choice(name="Noir", value="noir"),
+    app_commands.Choice(name="Pair", value="pair"),
+    app_commands.Choice(name="Impair", value="impair"),
+    app_commands.Choice(name="1-18", value="1-18"),
+    app_commands.Choice(name="19-36", value="19-36"),
+    app_commands.Choice(name="Douzaine", value="douzaine"),
+    app_commands.Choice(name="Colonne", value="colonne"),
+    app_commands.Choice(name="Carré", value="carré"),
+    app_commands.Choice(name="Sixain", value="sixain"),
+    app_commands.Choice(name="Transversale", value="transversale")])
 async def roulette(interaction: discord.Interaction, amount: int, bet_type: str, choice: str):
     user_id = interaction.user.id
 
@@ -974,69 +987,72 @@ async def roulette(interaction: discord.Interaction, amount: int, bet_type: str,
         await interaction.response.send_message(embed=embed)
         return
 
-    # Générer un numéro aléatoire pour la roulette (0-36)
-    result = random.randint(0, 36)
+    # Guide pour les choix spécifiques
+    choice_guide = {
+        "numéro": lambda x: x.isdigit() and 0 <= int(x) <= 36,
+        "rouge": lambda x: x == "rouge",
+        "noir": lambda x: x == "noir",
+        "pair": lambda x: x == "pair",
+        "impair": lambda x: x == "impair",
+        "1-18": lambda x: x == "1-18",
+        "19-36": lambda x: x == "19-36",
+        "douzaine": lambda x: x in ["1-12", "13-24", "25-36"],
+        "colonne": lambda x: x in ["1", "2", "3"],
+        "carré": lambda x: x.isdigit() and 0 <= int(x) <= 36,
+        "sixain": lambda x: x.isdigit() and 0 <= int(x) <= 36,
+        "transversale": lambda x: x.isdigit() and 0 <= int(x) <= 36
+    }
 
-    # Définir la couleur du résultat
-    if result == 0:
-        result_color = "vert"
-    elif result in [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]:
-        result_color = "rouge"
+    if not choice_guide[bet_type](choice):
+        embed = discord.Embed(title="Erreur", description=f"Choix invalide pour le type de mise '{bet_type}'. {choice_guide[bet_type].__doc__}.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    # Génération du résultat aléatoire
+    winning_number = random.randint(0, 36)
+    winning_color = "rouge" if winning_number in [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36] else "noir"
+    winning_parity = "pair" if winning_number % 2 == 0 else "impair"
+    winning_range = "1-18" if winning_number <= 18 else "19-36"
+    winning_douzaine = "1-12" if winning_number <= 12 else "13-24" if winning_number <= 24 else "25-36"
+    winning_colonne = "1" if winning_number in [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34] else "2" if winning_number in [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35] else "3"
+    winning_square = [(1, 4, 7, 10, 13, 16, 19, 22, 25), (2, 5, 8, 11, 14, 17, 20, 23, 26), (3, 6, 9, 12, 15, 18, 21, 24, 27), (28, 31, 34, 4, 7, 10), (29, 32, 35, 5, 8, 11), (30, 33, 36, 6, 9, 12)][(winning_number - 1) // 3]
+    winning_sixain = [(1, 2, 3, 4, 5, 6), (7, 8, 9, 10, 11, 12), (13, 14, 15, 16, 17, 18), (19, 20, 21, 22, 23, 24), (25, 26, 27, 28, 29, 30), (31, 32, 33, 34, 35, 36)][(winning_number - 1) // 6]
+    winning_transversale = [(1, 2, 3), (4, 5, 6), (7, 8, 9), (10, 11, 12), (13, 14, 15), (16, 17, 18), (19, 20, 21), (22, 23, 24), (25, 26, 27), (28, 29, 30), (31, 32, 33), (34, 35, 36)][(winning_number - 1) // 3]
+
+    # Vérification du résultat
+    if bet_type == "numéro" and int(choice) == winning_number:
+        winnings = amount * 35
+    elif bet_type == "rouge" and winning_color == choice:
+        winnings = amount * 1
+    elif bet_type == "noir" and winning_color == choice:
+        winnings = amount * 1
+    elif bet_type == "pair" and winning_parity == choice:
+        winnings = amount * 1
+    elif bet_type == "impair" and winning_parity == choice:
+        winnings = amount * 1
+    elif bet_type == "1-18" and winning_range == choice:
+        winnings = amount * 1
+    elif bet_type == "19-36" and winning_range == choice:
+        winnings = amount * 1
+    elif bet_type == "douzaine" and winning_douzaine == choice:
+        winnings = amount * 2
+    elif bet_type == "colonne" and winning_colonne == choice:
+        winnings = amount * 2
+    elif bet_type == "carré" and winning_number in winning_square:
+        winnings = amount * 8
+    elif bet_type == "sixain" and winning_number in winning_sixain:
+        winnings = amount * 5
+    elif bet_type == "transversale" and winning_number in winning_transversale:
+        winnings = amount * 11
     else:
-        result_color = "noir"
+        winnings = -amount
 
-    # Vérifier si le joueur a gagné et calculer les gains
-    won = False
-    multiplier = 0
+    # Mise à jour du solde de l'utilisateur
+    query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_USER_ID} = %s"
+    execute_query(query, (winnings, user_id))
 
-    if bet_type == "numéro":
-        if choice.isdigit() and 0 <= int(choice) <= 36 and int(choice) == result:
-            won = True
-            multiplier = 35
-    elif bet_type in ["rouge", "noir"]:
-        if choice == result_color:
-            won = True
-            multiplier = 1
-    elif bet_type in ["pair", "impair"]:
-        if (bet_type == "pair" and result % 2 == 0 and result != 0) or (bet_type == "impair" and result % 2 != 0):
-            won = True
-            multiplier = 1
-    elif bet_type in ["1-18", "19-36"]:
-        if (bet_type == "1-18" and 1 <= result <= 18) or (bet_type == "19-36" and 19 <= result <= 36):
-            won = True
-            multiplier = 1
-    elif bet_type == "douzaine":
-        if choice in ["1-12", "13-24", "25-36"] and ((choice == "1-12" and 1 <= result <= 12) or (choice == "13-24" and 13 <= result <= 24) or (choice == "25-36" and 25 <= result <= 36)):
-            won = True
-            multiplier = 2
-    elif bet_type == "col onne":
-        if choice in ["1", "2", "3"] and ((choice == "1" and result in [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34]) or (choice == "2" and result in [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35]) or (choice == "3" and result in [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36])):
-            won = True
-            multiplier = 2
-    elif bet_type == "carré":
-        if choice.isdigit() and 0 <= int(choice) <= 36 and result in [(int(choice) - 3) % 36, (int(choice) - 2) % 36, (int(choice) - 1) % 36, int(choice)]:
-            won = True
-            multiplier = 8
-    elif bet_type == "sixain":
-        if choice.isdigit() and 0 <= int(choice) <= 36 and result in [(int(choice) - 5) % 36, (int(choice) - 4) % 36, (int(choice) - 3) % 36, (int(choice) - 2) % 36, (int(choice) - 1) % 36, int(choice)]:
-            won = True
-            multiplier = 5
-    elif bet_type == "transversale":
-        if choice.isdigit() and 0 <= int(choice) <= 36 and result in [(int(choice) - 2) % 36, (int(choice) - 1) % 36, int(choice), (int(choice) + 1) % 36, (int(choice) + 2) % 36]:
-            won = True
-            multiplier = 11
-
-    if won:
-        winnings = amount * multiplier
-        query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_USER_ID} = %s"
-        execute_query(query, (winnings, user_id))
-        embed = discord.Embed(title="Résultat", description=f"Félicitations ! Vous avez gagné {winnings} {CoinEmoji} !", color=color_green)
-    else:
-        query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_USER_ID} = %s"
-        execute_query(query, (amount, user_id))
-        embed = discord.Embed(title="Résultat", description=f"Désolé, vous avez perdu {amount} {CoinEmoji}.", color=color_red)
-
-    embed.add_field(name="Résultat", value=f"Le numéro gagnant est {result} {result_color}.", inline=False)
+    # Envoi du résultat
+    embed = discord.Embed(title="Résultat de la roulette", description=f"Le numéro gagnant est {winning_number} {winning_color}. Vous avez gagné {winnings} {CoinEmoji}.", color=color_green)
     await interaction.response.send_message(embed=embed)
 
 if __name__ == "__main__":
