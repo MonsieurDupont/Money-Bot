@@ -136,6 +136,20 @@ async def on_ready():
     except Exception as e:
         print(e)
 
+class DeleteAccountView(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.value = None
+
+    @discord.ui.button(label="Confirmer", style=discord.ButtonStyle.green)
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.value = True
+        self.stop()
+
+    @discord.ui.button(label="Annuler", style=discord.ButtonStyle.red)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.value = False
+        self.stop()
 
 # BASIC COMMANDS
 
@@ -948,26 +962,9 @@ async def work(interaction: discord.Interaction):
 
 # Commande pour jouer à la roulette
 @bot.tree.command(name="roulette", description="Jouer à la roulette")
-@app_commands.describe(
-    amount="Montant à miser",
-    bet_type="Type de mise",
-    choice="Votre choix spécifique basé sur le type de mise")
-@app_commands.choices(bet_type=[
-    app_commands.Choice(name="Numéro (0-36)", value="numéro"),
-    app_commands.Choice(name="Rouge", value="rouge"),
-    app_commands.Choice(name="Noir", value="noir"),
-    app_commands.Choice(name="Pair", value="pair"),
-    app_commands.Choice(name="Impair", value="impair"),
-    app_commands.Choice(name="1-18", value="1-18"),
-    app_commands.Choice(name="19-36", value="19-36"),
-    app_commands.Choice(name="Douzaine", value="douzaine"),
-    app_commands.Choice(name="Colonne", value="colonne"),
-    app_commands.Choice(name="Carré", value="carré"),
-    app_commands.Choice(name="Sixain", value="sixain"),
-    app_commands.Choice(name="Transversale", value="transversale")])
-async def roulette(interaction: discord.Interaction, amount: int, bet_type: app_commands.Choice[str], choice: str):
+@app_commands.describe(amount="Montant à miser", bet="Type de mise (par exemple, 'rouge', 'noir', 'pair', 'impair', '1', '2', ...)")
+async def roulette(interaction: discord.Interaction, amount: int, bet: str):
     user_id = interaction.user.id
-    bet_type = bet_type.value  # Extraction de la valeur du choix
 
     if not is_registered(user_id):
         embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
@@ -988,24 +985,80 @@ async def roulette(interaction: discord.Interaction, amount: int, bet_type: app_
         await interaction.response.send_message(embed=embed)
         return
 
-    # Guide pour les choix spécifiques
-    choice_guide = {
-        "numéro": lambda x: x.isdigit() and 0 <= int(x) <= 36,
+    winning_conditions = {
         "rouge": lambda x: x == "rouge",
         "noir": lambda x: x == "noir",
-        "pair": lambda x: x == "pair",
-        "impair": lambda x: x == "impair",
-        "1-18": lambda x: x == "1-18",
-        "19-36": lambda x: x == "19-36",
-        "douzaine": lambda x: x in ["1-12", "13-24", "25-36"],
-        "colonne": lambda x: x in ["1", "2", "3"],
-        "carré": lambda x: x.isdigit() and 0 <= int(x) <= 36,
-        "sixain": lambda x: x.isdigit() and 0 <= int(x) <= 36,
-        "transversale": lambda x: x.isdigit() and 0 <= int(x) <= 36
+        "pair": lambda x: x % 2 == 0,
+        "impair": lambda x: x % 2 != 0,
+        "1-18": lambda x: 1 <= x <= 18,
+        "19-36": lambda x: 19 <= x <= 36,
+        "1": lambda x: x == 1,
+        "2": lambda x: x == 2,
+        "3": lambda x: x == 3,
+        "4": lambda x: x == 4,
+        "5": lambda x: x == 5,
+        "6": lambda x: x == 6,
+        "7": lambda x: x == 7,
+        "8": lambda x: x == 8,
+        "9": lambda x: x == 9,
+        "10": lambda x: x == 10,
+        "11": lambda x: x == 11,
+        "12": lambda x: x == 12,
+        "13": lambda x: x == 13,
+        "14": lambda x: x == 14,
+        "15": lambda x: x == 15,
+        "16": lambda x: x == 16,
+        "17": lambda x: x == 17,
+        "18": lambda x: x == 18,
+        "19": lambda x: x == 19,
+        "20": lambda x: x == 20,
+        "21": lambda x: x == 21,
+        "22": lambda x: x == 22,
+        "23": lambda x: x == 23,
+        "24": lambda x: x == 24,
+        "25": lambda x: x == 25,
+        "26": lambda x: x == 26,
+        "27": lambda x: x == 27,
+        "28": lambda x: x == 28,
+        "29": lambda x: x == 29,
+        "30": lambda x: x == 30,
+        "31": lambda x: x == 31,
+        "32": lambda x: x == 32,
+        "33": lambda x: x == 33,
+        "34": lambda x: x == 34,
+        "35": lambda x: x == 35,
+        "36": lambda x: x == 36,
+        "douzaine 1-12": lambda x: 1 <= x <= 12,
+        "douzaine 13-24": lambda x: 13 <= x <= 24,
+        "douzaine 25-36": lambda x: 25 <= x <= 36,
+        "colonne 1": lambda x: x in [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34],
+        "colonne 2": lambda x: x in [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35],
+        "colonne 3": lambda x: x in [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36],
+        "carré 1": lambda x: x in [1, 4, 7, 10, 13, 16, 19, 22, 25],
+        "carré 2": lambda x: x in [2, 5, 8, 11, 14, 17, 20, 23, 26],
+        "carré 3": lambda x: x in [3, 6, 9, 12, 15, 18, 21, 24, 27],
+        "sixain 1": lambda x: x in [1, 2, 3, 4, 5, 6],
+        "sixain 2": lambda x: x in [7, 8, 9, 10, 11, 12],
+        "sixain 3": lambda x: x in [13, 14, 15, 16, 17, 18],
+        "sixain 4": lambda x: x in [19, 20, 21, 22, 23, 24],
+        "sixain 5": lambda x: x in [25, 26, 27, 28, 29, 30],
+        "sixain 6": lambda x: x in [31, 32, 33, 34, 35, 36],
+        "transversale 1": lambda x: x in [1, 2, 3],
+        "transversale 2": lambda x: x in [4, 5, 6],
+        "transversale 3": lambda x: x in [7, 8, 9],
+        "transversale 4": lambda x: x in [10, 11, 12],
+        "transversale 5": lambda x: x in [13, 14, 15],
+        "transversale 6": lambda x: x in [16, 17, 18],
+        "transversale 7": lambda x: x in [19, 20, 21],
+        "transversale 8": lambda x: x in [22, 23, 24],
+        "transversale 9": lambda x: x in [25, 26, 27],
+        "transversale 10": lambda x: x in [28, 29, 30],
+        "transversale 11": lambda x: x in [31, 32, 33],
+        "transversale 12": lambda x: x in [34, 35, 36]
     }
 
-    if not choice_guide[bet_type](choice):
-        embed = discord.Embed(title="Erreur", description=f"Choix invalide pour le type de mise '{bet_type}'. {choice_guide[bet_type].__doc__}.", color=color_red)
+    if bet not in winning_conditions:
+        embed = discord.Embed(title="Erreur", description="Type de mise invalide.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
 
@@ -1016,35 +1069,12 @@ async def roulette(interaction: discord.Interaction, amount: int, bet_type: app_
     winning_range = "1-18" if winning_number <= 18 else "19-36"
     winning_douzaine = "1-12" if winning_number <= 12 else "13-24" if winning_number <= 24 else "25-36"
     winning_colonne = "1" if winning_number in [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34] else "2" if winning_number in [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35] else "3"
-    winning_square = [(1, 4, 7, 10, 13, 16, 19, 22, 25), (2, 5, 8, 11, 14, 17, 20, 23, 26), (3, 6, 9, 12, 15, 18, 21, 24, 27), (28, 31, 34, 4, 7, 10), (29, 32, 35, 5, 8, 11), (30, 33, 36, 6, 9, 12)][(winning_number - 1) // 3]
+    winning_square = [(1, 4, 7, 10, 13, 16, 19, 22, 25), (2, 5, 8, 11, 14, 17, 20, 23, 26), (3, 6, 9, 12, 15, 18, 21, 24, 27), (28, 31, 34, 4, 7, 10), (29, 32, 35, 5, 8, 11 ), (30, 33, 36, 6, 9, 12)][(winning_number - 1) // 3]
     winning_sixain = [(1, 2, 3, 4, 5, 6), (7, 8, 9, 10, 11, 12), (13, 14, 15, 16, 17, 18), (19, 20, 21, 22, 23, 24), (25, 26, 27, 28, 29, 30), (31, 32, 33, 34, 35, 36)][(winning_number - 1) // 6]
     winning_transversale = [(1, 2, 3), (4, 5, 6), (7, 8, 9), (10, 11, 12), (13, 14, 15), (16, 17, 18), (19, 20, 21), (22, 23, 24), (25, 26, 27), (28, 29, 30), (31, 32, 33), (34, 35, 36)][(winning_number - 1) // 3]
 
-    # Vérification du résultat
-    if bet_type == "numéro" and int(choice) == winning_number:
-        winnings = amount * 35
-    elif bet_type == "rouge" and winning_color == choice:
-        winnings = amount * 1
-    elif bet_type == "noir" and winning_color == choice:
-        winnings = amount * 1
-    elif bet_type == "pair" and winning_parity == choice:
-        winnings = amount * 1
-    elif bet_type == "impair" and winning_parity == choice:
-        winnings = amount * 1
-    elif bet_type == "1-18" and winning_range == choice:
-        winnings = amount * 1
-    elif bet_type == "19-36" and winning_range == choice:
-        winnings = amount * 1
-    elif bet_type == "douzaine" and winning_douzaine == choice:
-        winnings = amount * 2
-    elif bet_type == "colonne" and winning_colonne == choice:
-        winnings = amount * 2
-    elif bet_type == "carré" and winning_number in winning_square:
-        winnings = amount * 8
-    elif bet_type == "sixain" and winning_number in winning_sixain:
-        winnings = amount * 5
-    elif bet_type == "transversale" and winning_number in winning_transversale:
-        winnings = amount * 11
+    if winning_conditions[bet](winning_number):
+        winnings = amount * 35 if bet.isdigit() else amount * 1 if bet in ["rouge", "noir", "pair", "impair", "1-18", "19-36"] else amount * 2 if bet in ["douzaine 1-12", "douzaine 13-24", "douzaine 25-36", "colonne 1", "colonne 2", "colonne 3"] else amount * 8 if bet in ["carré 1", "carré 2", "carré 3"] else amount * 5 if bet in ["sixain 1", "sixain 2", "sixain 3", "sixain 4", "sixain 5", "sixain 6"] else amount * 11 if bet in ["transversale 1", "transversale 2", "transversale 3", "transversale 4", "transversale 5", "transversale 6", "transversale 7", "transversale 8", "transversale 9", "transversale 10", "transversale 11", "transversale 12"]
     else:
         winnings = -amount
 
