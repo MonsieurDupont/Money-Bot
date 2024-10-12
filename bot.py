@@ -39,13 +39,12 @@ GUILD_ID = os.getenv("GUILD_ID")
 APPLICATION_ID = os.getenv("APPLICATION_ID")
 CoinEmoji = "<:AploucheCoin:1286080674046152724>"
 
-if 'Constants' in commandsconfig:
-    min_work_pay = commandsconfig.getint('Constants', 'min_pay')
-    max_work_pay = commandsconfig.getint('Constants', 'max_pay')
-    work_cooldown_time = commandsconfig.getint('Constants', 'work_cooldown')
-    print(f"Succesfully read {len(commandsconfig.options('Constants'))} 'Constants' in 'settings.ini.'")
-else:
-    logging.ERROR("Cannot find 'Constants' in settings.ini")
+min_work_pay = commandsconfig.getint('Constants', 'min_pay')
+max_work_pay = commandsconfig.getint('Constants', 'max_pay')
+work_cooldown_time = commandsconfig.getint('Constants', 'work_cooldown')
+print(f"Succesfully read {len(commandsconfig.options('Constants'))} 'Constants' in 'settings.ini.'")
+initial_bet = commandsconfig.getint('Poker', 'initial_bet')
+
 
 # Définition des couleurs
 color_green = 0x98d444
@@ -1119,12 +1118,22 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
     embed = discord.Embed(title="Résultat de la roulette", description=f"Le numéro gagnant est {winning_number} {winning_color}. Vous avez {'gagné' if winnings > 0 else 'perdu'} {abs(winnings)} {CoinEmoji}.", color=color_green if winnings > 0 else color_red)
     await interaction.response.send_message(embed=embed)
 
-
-
 from treys import Card, Evaluator, Deck
+
+class PokerPlayer:
+    def __init__(self, id):
+        self.id = id
+class PokerSession:
+    def __init__(self, host_user): # Variables
+        self.players = []
+        self.host_user = host_user
+    
+    def add_poker_player(self, player_id):
+        self.players.append(PokerPlayer(player_id))
+
 @app_commands.describe(mise="Mise de départ")
-@bot.tree.command(name="poker", description="Jouer au poker")
-async def poker(interaction: discord.Interaction, mise: int):
+@bot.tree.command(name="poker", description=f"Jouer au poker. La mise initiale est de {initial_bet} {CoinEmoji}")
+async def poker(interaction: discord.Interaction):
     user_id = interaction.user.id
 
     query = f"SELECT {FIELD_CASH}, {FIELD_BANK} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
@@ -1132,12 +1141,16 @@ async def poker(interaction: discord.Interaction, mise: int):
     # Verifier si le joueur a assez d'argent pour lancer la partie
     cash, bank = data[0]
     total = cash + bank
-    if total < mise:
-        embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez de cash pour miser", color=color_red)
+    if total < initial_bet:
+        embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez d'argent pour miser", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
     else:
-
+        PokerSession.add_poker_player(user_id)
+        embed = discord.Embed(title="Poker", description=f"Vous avez rejoint la partie de poker", color=color_green)
+        embed.add_field(name="", value="Pour lancer la partie, faites ***/poker_start***")
+        embed.set_footer(text=f"Nombre de joueurs dans la partie : {len(PokerSession.players)}")
+        await interaction.response.send_message(embed=embed)
 
 
 
