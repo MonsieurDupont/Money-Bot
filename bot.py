@@ -1134,6 +1134,7 @@ async def poker(interaction: discord.Interaction, mise: int):
     total = cash + bank
     if total < mise:
         embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez de cash pour miser", color=color_red)
+        await interaction.response.send_message(embed=embed)
         return
     else:
 
