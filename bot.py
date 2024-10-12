@@ -1031,7 +1031,7 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
         "36": lambda x: x == 36,
         "douzaine 1-12": lambda x: 1 <= x <= 12,
         "douzaine 13-24": lambda x: 13 <= x <= 24,
-        "douzaine 25-36": lambda x: 25 <= x <= 36,
+        " douzaine 25-36": lambda x: 25 <= x <= 36,
         "colonne 1": lambda x: x in [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34],
         "colonne 2": lambda x: x in [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35],
         "colonne 3": lambda x: x in [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36],
@@ -1070,12 +1070,23 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
     winning_range = "1-18" if winning_number <= 18 else "19-36"
     winning_douzaine = "1-12" if winning_number <= 12 else "13-24" if winning_number <= 24 else "25-36"
     winning_colonne = "1" if winning_number in [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34] else "2" if winning_number in [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35] else "3"
-    winning_square = [(1, 4, 7, 10, 13, 16, 19, 22, 25), (2, 5, 8, 11, 14, 17, 20, 23, 26), (3, 6, 9, 12, 15, 18, 21, 24, 27), (28, 31, 34, 4, 7, 10), (29, 32, 35, 5, 8, 11 ), (30, 33, 36, 6, 9, 12)][(winning_number - 1) // 3]
+    winning_square = [(1, 4, 7, 10, 13, 16, 19, 22, 25), (2, 5, 8, 11, 14, 17, 20, 23, 26), (3, 6, 9, 12, 15, 18, 21, 24, 27), (28, 31, 34, 4, 7, 10), (29, 32, 35, 5, 8, 11), (30, 33, 36, 6, 9, 12)][(winning_number - 1) // 3]
     winning_sixain = [(1, 2, 3, 4, 5, 6), (7, 8, 9, 10, 11, 12), (13, 14, 15, 16, 17, 18), (19, 20, 21, 22, 23, 24), (25, 26, 27, 28, 29, 30), (31, 32, 33, 34, 35, 36)][(winning_number - 1) // 6]
     winning_transversale = [(1, 2, 3), (4, 5, 6), (7, 8, 9), (10, 11, 12), (13, 14, 15), (16, 17, 18), (19, 20, 21), (22, 23, 24), (25, 26, 27), (28, 29, 30), (31, 32, 33), (34, 35, 36)][(winning_number - 1) // 3]
 
     if winning_conditions[bet](winning_number):
-        winnings = amount * 35 if bet.isdigit() else amount * 1 if bet in ["rouge", "noir", "pair", "impair", "1-18", "19-36"] else amount * 2 if bet in ["douzaine 1-12", "douzaine 13-24", "douzaine 25-36", "colonne 1", "colonne 2", "colonne 3"] else amount * 8 if bet in ["carré 1", "carré 2", "carré 3"] else amount * 5 if bet in ["sixain 1", "sixain 2", "sixain 3", "sixain 4", "sixain 5", "sixain 6"] else amount * 11 if bet in ["transversale 1", "transversale 2", "transversale 3", "transversale 4", "transversale 5", "transversale 6", "transversale 7", "transversale 8", "transversale 9", "transversale 10", "transversale 11", "transversale 12"]
+        if bet.isdigit():
+            winnings = amount * 35
+        elif bet in ["rouge", "noir", "pair", "impair", "1-18", "19-36"]:
+            winnings = amount
+        elif bet in ["douzaine 1-12", "douzaine 13-24", "douzaine 25-36", "colonne 1", "colonne 2", "colonne 3"]:
+            winnings = amount * 2
+        elif bet in ["carré 1", "carré 2", "carré 3"]:
+            winnings = amount * 8
+        elif bet in ["sixain 1", "sixain 2", "sixain 3", "sixain 4", "sixain 5", "sixain 6"]:
+            winnings = amount * 5
+        elif bet in ["transversale 1", "transversale 2", "transversale 3", "transversale 4", "transversale 5", "transversale 6", "transversale 7", "transversale 8", "transversale 9", "transversale 10", "transversale 11", "transversale 12"]:
+            winnings = amount * 11
     else:
         winnings = -amount
 
