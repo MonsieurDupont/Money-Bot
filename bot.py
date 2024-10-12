@@ -963,6 +963,24 @@ async def work(interaction: discord.Interaction):
 
 # GAMES
 
+# Convertir une carte en emoji
+def card_to_emoji(card):
+    return card_map.get(card.lower(), "❓")
+
+def card_to_name(card):
+    value_map = {
+    '2': '2', '3': '3', '4': '4', '5': '5', '6': '6', 
+    '7': '7', '8': '8', '9': '9', '10': '10', 
+    'j': 'Valet', 'q': 'Reine', 'k': 'Roi', 'a': 'As'
+    }
+    suit_map = {
+    'c': 'Trefle', 'd': 'Carré', 'h': 'Coeur', 's': 'Pique'
+    }
+
+    full_value = value_map.get(card[:-1].lower())
+    full_suit = suit_map.get(card[-1].lower(), 'Unknown Suit')
+
+
 # Commande pour jouer à la roulette
 @bot.tree.command(name="roulette", description="Jouer à la roulette")
 @app_commands.describe(amount="Montant à miser", bet="Type de mise (par exemple, 'rouge', 'noir', 'pair', 'impair', '1', '2', ...)")
@@ -1100,8 +1118,7 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
     embed = discord.Embed(title="Résultat de la roulette", description=f"Le numéro gagnant est {winning_number} {winning_color}. Vous avez {'gagné' if winnings > 0 else 'perdu'} {abs(winnings)} {CoinEmoji}.", color=color_green if winnings > 0 else color_red)
     await interaction.response.send_message(embed=embed)
 
-def card_to_emoji(card):
-    return card_map.get(card.lower(), "❓")
+
 
 from treys import Card, Evaluator, Deck
 @app_commands.describe(mise="Mise de départ")
@@ -1117,7 +1134,7 @@ async def poker(interaction: discord.Interaction, mise: int):
     # embed = discord.Embed(title="Poker", description=f"Vos cartes : {formatted_cards}", color=color_green)
     card_list = ""
     for card, emoji in card_map.items():
-        card_list += f"{card.upper()} : {emoji}\n"   
+        card_list += f"{card_to_name(card)} : {emoji}\n"   
     embed = discord.Embed(title="Poker", description=f"{card_list}", color=color_green)
     await interaction.response.send_message(embed=embed)
 
