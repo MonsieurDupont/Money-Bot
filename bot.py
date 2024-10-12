@@ -1128,8 +1128,7 @@ class PokerSessionClass:
         self.players = []
         self.host_user = host_user
         game_started = False
-
-    
+   
     def add_poker_player(self, player_id):
         self.players.append(PokerPlayerClass(player_id))
 
@@ -1144,6 +1143,7 @@ async def poker(interaction: discord.Interaction):
     # Verifier si le joueur a assez d'argent pour lancer la partie
     cash, bank = data[0]
     total = cash + bank
+
     if total < initial_bet:
         embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez d'argent pour miser", color=color_red)
         await interaction.response.send_message(embed=embed)
@@ -1152,8 +1152,11 @@ async def poker(interaction: discord.Interaction):
         if Poker_game_in_progress == False:
             poker_session = PokerSessionClass(host_user=user_id, game_started=False)
             Poker_game_in_progress == True
+            embed = discord.Embed(title="Poker", description=f"Vous avez lancé la partie de poker", color=color_green)
+        else: 
+            embed = discord.Embed(title="Poker", description=f"Vous avez rejoint une partie de poker", color=color_green)
         poker_session.add_poker_player(user_id)
-        embed = discord.Embed(title="Poker", description=f"Vous avez rejoint la partie de poker", color=color_green)
+        print(poker_session.players)
         embed.add_field(name="", value="Pour lancer la partie, faites ***/poker_start***")
         embed.set_footer(text=f"Nombre de joueurs dans la partie : {len(poker_session.players)}")
         await interaction.response.send_message(embed=embed)
