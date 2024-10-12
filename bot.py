@@ -1113,7 +1113,8 @@ async def poker(interaction: discord.Interaction, mise: int):
     p1_deck = deck.draw(2)
     p2 = deck.draw(2)
     p1_cards = [card_to_emoji(Card.int_to_str(card)) for card in p1_deck]
-    embed = discord.Embed(title="Poker", description=f"Vos cartes : {p1_cards}", color=color_green)
+    formatted_cards = " ".join(p1_cards)
+    embed = discord.Embed(title="Poker", description=f"Vos cartes : {formatted_cards}", color=color_green)
     await interaction.response.send_message(embed=embed)
 
 
