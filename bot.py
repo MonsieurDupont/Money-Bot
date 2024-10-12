@@ -1134,6 +1134,8 @@ class PokerSessionClass:
 
     def player_exists(self, player_id): # Verifier si un joueur a deja rejoint
         return any(player.id == player_id for player in self.players)
+    def num_players(self):
+        return len(self.players)
 
 Poker_game_in_progress = False
 poker_session = None
@@ -1157,7 +1159,6 @@ async def poker(interaction: discord.Interaction):
         if not Poker_game_in_progress:
             poker_session = PokerSessionClass(host_user=user_id, game_started=False)
             Poker_game_in_progress = True
-            embed = discord.Embed(title="Poker", description=f"Vous avez lancé la partie de poker", color=color_green)
         else: 
             if poker_session.player_exists(user_id):
                 embed = discord.Embed(title="Erreur", description=f"Vous avez déja rejoint la partie", color=color_red)
@@ -1167,7 +1168,7 @@ async def poker(interaction: discord.Interaction):
         poker_session.add_poker_player(user_id)
         print([player.id for player in poker_session.players])
         embed.add_field(name="", value="Pour lancer la partie, faites ***/poker_start***")
-        embed.set_footer(text=f"Nombre de joueurs dans la partie : {len(poker_session.players)}")
+        embed.set_footer(text=f"Nombre de joueurs dans la partie : {poker_session.num_players()}")
         await interaction.response.send_message(embed=embed)
 
 
