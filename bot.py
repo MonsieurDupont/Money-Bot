@@ -1120,16 +1120,20 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
 
 from treys import Card, Evaluator, Deck
 
-class PokerPlayer:
+class PokerPlayerClass:
     def __init__(self, id):
         self.id = id
-class PokerSession:
-    def __init__(self, host_user): # Variables
+class PokerSessionClass:
+    def __init__(self, host_user, game_started): # Variables
         self.players = []
         self.host_user = host_user
+        game_started = False
+
     
     def add_poker_player(self, player_id):
-        self.players.append(PokerPlayer(player_id))
+        self.players.append(PokerPlayerClass(player_id))
+
+Poker_game_in_progress = False
 
 @bot.tree.command(name="poker", description=f"Jouer au poker. La mise initiale est de {initial_bet} {CoinEmoji}")
 async def poker(interaction: discord.Interaction):
@@ -1145,10 +1149,13 @@ async def poker(interaction: discord.Interaction):
         await interaction.response.send_message(embed=embed)
         return
     else:
-        PokerSession.add_poker_player(user_id)
+        if Poker_game_in_progress == False:
+            poker_session = PokerSessionClass(host_user=user_id)
+            Poker_game_in_progress == True
+        poker_session.add_poker_player(user_id)
         embed = discord.Embed(title="Poker", description=f"Vous avez rejoint la partie de poker", color=color_green)
         embed.add_field(name="", value="Pour lancer la partie, faites ***/poker_start***")
-        embed.set_footer(text=f"Nombre de joueurs dans la partie : {len(PokerSession.players)}")
+        embed.set_footer(text=f"Nombre de joueurs dans la partie : {len(poker_session.players)}")
         await interaction.response.send_message(embed=embed)
 
 
