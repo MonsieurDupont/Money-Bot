@@ -1098,10 +1098,18 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
     embed = discord.Embed(title="Résultat de la roulette", description=f"Le numéro gagnant est {winning_number} {winning_color}. Vous avez {'gagné' if winnings > 0 else 'perdu'} {abs(winnings)} {CoinEmoji}.", color=color_green if winnings > 0 else color_red)
     await interaction.response.send_message(embed=embed)
 
+from treys import Card, Evaluator, Deck
 @app_commands.describe(amount="Mise de départ")
 @bot.tree.command(name="poker", description="Jouer au poker")
-async def poker(interaction: discord.Interaction, amount: int):
+async def poker(interaction: discord.Interaction, mise: int):
     user_id = interaction.user.id
+    deck = Deck()
+    board = deck.draw(5)
+    p1 = deck.draw(2)
+    p2 = deck.draw(2)
+    embed = discord.Embed(title="Poker", description=f"Vos cartes : {p1}", color=color_green)
+    await interaction.response.send_message(embed=embed)
+
 
 if __name__ == "__main__":
     bot.run(TOKEN)
