@@ -1107,8 +1107,8 @@ async def poker(interaction: discord.Interaction, mise: int):
     board = deck.draw(5)
     p1 = deck.draw(2)
     p2 = deck.draw(2)
-    print(p1)
-    embed = discord.Embed(title="Poker", description=f"Vos cartes : {p1}", color=color_green)
+    
+    embed = discord.Embed(title="Poker", description=f"Vos cartes : {deck.cards(p1)}", color=color_green)
     await interaction.response.send_message(embed=embed)
 
 
