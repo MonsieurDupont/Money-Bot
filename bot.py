@@ -1099,7 +1099,7 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
     await interaction.response.send_message(embed=embed)
 
 from treys import Card, Evaluator, Deck
-@app_commands.describe(amount="Mise de départ")
+@app_commands.describe(mise="Mise de départ")
 @bot.tree.command(name="poker", description="Jouer au poker")
 async def poker(interaction: discord.Interaction, mise: int):
     user_id = interaction.user.id
