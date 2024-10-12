@@ -1173,8 +1173,8 @@ async def poker(interaction: discord.Interaction):
         card_list = ""
         for card, emoji in card_map.items():
             card_list += f"{card_to_name(card)} : {emoji}\n"   
-        embed = discord.Embed(title="Poker", description=f"{card_list}", color=color_green)
-        await interaction.response.send_message(embed=embed)
+        # embed = discord.Embed(title="Poker", description=f"{card_list}", color=color_green)
+        # await interaction.response.send_message(embed=embed)
 
 
 if __name__ == "__main__":
