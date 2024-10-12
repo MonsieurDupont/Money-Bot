@@ -26,6 +26,8 @@ commandsconfig.read('settings.ini')
 with open('commandphrases.json') as file:
     workdata = json.load(file)
     workphrases = workdata["workphrases"]
+with open('cards.json') as file:
+    card_map = json.load(file)
 
 # Définition des constantes
 TOKEN = os.getenv("TOKEN")
@@ -1098,6 +1100,9 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
     embed = discord.Embed(title="Résultat de la roulette", description=f"Le numéro gagnant est {winning_number} {winning_color}. Vous avez {'gagné' if winnings > 0 else 'perdu'} {abs(winnings)} {CoinEmoji}.", color=color_green if winnings > 0 else color_red)
     await interaction.response.send_message(embed=embed)
 
+def card_to_emoji(card):
+    return card_map.get(card.lower(), "❓")
+
 from treys import Card, Evaluator, Deck
 @app_commands.describe(mise="Mise de départ")
 @bot.tree.command(name="poker", description="Jouer au poker")
@@ -1107,7 +1112,7 @@ async def poker(interaction: discord.Interaction, mise: int):
     board = deck.draw(5)
     p1_deck = deck.draw(2)
     p2 = deck.draw(2)
-    p1_cards = [Card.int_to_pretty_str(card) for card in p1_deck]
+    p1_cards = [card_to_emoji(Card.int_to_str(card)) for card in p1_deck]
     embed = discord.Embed(title="Poker", description=f"Vos cartes : {p1_cards}", color=color_green)
     await interaction.response.send_message(embed=embed)
 
