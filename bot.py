@@ -1134,12 +1134,13 @@ class PokerSessionClass:
 
     def player_exists(self, player_id): # Verifier si un joueur a deja rejoint
         return any(player.id == player_id for player in self.players)
-Poker_game_in_progress = False
+
 
 @bot.tree.command(name="poker", description=f"Jouer au poker. La mise initiale est de {initial_bet} {CoinEmoji}")
 async def poker(interaction: discord.Interaction):
     user_id = interaction.user.id
-
+    global Poker_game_in_progress, poker_session
+    
     query = f"SELECT {FIELD_CASH}, {FIELD_BANK} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
     data = fetch_data(query, (user_id,))
     # Verifier si le joueur a assez d'argent pour lancer la partie
