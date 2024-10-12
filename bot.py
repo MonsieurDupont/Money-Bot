@@ -965,8 +965,9 @@ async def work(interaction: discord.Interaction):
     app_commands.Choice(name="Carré", value="carré"),
     app_commands.Choice(name="Sixain", value="sixain"),
     app_commands.Choice(name="Transversale", value="transversale")])
-async def roulette(interaction: discord.Interaction, amount: int, bet_type: str, choice: str):
+async def roulette(interaction: discord.Interaction, amount: int, bet_type: app_commands.Choice[str], choice: str):
     user_id = interaction.user.id
+    bet_type = bet_type.value  # Extraction de la valeur du choix
 
     if not is_registered(user_id):
         embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
@@ -1052,7 +1053,7 @@ async def roulette(interaction: discord.Interaction, amount: int, bet_type: str,
     execute_query(query, (winnings, user_id))
 
     # Envoi du résultat
-    embed = discord.Embed(title="Résultat de la roulette", description=f"Le numéro gagnant est {winning_number} {winning_color}. Vous avez gagné {winnings} {CoinEmoji}.", color=color_green)
+    embed = discord.Embed(title="Résultat de la roulette", description=f"Le numéro gagnant est {winning_number} {winning_color}. Vous avez {'gagné' if winnings > 0 else 'perdu'} {abs(winnings)} {CoinEmoji}.", color=color_green if winnings > 0 else color_red)
     await interaction.response.send_message(embed=embed)
 
 if __name__ == "__main__":
