@@ -1150,7 +1150,7 @@ async def poker(interaction: discord.Interaction):
         return
     else:
         if Poker_game_in_progress == False:
-            poker_session = PokerSessionClass(host_user=user_id)
+            poker_session = PokerSessionClass(host_user=user_id, game_started=False)
             Poker_game_in_progress == True
         poker_session.add_poker_player(user_id)
         embed = discord.Embed(title="Poker", description=f"Vous avez rejoint la partie de poker", color=color_green)
