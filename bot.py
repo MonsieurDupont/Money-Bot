@@ -1125,8 +1125,8 @@ class PokerPlayerClass:
         self.id = id
         self.deck = []
 
-        def set_deck(self, cards):
-            self.deck = cards
+    def set_deck(self, cards):
+        self.deck = cards
 class PokerSessionClass:
     def __init__(self, host_user, game_started=False): # Variables
         self.players = []
