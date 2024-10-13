@@ -1123,7 +1123,7 @@ from treys import Card, Evaluator, Deck
 class PokerPlayerClass:
     def __init__(self, id):
         self.id = id
-        self.deck = []
+        self.deck = Deck
 
         def set_deck(self, cards):
             self.deck = cards
@@ -1226,18 +1226,16 @@ async def poker_start(interaction: discord.Interaction):
     poker_session.deal_cards()
 
     for player in poker_session.players:
-        """ deck = Deck.draw(2)
-        playercards = [card_to_emoji(Card.int_to_str(card)) for card in deck]
-        formattedcards = " ".join(playercards)
-        embed = discord.Embed(title="Vos cartes", description=f"{playercards}", color=color_green)
-        await interaction.channel.send(embed=embed)  """
-        deck = Deck()
-        board = deck.draw(5)
-        p1_deck = deck.draw(2)
-        p2 = deck.draw(2)
-        p1_cards = [card_to_emoji(Card.int_to_str(card)) for card in p1_deck]
-        formatted_cards = " ".join(p1_cards)
-        embed = discord.Embed(title="Vos cartes", description=f"{formatted_cards}", color=color_green)
-        await interaction.channel.send(embed=embed)
+        
+        deck = [card_to_emoji(Card.int_to_str(card)) for card in player.deck]
+        formattedcards = " ".join(deck)
+        embed = discord.Embed(title="Vos cartes", description=f"{[card_to_emoji(Card.int_to_str(card)) for card in formattedcards]}", color=color_green)
+        cardlist = ""
+        for card, emoji in card_map.items():
+            cardlist += f"{card_to_name(card)} : {emoji}\n"   
+        embed.set_footer(text=f"{cardlist}")
+        await interaction.channel.send(embed=embed)  
+
+
 if __name__ == "__main__":
     bot.run(TOKEN)
