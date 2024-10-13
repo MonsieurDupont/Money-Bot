@@ -1231,7 +1231,7 @@ async def poker_start(interaction: discord.Interaction):
         formattedcards = " ".join(deck)
         embed = discord.Embed(title="Vos cartes", description=formattedcards, color=color_green)
         cardlist = []
-        embed.set_footer(text=f"{" | ".join(cardlist)}")
+        embed.set_footer(text=f'{" | ".join(cardlist)}')
         await interaction.channel.send(embed=embed)  
 
 
