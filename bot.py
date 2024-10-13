@@ -1123,11 +1123,14 @@ from treys import Card, Evaluator, Deck
 class PokerPlayerClass:
     def __init__(self, id):
         self.id = id
+        deck = Deck
 class PokerSessionClass:
     def __init__(self, host_user, game_started=False): # Variables
         self.players = []
         self.host_user = host_user
         game_started = game_started
+        pot = 0
+        board = Deck
    
     def add_poker_player(self, player_id): # Ajouter un joueur
         self.players.append(PokerPlayerClass(player_id))
@@ -1152,7 +1155,7 @@ async def poker(interaction: discord.Interaction):
     total = cash + bank
 
     if total < initial_bet:
-        embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez d'argent pour miser", color=color_red)
+        embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez d'argent pour la mise initiale", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
     else:
@@ -1162,6 +1165,9 @@ async def poker(interaction: discord.Interaction):
         else: 
             if poker_session.player_exists(user_id):
                 embed = discord.Embed(title="Erreur", description=f"Vous avez déja rejoint la partie", color=color_red)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+            elif poker_session.game_started == True:
+                embed = discord.Embed(title="Erreur", description=f"Une partie est déja en cours, attendez la fin.", color=color_red)
                 await interaction.response.send_message(embed=embed, ephemeral=True)
 
         embed = discord.Embed(title="Poker", description=f"Vous avez rejoint une partie de poker", color=color_green)
@@ -1194,11 +1200,17 @@ async def poker_start(interaction: discord.Interaction):
         embed = discord.Embed(title="Erreur", description=f"Aucune partie de poker n'a été démarée. Faites ***/poker***", color=color_red)
         await interaction.response.send_message(embed=embed) 
         return
-    if poker_session.num_players() < 2:
+    if poker_session.num_players() < 1:
         embed = discord.Embed(title="Erreur", description=f"Il faut au moins 2 joueurs pour commencer la partie", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
-    embed = discord.Embed(title="Poker", description=f"", color=color_green)
+    
+    embed = discord.Embed(title="Poker", description=f"La partie de poker va commencer. Bon jeu", color=color_green)
     await interaction.response.send_message(embed=embed)
+    await asyncio.sleep(5)
+    embed = discord.Embed(title="Poker", description=f"Cartes du croupier:", color=color_green)
+    embed.add_field(name="", value=" :flower_playing_cards: :flower_playing_cards: :flower_playing_cards: :flower_playing_cards: :flower_playing_cards:")
+    embed.set_footer("Vous allez recevoir vos cartes pour faire la mise initiale")
+
 if __name__ == "__main__":
     bot.run(TOKEN)
