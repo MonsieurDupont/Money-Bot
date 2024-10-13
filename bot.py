@@ -976,8 +976,8 @@ def card_to_name(card):
     'c': 'Trefle', 'd': 'Carré', 'h': 'Coeur', 's': 'Pique'
     }
 
-    value = value_map.get(card[:-1].lower())
-    suit = suit_map.get(card[-1].lower(), 'Unknown Suit')
+    value = value_map.get(card[:0].lower())
+    suit = suit_map.get(card[0].lower(), 'Unknown Suit')
 
     return f"{value} de {suit}"
 
@@ -1216,7 +1216,7 @@ async def poker_start(interaction: discord.Interaction):
     
     embed = discord.Embed(title="Poker", description=f"La partie de poker va commencer. Bon jeu", color=color_green)
     await interaction.response.send_message(embed=embed)
-    await asyncio.sleep(5)
+    await asyncio.sleep(1)
     embed = discord.Embed(title="Poker", description=f"Cartes communes:", color=color_green)
     embed.add_field(name="", value=" :flower_playing_cards: :flower_playing_cards: :flower_playing_cards: :flower_playing_cards: :flower_playing_cards:")
     embed.set_footer(text="Vous allez recevoir vos cartes pour faire la mise initiale")
