@@ -976,8 +976,8 @@ def card_to_name(card):
     'c': 'Trefle', 'd': 'Carré', 'h': 'Coeur', 's': 'Pique'
     }
 
-    value = value_map.get(card[:0].lower())
-    suit = suit_map.get(card[0].lower(), 'Unknown Suit')
+    value = value_map.get(card[:-1].lower())
+    suit = suit_map.get(card[-1].lower(), 'Unknown Suit')
 
     return f"{value} de {suit}"
 
@@ -1224,8 +1224,8 @@ async def poker_start(interaction: discord.Interaction):
     poker_session.deal_cards()
 
     for player in poker_session.players:
-        
-        deck = [card_to_emoji(Card.int_to_str(card)) for card in player.deck]
+        pdeck = Deck.draw(2)
+        deck = [card_to_emoji(Card.int_to_str(card)) for card in pdeck]
         formattedcards = " ".join(deck)
         embed = discord.Embed(title="Vos cartes", description=formattedcards, color=color_green)
         cardlist = ""
