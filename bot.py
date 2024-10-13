@@ -1226,11 +1226,18 @@ async def poker_start(interaction: discord.Interaction):
     poker_session.deal_cards()
 
     for player in poker_session.players:
-        deck = Deck.draw(2)
+        """ deck = Deck.draw(2)
         playercards = [card_to_emoji(Card.int_to_str(card)) for card in deck]
         formattedcards = " ".join(playercards)
         embed = discord.Embed(title="Vos cartes", description=f"{playercards}", color=color_green)
+        await interaction.channel.send(embed=embed)  """
+        deck = Deck()
+        board = deck.draw(5)
+        p1_deck = deck.draw(2)
+        p2 = deck.draw(2)
+        p1_cards = [card_to_emoji(Card.int_to_str(card)) for card in p1_deck]
+        formatted_cards = " ".join(p1_cards)
+        embed = discord.Embed(title="Vos cartes", description=f"{formatted_cards}", color=color_green)
         await interaction.channel.send(embed=embed)
-
 if __name__ == "__main__":
     bot.run(TOKEN)
