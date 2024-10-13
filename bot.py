@@ -1224,15 +1224,14 @@ async def poker_start(interaction: discord.Interaction):
     poker_session.deal_cards()
 
     for player in poker_session.players:
-        d = Deck()
-        pdeck = d.draw(2)
-        deck = [card_to_emoji(Card.int_to_str(card)) for card in pdeck]
+        for card in player.deck
+            card_name = card_to_name(card)
+            cardlist.append(card_name)
+        deck = [card_to_emoji(Card.int_to_str(card)) for card in player.deck]
         formattedcards = " ".join(deck)
         embed = discord.Embed(title="Vos cartes", description=formattedcards, color=color_green)
-        cardlist = ""
-        for card in card_map.items():
-            cardlist += f"{card_to_name(card)} |"   
-        embed.set_footer(text=f"{cardlist}")
+        cardlist = []
+        embed.set_footer(text=f"{" | ".join(cardlist)}")
         await interaction.channel.send(embed=embed)  
 
 
