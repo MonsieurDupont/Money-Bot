@@ -1227,8 +1227,8 @@ async def poker_start(interaction: discord.Interaction):
 
     for player in poker_session.players:
         
-        embed = discord.Embed(title="Vos cartes", description=f"{player.deck}", ephemeral=True)
-        await interaction.channel.send(embed=embed)
+        embed = discord.Embed(title="Vos cartes", description=f"{player.deck}", color=color_green)
+        await interaction.channel.send(embed=embed, ephemeral=True)
 
 if __name__ == "__main__":
     bot.run(TOKEN)
