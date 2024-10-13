@@ -1219,7 +1219,7 @@ async def poker_start(interaction: discord.Interaction):
     embed = discord.Embed(title="Poker", description=f"La partie de poker va commencer. Bon jeu", color=color_green)
     await interaction.response.send_message(embed=embed)
     await asyncio.sleep(5)
-    embed = discord.Embed(title="Poker", description=f"Cartes communautaires:", color=color_green)
+    embed = discord.Embed(title="Poker", description=f"Cartes communes:", color=color_green)
     embed.add_field(name="", value=" :flower_playing_cards: :flower_playing_cards: :flower_playing_cards: :flower_playing_cards: :flower_playing_cards:")
     embed.set_footer(text="Vous allez recevoir vos cartes pour faire la mise initiale")
     await interaction.edit_original_response(embed=embed)
@@ -1227,7 +1227,7 @@ async def poker_start(interaction: discord.Interaction):
 
     for player in poker_session.players:
         
-        embed = discord.Embed(title="Vos cartes", description=f"{player.deck}", color=color_green)
+        embed = discord.Embed(title="Vos cartes", description=f"{[card_to_emoji(Card.int_to_str(card)) for card in player.deck]}", color=color_green)
         await interaction.channel.send(embed=embed)
 
 if __name__ == "__main__":
