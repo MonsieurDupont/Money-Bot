@@ -1123,10 +1123,14 @@ from treys import Card, Evaluator, Deck
 class PokerPlayerClass:
     def __init__(self, id):
         self.id = id
-        deck = Deck
+        self.deck = []
+
+        def set_deck(self, cards):
+            self.deck = cards
 class PokerSessionClass:
     def __init__(self, host_user, game_started=False): # Variables
         self.players = []
+        self.playermessages = []
         self.host_user = host_user
         game_started = game_started
         pot = 0
@@ -1134,11 +1138,17 @@ class PokerSessionClass:
    
     def add_poker_player(self, player_id): # Ajouter un joueur
         self.players.append(PokerPlayerClass(player_id))
-
+    def add_player_message(self, message):
+        self.playermessages.append(message)
     def player_exists(self, player_id): # Verifier si un joueur a deja rejoint
         return any(player.id == player_id for player in self.players)
     def num_players(self):
         return len(self.players)
+    def deal_cards(self):
+        deck = Deck()
+        for player in self.players:
+            player_deck = deck.draw(2)
+            player.set_deck(player_deck)
 
 Poker_game_in_progress = False
 poker_session = None
@@ -1175,7 +1185,8 @@ async def poker(interaction: discord.Interaction):
         print([player.id for player in poker_session.players])
         embed.add_field(name="", value="Pour lancer la partie, faites ***/poker_start***")
         embed.set_footer(text=f"Nombre de joueurs dans la partie : {poker_session.num_players()}")
-        await interaction.response.send_message(embed=embed)
+        message = await interaction.response.send_message(embed=embed)
+        poker_session.add_player_message(message)
 
 
 
@@ -1208,10 +1219,15 @@ async def poker_start(interaction: discord.Interaction):
     embed = discord.Embed(title="Poker", description=f"La partie de poker va commencer. Bon jeu", color=color_green)
     await interaction.response.send_message(embed=embed)
     await asyncio.sleep(5)
-    embed = discord.Embed(title="Poker", description=f"Cartes du croupier:", color=color_green)
+    embed = discord.Embed(title="Poker", description=f"Cartes communautaires:", color=color_green)
     embed.add_field(name="", value=" :flower_playing_cards: :flower_playing_cards: :flower_playing_cards: :flower_playing_cards: :flower_playing_cards:")
     embed.set_footer(text="Vous allez recevoir vos cartes pour faire la mise initiale")
     await interaction.edit_original_response(embed=embed)
+    poker_session.deal_cards()
 
+    for player in poker_session.players:
+        
+        embed = discord.Embed(title="Vos cartes", description=f"{player.deck}", ephemeral = True)
+        await interaction.channel.send(embed=embed)
 if __name__ == "__main__":
     bot.run(TOKEN)
