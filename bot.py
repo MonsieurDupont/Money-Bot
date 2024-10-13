@@ -1123,7 +1123,7 @@ from treys import Card, Evaluator, Deck
 class PokerPlayerClass:
     def __init__(self, id):
         self.id = id
-        self.deck = Deck
+        self.deck = None
 
         def set_deck(self, cards):
             self.deck = cards
@@ -1231,8 +1231,8 @@ async def poker_start(interaction: discord.Interaction):
         formattedcards = " ".join(deck)
         embed = discord.Embed(title="Vos cartes", description=f"{[card_to_emoji(Card.int_to_str(card)) for card in formattedcards]}", color=color_green)
         cardlist = ""
-        for card, emoji in card_map.items():
-            cardlist += f"{card_to_name(card)} : {emoji}\n"   
+        for card in card_map.items():
+            cardlist += f"{card_to_name(card)} |"   
         embed.set_footer(text=f"{cardlist}")
         await interaction.channel.send(embed=embed)  
 
