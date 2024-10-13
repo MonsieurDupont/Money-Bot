@@ -1226,7 +1226,8 @@ async def poker_start(interaction: discord.Interaction):
     poker_session.deal_cards()
 
     for player in poker_session.players:
-        playercards = [card_to_emoji(Card.int_to_str(card)) for card in player.deck]
+        deck = player.deck
+        playercards = [card_to_emoji(Card.int_to_str(card)) for card in deck]
         formattedcards = " ".join(playercards)
         embed = discord.Embed(title="Vos cartes", description=f"{playercards}", color=color_green)
         await interaction.channel.send(embed=embed)
