@@ -1210,7 +1210,7 @@ async def poker_start(interaction: discord.Interaction):
     await asyncio.sleep(5)
     embed = discord.Embed(title="Poker", description=f"Cartes du croupier:", color=color_green)
     embed.add_field(name="", value=" :flower_playing_cards: :flower_playing_cards: :flower_playing_cards: :flower_playing_cards: :flower_playing_cards:")
-    embed.set_footer("Vous allez recevoir vos cartes pour faire la mise initiale")
+    embed.set_footer(text="Vous allez recevoir vos cartes pour faire la mise initiale")
 
 if __name__ == "__main__":
     bot.run(TOKEN)
