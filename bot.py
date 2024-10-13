@@ -1176,9 +1176,11 @@ async def poker(interaction: discord.Interaction):
             if poker_session.player_exists(user_id):
                 embed = discord.Embed(title="Erreur", description=f"Vous avez déja rejoint la partie", color=color_red)
                 await interaction.response.send_message(embed=embed, ephemeral=True)
+                return
             elif poker_session.game_started == True:
                 embed = discord.Embed(title="Erreur", description=f"Une partie est déja en cours, attendez la fin.", color=color_red)
                 await interaction.response.send_message(embed=embed, ephemeral=True)
+                return
 
         embed = discord.Embed(title="Poker", description=f"Vous avez rejoint une partie de poker", color=color_green)
         poker_session.add_poker_player(user_id)
@@ -1225,7 +1227,7 @@ async def poker_start(interaction: discord.Interaction):
 
     for player in poker_session.players:        
         deckemoji = [card_to_emoji(Card.int_to_str(card)) for card in player.deck]        
-        embed = discord.Embed(title=" ".join(deckemoji), description="", color=color_green)
+        embed = discord.Embed(title="Vos cartes", description=" ".join(deckemoji), color=color_green)
         deckname = [card_to_name(Card.int_to_str(card)) for card in player.deck]
         embed.set_footer(text=f'{" | ".join(deckname)}')
         await interaction.channel.send(embed=embed)  
