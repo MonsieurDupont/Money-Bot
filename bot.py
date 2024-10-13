@@ -1223,11 +1223,9 @@ async def poker_start(interaction: discord.Interaction):
     await interaction.edit_original_response(embed=embed)
     poker_session.deal_cards()
 
-    for player in poker_session.players:
-        
-        deckemoji = [card_to_emoji(Card.int_to_str(card)) for card in player.deck]
-        
-        embed = discord.Embed(title="Vos cartes", description=" ".join(deckemoji), color=color_green)
+    for player in poker_session.players:        
+        deckemoji = [card_to_emoji(Card.int_to_str(card)) for card in player.deck]        
+        embed = discord.Embed(title=" ".join(deckemoji), description="", color=color_green)
         deckname = [card_to_name(Card.int_to_str(card)) for card in player.deck]
         embed.set_footer(text=f'{" | ".join(deckname)}')
         await interaction.channel.send(embed=embed)  
