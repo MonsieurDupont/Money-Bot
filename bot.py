@@ -1148,7 +1148,7 @@ class PokerSessionClass:
         deck = Deck()
         for player in self.players:
             player_deck = deck.draw(2)
-            player.set_deck(player_deck)
+            player.deck = deck
 
 Poker_game_in_progress = False
 poker_session = None
