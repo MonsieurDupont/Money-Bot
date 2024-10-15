@@ -1261,8 +1261,8 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     # Verifier si le joueur a assez d'argent
     query = f"SELECT {FIELD_CASH} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
     data = fetch_data(query, (user_id,))
-
-    if amount > data[0]:
+    cash = data[0]
+    if amount > cash:
         embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez d'argent pour jouer", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
