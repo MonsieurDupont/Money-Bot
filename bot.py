@@ -50,6 +50,7 @@ initial_bet = commandsconfig.getint('Poker', 'initial_bet')
 color_green = 0x98d444
 color_blue = 0x448ad4
 color_red = 0xd44e44
+color_yellow = 0xffbf00
 
 # Définition des tables et des champs
 TABLE_USERS = "users"
@@ -1132,7 +1133,7 @@ class PokerSessionClass:
         self.players = []
         self.playermessages = []
         self.host_user = host_user
-        game_started = game_started
+        self.game_started = game_started
         pot = 0
         board = Deck
    
@@ -1211,6 +1212,10 @@ async def poker_start(interaction: discord.Interaction):
         embed = discord.Embed(title="Erreur", description=f"Aucune partie de poker n'a été démarée. Faites ***/poker***", color=color_red)
         await interaction.response.send_message(embed=embed) 
         return
+    if poker_session.game_started == True:
+        embed = discord.Embed(title="Erreur", description="Une partie a déja été lancée", color=color_red)
+        await interaction.response.send_message(embed=embed) 
+        return
     if poker_session.num_players() < 1:
         embed = discord.Embed(title="Erreur", description=f"Il faut au moins 2 joueurs pour commencer la partie", color=color_red)
         await interaction.response.send_message(embed=embed)
@@ -1232,6 +1237,38 @@ async def poker_start(interaction: discord.Interaction):
         embed.set_footer(text=f'{" | ".join(deckname)}')
         await interaction.channel.send(embed=embed)  
 
+# BLACKJACK
+
+class BlackJackView(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.value = None
+
+    @discord.ui.button(label="Hit", style=discord.ButtonStyle.green)
+    async def hit(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.value = True
+        self.stop()
+
+    @discord.ui.button(label="Stand", style=discord.ButtonStyle.gray)
+    async def stand(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.value = False
+        self.stop()
+    
+@bot.tree.command(name="blackjack", description=f"Démarrer la partie de blackjack")
+async def blackjack(interaction: discord.Interaction, amount: int):
+    user_id = interaction.user.id
+
+    # Verifier si le joueur a assez d'argent
+    query = f"SELECT {FIELD_CASH} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
+    data = fetch_data(query, (user_id,))
+
+    if amount > data[0]:
+        embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez d'argent pour jouer", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+    view = BlackJackView()
+    embed = discord.Embed(title="BlackJack", description=f"", color=color_blue)
+    await interaction.response.send_message(embed=embed, view=view)
 
 if __name__ == "__main__":
     bot.run(TOKEN)
