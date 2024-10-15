@@ -1259,6 +1259,7 @@ async def blackjack(interaction: discord.Interaction, amount: int):
 
     if amount < min_b_bet:
         embed = discord.Embed(title="Erreur", description=f"La mise minimale est de {initial_p_bet}", color=color_red)
+        await interaction.response.send_message(embed=embed)
         return
     
     user_id = interaction.user.id
