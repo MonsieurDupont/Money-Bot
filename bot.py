@@ -43,8 +43,8 @@ min_work_pay = commandsconfig.getint('Constants', 'min_pay')
 max_work_pay = commandsconfig.getint('Constants', 'max_pay')
 work_cooldown_time = commandsconfig.getint('Constants', 'work_cooldown')
 print(f"Succesfully read {len(commandsconfig.options('Constants'))} 'Constants' in 'settings.ini.'")
-initial_bet = commandsconfig.getint('Poker', 'initial_bet')
-
+initial_p_bet = commandsconfig.getint('Poker', 'initial_p_bet')
+min_b_bet = commandsconfig.getint('Blackjack', 'min_b_bet')
 
 # Définition des couleurs
 color_green = 0x98d444
@@ -1154,7 +1154,7 @@ class PokerSessionClass:
 Poker_game_in_progress = False
 poker_session = None
 
-@bot.tree.command(name="poker", description=f"Jouer au poker. La mise initiale est de {initial_bet}")
+@bot.tree.command(name="poker", description=f"Jouer au poker. La mise initiale est de {initial_p_bet}")
 async def poker(interaction: discord.Interaction):
     user_id = interaction.user.id
     global Poker_game_in_progress, poker_session
@@ -1165,7 +1165,7 @@ async def poker(interaction: discord.Interaction):
     cash, bank = data[0]
     total = cash + bank
 
-    if total < initial_bet:
+    if total < initial_p_bet:
         embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez d'argent pour la mise initiale", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
@@ -1256,8 +1256,12 @@ class BlackJackView(discord.ui.View):
     
 @bot.tree.command(name="blackjack", description=f"Démarrer la partie de blackjack")
 async def blackjack(interaction: discord.Interaction, amount: int):
-    user_id = interaction.user.id
 
+    if amount < min_b_bet:
+        embed = discord.Embed(title="Erreur", description=f"La mise minimale est de {initial_p_bet}", color=color_red)
+        return
+    
+    user_id = interaction.user.id
     # Verifier si le joueur a assez d'argent
     query = f"SELECT {FIELD_CASH} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
     data = fetch_data(query, (user_id,))
