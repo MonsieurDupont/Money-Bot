@@ -1284,7 +1284,7 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     view = BlackJackView()
     embed = discord.Embed(title="", description=f"", color=color_blue)
     embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
-    embed.add_field(name=result, value="")
+    # embed.add_field(name=result, value="")
     embed.add_field(name="Votre main", value="")
     embed.add_field(name=f"", value="")
     embed.add_field(name="Main du croupier", value="")
