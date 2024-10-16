@@ -1253,16 +1253,25 @@ class BlackJackView(discord.ui.View):
     async def stand(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.value = False
         self.stop()
-    
+
+blackjack_players = []  
 @bot.tree.command(name="blackjack", description=f"Démarrer la partie de blackjack")
 async def blackjack(interaction: discord.Interaction, amount: int):
 
+    user_id = interaction.user.id
+    global blackjack_players
+
+    if user_id in blackjack_players:
+        embed = discord.Embed(title="Erreur", description=f"Vous jouez deja une partie de BlackJack", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
     if amount < min_b_bet:
-        embed = discord.Embed(title="Erreur", description=f"La mise minimale est de {initial_p_bet}", color=color_red)
+        embed = discord.Embed(title="Erreur", description=f"La mise minimale est de **{initial_p_bet}** {CoinEmoji}", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
     
-    user_id = interaction.user.id
+    
     # Verifier si le joueur a assez d'argent
     query = f"SELECT {FIELD_CASH} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
     data = fetch_data(query, (user_id,))
@@ -1270,6 +1279,7 @@ async def blackjack(interaction: discord.Interaction, amount: int):
         embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez d'argent pour jouer", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
+    blackjack_players.append(user_id)
     view = BlackJackView()
     embed = discord.Embed(title="BlackJack", description=f"", color=color_blue)
     await interaction.response.send_message(embed=embed, view=view)
