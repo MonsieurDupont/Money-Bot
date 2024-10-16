@@ -1253,24 +1253,35 @@ class BlackJackView(discord.ui.View):
     async def stand(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.value = False
         self.stop()
-
+class BlackJackSession:
+    def __init__(self):
+        super().__init__()
+    def deal(self, amount):
+        cards = []
+        for i in range(amount):
+            card = random.choice(list(card_map.items()))
+            cards.append(card)
+        return cards
+blackjack_sessions = {}
 blackjack_players = []  
 @bot.tree.command(name="blackjack", description=f"Démarrer la partie de blackjack")
 async def blackjack(interaction: discord.Interaction, amount: int):
 
     user_id = interaction.user.id
     global blackjack_players
+    global blackjack_sessions
 
+    # Verifier si le joueur ne joue pas deja
     if user_id in blackjack_players:
         embed = discord.Embed(title="Erreur", description=f"Vous jouez deja une partie de Black Jack", color=color_red)
         await interaction.response.send_message(embed=embed, ephemeral=True)
         return
 
+    # Verifier si la mise est inferieure a la mise minimale
     if amount < min_b_bet:
         embed = discord.Embed(title="Erreur", description=f"La mise minimale est de **{initial_p_bet}** {CoinEmoji}", color=color_red)
         await interaction.response.send_message(embed=embed, ephemeral=True)
         return
-    
     
     # Verifier si le joueur a assez d'argent
     query = f"SELECT {FIELD_CASH} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
@@ -1279,15 +1290,24 @@ async def blackjack(interaction: discord.Interaction, amount: int):
         embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez d'argent pour jouer", color=color_red)
         await interaction.response.send_message(embed=embed, ephemeral=True)
         return
+    
+    # Ajouter le joueur a la liste des joueurs
     blackjack_players.append(user_id)
+
+    # Creer une nouvelle session de blackjack
+    blackjack_sessions[user_id] = BlackJackSession()
+
+    # Tirer les cartes initiales
+    player_cards = blackjack_sessions[user_id].deal(2)
+    dealer_cards = blackjack_sessions[user_id].deal(2)
     result = ""
     view = BlackJackView()
     embed = discord.Embed(title="", description=f"", color=color_blue)
     embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
     # embed.add_field(name=result, value="")
-    embed.add_field(name="Votre main", value="qweqwe")
+    embed.add_field(name="Votre main", value=f"{player_cards}")
     embed.add_field(name=f"", value="")
-    embed.add_field(name="Main du croupier", value="qweqweqw")
+    embed.add_field(name="Main du croupier", value=f"{dealer_cards[0][0]}")
     embed.add_field(name=f"", value="")
 
     
