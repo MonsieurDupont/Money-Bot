@@ -38,6 +38,7 @@ DATABASE = os.getenv("DATABASE")
 GUILD_ID = os.getenv("GUILD_ID")
 APPLICATION_ID = os.getenv("APPLICATION_ID")
 CoinEmoji = "<:AploucheCoin:1286080674046152724>"
+card_back = "<:cardback:1296221076430262363>"
 
 min_work_pay = commandsconfig.getint('Constants', 'min_pay')
 max_work_pay = commandsconfig.getint('Constants', 'max_pay')
@@ -1312,7 +1313,7 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     print(player_cards)
     embed.add_field(name="Vous", value=f"".join([card_to_emoji(Card.int_to_str(card[0])) for card in player_cards]))
     embed.add_field(name=f"", value="")
-    embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(dealer_cards[0][0]))}")
+    embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(dealer_cards[0][0]))} {card_back}")
     embed.add_field(name=f"", value="")
 
     
