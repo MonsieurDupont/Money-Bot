@@ -965,7 +965,8 @@ async def work(interaction: discord.Interaction):
 
 # Convertir une carte en emoji
 def card_to_emoji(card):
-    return card_map.get(card.lower(), "❓")
+    emoji = card_map.get(card.lower(), "❓")
+    return emoji.replace("'", "").replace('"', "")
 
 def card_to_name(card):
     value_map = {
