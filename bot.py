@@ -1262,7 +1262,8 @@ class BlackJackSession:
         for i in range(amount):
             # card = random.choice(list(card_map.items()))
             # cards.append(card)
-            cards.append(Deck.draw(1))
+            deck = Deck.draw(1)
+            cards.append(deck)
         return cards
 blackjack_sessions = {}
 blackjack_players = []  
