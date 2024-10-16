@@ -284,8 +284,8 @@ async def balance(interaction: discord.Interaction, user: typing.Optional[discor
         return
 
     total = cash + bank
-    foo = await bot.fetch_user(user_id)
-    embed = discord.Embed(title=f"Solde de {foo.name}", description=f"**Cash** : {cash:,} {CoinEmoji}\n**Banque** : {bank:,} {CoinEmoji}\n**Total** : {total:,} {CoinEmoji}", color=color_blue)
+    embed = discord.Embed(title=f"Solde", description=f"**Cash** : {cash:,} {CoinEmoji}\n**Banque** : {bank:,} {CoinEmoji}\n**Total** : {total:,} {CoinEmoji}", color=color_blue)
+    embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
     if total <= 0:
         embed.add_field(name="", value="Wesh c'est la hess la ", inline=False)
     # embed.add_field(name="Aide", value="Pour voir les commandes disponibles, tapez `/help`.", inline=False)
@@ -1280,9 +1280,17 @@ async def blackjack(interaction: discord.Interaction, amount: int):
         await interaction.response.send_message(embed=embed, ephemeral=True)
         return
     blackjack_players.append(user_id)
+
     view = BlackJackView()
-    embed = discord.Embed(title=interaction.user.display_name, description=f"qweqweqweqweqe \n qweqeqweqweqew", color=color_blue)
+    embed = discord.Embed(title=interaction.user.display_name, description=f"", color=color_blue)
     embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
+    embed.add_field(value=result)
+    embed.add_field(value="Votre main")
+    embed.add_field(value=f"")
+    embed.add_field(value="Main du croupier")
+    embed.add_field(value=f"")
+
+    result = ""
     await interaction.response.send_message(embed=embed, view=view)
 
 if __name__ == "__main__":
