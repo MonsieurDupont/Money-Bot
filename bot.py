@@ -1265,9 +1265,10 @@ class BlackJackSession:
     def deal(self, amount):
         cards = []
         for i in range(amount):
-            card = self.deck.draw(1)
-            cards.append(card)
-        return cards
+            cards = self.deck.draw(1)
+            cards.extend(cards)
+        return cards 
+    
     
     # Evaluer les mains
     def evaluate(self, hand):
