@@ -1262,13 +1262,13 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     global blackjack_players
 
     if user_id in blackjack_players:
-        embed = discord.Embed(title="Erreur", description=f"Vous jouez deja une partie de BlackJack", color=color_red)
-        await interaction.response.send_message(embed=embed)
+        embed = discord.Embed(title="Erreur", description=f"Vous jouez deja une partie de Black Jack", color=color_red)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
         return
 
     if amount < min_b_bet:
         embed = discord.Embed(title="Erreur", description=f"La mise minimale est de **{initial_p_bet}** {CoinEmoji}", color=color_red)
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
         return
     
     
@@ -1277,11 +1277,11 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     data = fetch_data(query, (user_id,))
     if amount > data[0][0]:
         embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez d'argent pour jouer", color=color_red)
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
         return
     blackjack_players.append(user_id)
     view = BlackJackView()
-    embed = discord.Embed(title="BlackJack", description=f"", color=color_blue)
+    embed = discord.Embed(title=f"{interaction.user.display_icon}", description=f"", color=color_blue)
     await interaction.response.send_message(embed=embed, view=view)
 
 if __name__ == "__main__":
