@@ -965,8 +965,8 @@ async def work(interaction: discord.Interaction):
 
 # Convertir une carte en emoji
 def card_to_emoji(card):
-    emoji = card_map.get(card.lower(), "❓")
-    return emoji.replace("'", "").replace('"', "")
+   return card_map.get(card.lower(), "❓")
+
 
 def card_to_name(card):
     value_map = {
@@ -1260,8 +1260,9 @@ class BlackJackSession:
     def deal(self, amount):
         cards = []
         for i in range(amount):
-            card = random.choice(list(card_map.items()))
-            cards.append(card)
+            # card = random.choice(list(card_map.items()))
+            # cards.append(card)
+            cards.append(Deck.draw(1))
         return cards
 blackjack_sessions = {}
 blackjack_players = []  
@@ -1307,9 +1308,9 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
     # embed.add_field(name=result, value="")
     print(player_cards)
-    embed.add_field(name="Votre main", value=f"".join([card_to_emoji(card[0]) for card in player_cards]))
+    embed.add_field(name="Vous", value=f"".join([card_to_emoji(card[0]) for card in player_cards]))
     embed.add_field(name=f"", value="")
-    embed.add_field(name="Main du croupier", value=f"{card_to_emoji(dealer_cards[0][0])}")
+    embed.add_field(name="Croupier", value=f"{card_to_emoji(dealer_cards[0][0])}")
     embed.add_field(name=f"", value="")
 
     
