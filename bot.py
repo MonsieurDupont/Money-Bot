@@ -1282,7 +1282,7 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     blackjack_players.append(user_id)
     view = BlackJackView()
     embed = discord.Embed(title=f"t", description=f"", color=color_blue)
-    embed.set_thumbnail(url="https://images-ext-1.discordapp.net/external/AXxq80j-EIhKyG_f6T27-fJdnIhymIywMDOYQcJmHKM/https/media.tenor.com/ZBtJFtWJeFYAAAPo/ga-logis-ambatukam.mp4")
+    embed.set_thumbnail(url=interaction.user.avatar.url)
     await interaction.response.send_message(embed=embed, view=view)
 
 if __name__ == "__main__":
