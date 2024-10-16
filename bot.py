@@ -1270,7 +1270,7 @@ class BlackJackSession:
         return cards
     
     # Evaluer les mains
-    def evaluate(hand):
+    def evaluate(self, hand):
         value = 0
         aces = 0
         for card in hand:
