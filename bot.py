@@ -1257,13 +1257,14 @@ class BlackJackView(discord.ui.View):
 class BlackJackSession:
     def __init__(self):
         super().__init__()
+        self.deck = Deck()
     def deal(self, amount):
         cards = []
         for i in range(amount):
             # card = random.choice(list(card_map.items()))
             # cards.append(card)
-            deck = Deck.draw(1)
-            cards.append(deck)
+            card = self.deck.draw(1)
+            cards.append(card)
         return cards
 blackjack_sessions = {}
 blackjack_players = []  
