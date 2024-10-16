@@ -12,6 +12,7 @@ import configparser
 from dotenv import load_dotenv
 from discord.ext import commands
 from discord import app_commands
+from treys import Card, Evaluator, Deck
 from typing import Literal
 from datetime import datetime
 
@@ -1121,7 +1122,7 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
     embed = discord.Embed(title="Résultat de la roulette", description=f"Le numéro gagnant est {winning_number} {winning_color}. Vous avez {'gagné' if winnings > 0 else 'perdu'} {abs(winnings)} {CoinEmoji}.", color=color_green if winnings > 0 else color_red)
     await interaction.response.send_message(embed=embed)
 
-from treys import Card, Evaluator, Deck
+
 
 class PokerPlayerClass:
     def __init__(self, id):
@@ -1259,14 +1260,36 @@ class BlackJackSession:
     def __init__(self):
         super().__init__()
         self.deck = Deck()
+
+    # Distribuer les cartes
     def deal(self, amount):
         cards = []
         for i in range(amount):
-            # card = random.choice(list(card_map.items()))
-            # cards.append(card)
             card = self.deck.draw(1)
             cards.append(card)
         return cards
+    
+    # Evaluer les mains
+    def evaluate(hand):
+        value = 0
+        aces = 0
+        for card in hand:
+            rank = Card.rank(card)
+            if rank >= 10:  # 10, J, Q, K
+                value += 10
+            elif rank == 1:  # Ace
+                aces += 1
+                value += 11  # Count Ace as 11 initially
+            else:
+                value += rank  # Add the card's rank value
+
+        # Adjust for Aces if value exceeds 21
+        while value > 21 and aces:
+            value -= 10  # Treat one Ace as 1 instead of 11
+            aces -= 1
+
+        return value
+    
 blackjack_sessions = {}
 blackjack_players = []  
 @bot.tree.command(name="blackjack", description=f"Démarrer la partie de blackjack")
@@ -1312,9 +1335,9 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     # embed.add_field(name=result, value="")
     print(player_cards)
     embed.add_field(name="Vous", value=f"".join([card_to_emoji(Card.int_to_str(card[0])) for card in player_cards]))
-    embed.add_field(name=f"", value="")
+    embed.add_field(name=f"", value=f"{blackjack_sessions[user_id].evaluate(player_cards)}")
     embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(dealer_cards[0][0]))} {card_back}")
-    embed.add_field(name=f"", value="")
+    embed.add_field(name=f"", value=f"{blackjack_sessions[user_id].evaluate(dealer_cards[0][0])}")
 
     
     await interaction.response.send_message(embed=embed, view=view)
