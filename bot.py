@@ -1282,8 +1282,8 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     blackjack_players.append(user_id)
     view = BlackJackView()
     embed = discord.Embed(title=interaction.user.display_name, description=f"", color=color_blue)
-    print(interaction.user.display_icon.url)
-    embed.set_thumbnail(url=interaction.user.display_icon.url)
+    print(interaction.user.display_icon)
+    embed.set_thumbnail(url=interaction.user.display_icon)
     await interaction.response.send_message(embed=embed, view=view)
 
 if __name__ == "__main__":
