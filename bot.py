@@ -1260,7 +1260,7 @@ class BlackJackSession:
     def deal(self, amount):
         cards = []
         for i in range(amount):
-            card = random.choice(list(card_map.keys()))
+            card = random.choice(list(card_map.items()))
             cards.append(card)
         return cards
 blackjack_sessions = {}
