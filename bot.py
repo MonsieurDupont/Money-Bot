@@ -1335,10 +1335,10 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
     # embed.add_field(name=result, value="")
     print(player_cards)
-    # embed.add_field(name="Vous", value=f"".join([card_to_emoji(Card.int_to_str(card[0])) for card in player_cards]))
+    embed.add_field(name="Vous", value=f"".join([card_to_emoji(Card.int_to_str(card[0])) for card in player_cards]))
     embed.add_field(name=f"", value=f"{blackjack_sessions[user_id].evaluate(player_cards)}")
-    # embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(dealer_cards[0][0]))} {card_back}")
-    embed.add_field(name=f"", value=f"{blackjack_sessions[user_id].evaluate(dealer_cards[0][0])}")
+    embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(dealer_cards[0][0]))} {card_back}")
+    # embed.add_field(name=f"", value=f"{blackjack_sessions[user_id].evaluate(dealer_cards[0][0])}")
 
     
     await interaction.response.send_message(embed=embed, view=view)
