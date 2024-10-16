@@ -1312,7 +1312,7 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     print(player_cards)
     embed.add_field(name="Vous", value=f"".join([card_to_emoji(Card.int_to_str(card[0])) for card in player_cards]))
     embed.add_field(name=f"", value="")
-    embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(dealer_cards[0]))}")
+    embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(dealer_cards[0][0]))}")
     embed.add_field(name=f"", value="")
 
     
