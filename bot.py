@@ -1280,7 +1280,7 @@ async def blackjack(interaction: discord.Interaction, amount: int):
         await interaction.response.send_message(embed=embed, ephemeral=True)
         return
     blackjack_players.append(user_id)
-
+    result = ""
     view = BlackJackView()
     embed = discord.Embed(title=interaction.user.display_name, description=f"", color=color_blue)
     embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
@@ -1290,7 +1290,7 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     embed.add_field(value="Main du croupier")
     embed.add_field(value=f"")
 
-    result = ""
+    
     await interaction.response.send_message(embed=embed, view=view)
 
 if __name__ == "__main__":
