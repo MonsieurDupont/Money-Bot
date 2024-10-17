@@ -1275,7 +1275,6 @@ class BlackJackSession:
     def rank_card(self, card):
     # Extract the rank from the card name (the first character(s))
         rank_str = card[:-1].lower()  # Exclude the suit (last character)
-        print(rank_str)
         if rank_str.isdigit():  # For ranks 2 to 9
             return int(rank_str)
         elif rank_str == 't':  # For the 10 card
@@ -1285,7 +1284,7 @@ class BlackJackSession:
         elif rank_str == 'a':
             return 1  # Ace is worth 1 (you can handle 11 separately)
         else:
-            print("invalid")
+            print("ERROR: rank card | invalid card")
             return 0  # Invalid card
         
     def evaluate_hand(self, hand):
@@ -1355,11 +1354,11 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
     
     # Cartes initiales du joueur
-    embed.add_field(name="Vous", value="".join([card_to_emoji(Card.int_to_str(card)) for card in player_cards]) + "\n" + f"{blackjack_sessions[user_id].evaluate_hand(player_cards)}")
+    embed.add_field(name="Vous", value="".join([card_to_emoji(Card.int_to_str(card)) for card in player_cards]))
     # Cartes initiales du croupier
-    embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(dealer_cards[0]))} {card_back} \n {blackjack_sessions[user_id].evaluate_hand(dealer_cards)}")
-    # embed.add_field(name="", value=f"{blackjack_sessions[user_id].evaluate_hand(player_cards)}")
-    # embed.add_field(name="", value=f"{blackjack_sessions[user_id].evaluate_hand(dealer_cards)}")
+    embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(dealer_cards[0]))} {card_back}")
+    embed.add_field(name=" ", value=f"{blackjack_sessions[user_id].evaluate_hand(player_cards)}")
+    embed.add_field(name=" ", value=f"{blackjack_sessions[user_id].evaluate_hand(dealer_cards)}")
 
     await interaction.response.send_message(embed=embed, view=view)
 
