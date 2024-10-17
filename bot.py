@@ -1316,10 +1316,10 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     global blackjack_sessions
 
     # Verifier si le joueur ne joue pas deja
-    if user_id in blackjack_players:
+    """ if user_id in blackjack_players:
         embed = discord.Embed(title="Erreur", description=f"Vous jouez deja une partie de Black Jack", color=color_red)
         await interaction.response.send_message(embed=embed, ephemeral=True)
-        return
+        return """
 
     # Verifier si la mise est inferieure a la mise minimale
     if amount < min_b_bet:
