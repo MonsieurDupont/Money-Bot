@@ -1267,8 +1267,7 @@ class BlackJackSession:
         for i in range(amount):
             cards = self.deck.draw(1)
             cards.extend(cards)
-        return cards 
-    
+        return cards
     
     # Evaluer les mains
     def evaluate(self, hand):
