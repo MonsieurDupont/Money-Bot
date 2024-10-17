@@ -1277,6 +1277,7 @@ class BlackJackSession:
         aces = 0
         for card in hand:
             rank = Card.get_rank_int(card)
+            print(rank)
             if rank >= 10:  # 10, J, Q, K all count as 10
                 value += 10
             elif rank == 1:  # Ace can be 11 or 1
