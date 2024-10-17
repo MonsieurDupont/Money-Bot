@@ -1259,6 +1259,8 @@ class BlackJackSession:
     def __init__(self):
         super().__init__()
         self.deck = Deck()
+        self.player_hand = []  
+        self.dealer_hand = []
 
     # Distribuer les cartes
     def deal(self, amount):
@@ -1267,27 +1269,6 @@ class BlackJackSession:
             cards = self.deck.draw(1)
             cards.extend(cards)
         return cards
-    
-    # Evaluer les mains
-    def evaluate(self, hand):
-        value = 0
-        aces = 0
-        for card in hand:
-            rank = Card.get_bitrank_int(card)
-            if rank >= 10:  # 10, J, Q, K
-                value += 10
-            elif rank == 1:  # Ace
-                aces += 1
-                value += 11  # Count Ace as 11 initially
-            else:
-                value += rank  # Add the card's rank value
-
-        # Adjust for Aces if value exceeds 21
-        while value > 21 and aces:
-            value -= 10  # Treat one Ace as 1 instead of 11
-            aces -= 1
-
-        return value
     
 blackjack_sessions = {}
 blackjack_players = []  
@@ -1324,19 +1305,21 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     # Creer une nouvelle session de blackjack
     blackjack_sessions[user_id] = BlackJackSession()
 
-    # Tirer les cartes initiales
-    player_cards = blackjack_sessions[user_id].deal(2)
-    dealer_cards = blackjack_sessions[user_id].deal(2)
+    # Obtenir les cartes pour l'affichage
+    player_cards = blackjack_sessions[user_id].player_hand
+    dealer_cards = blackjack_sessions[user_id].dealer_hand
+
+    # Tirer les cartes initiales pour le joueur et le croupier
+    blackjack_sessions[user_id].deal(blackjack_sessions[user_id].player_hand, 2)  # Player's initial cards
+    blackjack_sessions[user_id].deal(blackjack_sessions[user_id].dealer_hand, 1)
+
     result = ""
     view = BlackJackView()
     embed = discord.Embed(title="", description=f"", color=color_blue)
     embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
-    # embed.add_field(name=result, value="")
-    print(player_cards)
-    embed.add_field(name="Vous", value=f"".join([card_to_emoji(Card.int_to_str(card[0])) for card in player_cards]))
-    # embed.add_field(name=f"", value=f"{blackjack_sessions[user_id].evaluate(player_cards)}")
-    embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(dealer_cards[0][0]))} {card_back}")
-    # embed.add_field(name=f"", value=f"{blackjack_sessions[user_id].evaluate(dealer_cards[0][0])}")
+
+    embed.add_field(name="Vous", value=f"".join([card_to_emoji(Card.int_to_str(card)) for card in player_cards]))
+    embed.add_field(name="Croupier", value=f"".join([card_to_emoji(Card.int_to_str(card)) for card in dealer_cards]))
 
     await interaction.response.send_message(embed=embed, view=view)
 
