@@ -1263,12 +1263,12 @@ class BlackJackSession:
         self.dealer_hand = []
 
     # Distribuer les cartes
-    def deal(self, amount):
-        cards = []
+    def deal(self, hand, amount):
+        
         for i in range(amount):
             cards = self.deck.draw(1)
-            cards.extend(cards)
-        return cards
+            hand.extend(cards)
+        return hand
     
 blackjack_sessions = {}
 blackjack_players = []  
