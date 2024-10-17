@@ -1292,9 +1292,10 @@ class BlackJackSession:
         aces = 0  # Count of Aces in hand
 
         for card in hand:
-            card_value = self.rank_card(Card.int_to_str(card))
+            strcard = Card.int_to_str(card)
+            card_value = self.rank_card(strcard)
             total_value += card_value
-            if card.endswith('A'):
+            if strcard.endswith('A'):
                 aces += 1  # Count Aces for adjustment later
 
     # Adjust for Aces if total exceeds 21
