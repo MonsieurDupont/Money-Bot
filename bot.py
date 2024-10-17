@@ -39,7 +39,7 @@ DATABASE = os.getenv("DATABASE")
 GUILD_ID = os.getenv("GUILD_ID")
 APPLICATION_ID = os.getenv("APPLICATION_ID")
 CoinEmoji = "<:AploucheCoin:1286080674046152724>"
-card_back = "<:cardback:1296604945121804318>"
+card_back = "<:cardback:1296606466920284234>"
 
 min_work_pay = commandsconfig.getint('Constants', 'min_pay')
 max_work_pay = commandsconfig.getint('Constants', 'max_pay')
