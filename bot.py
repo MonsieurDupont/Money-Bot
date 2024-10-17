@@ -1275,7 +1275,7 @@ class BlackJackSession:
     def rank_card(self, card):
     # Extract the rank from the card name (the first character(s))
         rank_str = card[:-1]  # Exclude the suit (last character)
-
+        print(rank_str)
         if rank_str.isdigit():  # For ranks 2 to 9
             return int(rank_str)
         elif rank_str == 't':  # For the 10 card
