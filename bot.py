@@ -962,7 +962,6 @@ async def work(interaction: discord.Interaction):
     embed = discord.Embed(title=(f"{interaction.user.display_name}"), description=random_phrase.format(pay=pay) + CoinEmoji, color=color_green)
     await interaction.response.send_message(embed=embed)
 
-
 # GAMES
 
 # Convertir une carte en emoji
@@ -1122,8 +1121,6 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
     embed = discord.Embed(title="Résultat de la roulette", description=f"Le numéro gagnant est {winning_number} {winning_color}. Vous avez {'gagné' if winnings > 0 else 'perdu'} {abs(winnings)} {CoinEmoji}.", color=color_green if winnings > 0 else color_red)
     await interaction.response.send_message(embed=embed)
 
-
-
 class PokerPlayerClass:
     def __init__(self, id):
         self.id = id
@@ -1131,6 +1128,7 @@ class PokerPlayerClass:
 
     def set_deck(self, cards):
         self.deck = cards
+        
 class PokerSessionClass:
     def __init__(self, host_user, game_started=False): # Variables
         self.players = []
@@ -1256,6 +1254,7 @@ class BlackJackView(discord.ui.View):
     async def stand(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.value = False
         self.stop()
+        
 class BlackJackSession:
     def __init__(self):
         super().__init__()
@@ -1339,7 +1338,6 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(dealer_cards[0][0]))} {card_back}")
     # embed.add_field(name=f"", value=f"{blackjack_sessions[user_id].evaluate(dealer_cards[0][0])}")
 
-    
     await interaction.response.send_message(embed=embed, view=view)
 
 if __name__ == "__main__":
