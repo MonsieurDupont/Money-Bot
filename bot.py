@@ -1285,6 +1285,7 @@ class BlackJackSession:
         elif rank_str == 'a':
             return 1  # Ace is worth 1 (you can handle 11 separately)
         else:
+            print("invalid")
             return 0  # Invalid card
         
     def evaluate_hand(self, hand):
