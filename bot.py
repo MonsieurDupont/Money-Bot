@@ -1270,6 +1270,27 @@ class BlackJackSession:
             cards = self.deck.draw(1)
             hand.extend(cards)
         return hand
+
+    # Evaluer une main
+    def evaluate_hand(self, hand):
+        value = 0
+        aces = 0
+        for card in hand:
+            rank = Card.get_rank_int(card)
+            if rank >= 10:  # 10, J, Q, K all count as 10
+                value += 10
+            elif rank == 1:  # Ace can be 11 or 1
+                aces += 1
+                value += 11
+            else:
+                value += rank  # Add the card's rank value
+
+        # Adjust for Aces if value exceeds 21
+        while value > 21 and aces:
+            value -= 10  # Treat one Ace as 1 instead of 11
+            aces -= 1
+
+        return value
     
 blackjack_sessions = {}
 blackjack_players = []  
@@ -1318,9 +1339,10 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     view = BlackJackView()
     embed = discord.Embed(title="", description=f"", color=color_blue)
     embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
-
+    
     # Cartes initiales du joueur
     embed.add_field(name="Vous", value=f"".join([card_to_emoji(Card.int_to_str(card)) for card in player_cards]))
+    embed.add_field(name="", value=f"{blackjack_sessions[user_id].evaluate_hand(player_cards)}")
     # Cartes initiales du croupier
     embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(dealer_cards[0]))} {card_back}")
 
