@@ -1287,7 +1287,7 @@ class BlackJackSession:
                 value += rank  # Add the card's rank value
 
         # Adjust for Aces if value exceeds 21
-        while value > 21 and aces:
+        while value > 21 and aces > 0:
             value -= 10  # Treat one Ace as 1 instead of 11
             aces -= 1
 
