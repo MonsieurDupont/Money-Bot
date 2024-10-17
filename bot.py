@@ -1261,6 +1261,7 @@ class BlackJackSession:
         self.deck = Deck()
         self.player_hand = []  
         self.dealer_hand = []
+        self.dealer_revealed = False
 
     # Distribuer les cartes
     def deal(self, hand, amount):
@@ -1318,10 +1319,15 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     embed = discord.Embed(title="", description=f"", color=color_blue)
     embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
 
+    # Cartes initiales du joueur
     embed.add_field(name="Vous", value=f"".join([card_to_emoji(Card.int_to_str(card)) for card in player_cards]))
-    embed.add_field(name="Croupier", value=f"".join([card_to_emoji(Card.int_to_str(card)) for card in dealer_cards]))
+    # Cartes initiales du croupier
+    embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(dealer_cards[0]))} {card_back}")
 
     await interaction.response.send_message(embed=embed, view=view)
+
+
+
 
 if __name__ == "__main__":
     bot.run(TOKEN)
