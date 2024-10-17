@@ -1272,26 +1272,37 @@ class BlackJackSession:
         return hand
 
     # Evaluer une main
-    def evaluate_hand(self, hand):
-        value = 0
-        aces = 0
-        for card in hand:
-            rank = Card.get_rank_int(card)
-            print(f"{Card.int_to_str(card)} | {Card.get_rank_int(card)}")
-            if rank >= 10:  # 10, J, Q, K all count as 10
-                value += 10
-            elif rank == 1:  # Ace can be 11 or 1
-                aces += 1
-                value += 11
-            else:
-                value += rank  # Add the card's rank value
+    def rank_card(self, card):
+    # Extract the rank from the card name (the first character(s))
+        rank_str = card[:-1]  # Exclude the suit (last character)
 
-        # Adjust for Aces if value exceeds 21
-        while value > 21 and aces > 0:
-            value -= 10  # Treat one Ace as 1 instead of 11
+        if rank_str.isdigit():  # For ranks 2 to 9
+            return int(rank_str)
+        elif rank_str == 't':  # For the 10 card
+            return 10
+        elif rank_str == 'j' or rank_str == 'q' or rank_str == 'k':
+            return 10  # Face cards are worth 10
+        elif rank_str == 'a':
+            return 1  # Ace is worth 1 (you can handle 11 separately)
+        else:
+            return 0  # Invalid card
+        
+    def evaluate_hand(self, hand):
+        total_value = 0
+        aces = 0  # Count of Aces in hand
+
+        for card in hand:
+            card_value = self.rank_card(card)
+            total_value += card_value
+            if card.endswith('A'):
+                aces += 1  # Count Aces for adjustment later
+
+    # Adjust for Aces if total exceeds 21
+        while total_value > 21 and aces > 0:
+            total_value -= 10  # Count one Ace as 1 instead of 11
             aces -= 1
 
-        return value
+        return total_value
     
 blackjack_sessions = {}
 blackjack_players = []  
