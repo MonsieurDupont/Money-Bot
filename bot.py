@@ -1274,13 +1274,13 @@ class BlackJackSession:
     # Evaluer une main
     def rank_card(self, card):
     # Extract the rank from the card name (the first character(s))
-        rank_str = card[:-1]  # Exclude the suit (last character)
+        rank_str = card[:-1].lower()  # Exclude the suit (last character)
         print(rank_str)
         if rank_str.isdigit():  # For ranks 2 to 9
             return int(rank_str)
         elif rank_str == 't':  # For the 10 card
             return 10
-        elif rank_str == 'j' or rank_str == 'q' or rank_str == 'k':
+        elif rank_str in ['j', 'q', 'k']:
             return 10  # Face cards are worth 10
         elif rank_str == 'a':
             return 1  # Ace is worth 1 (you can handle 11 separately)
