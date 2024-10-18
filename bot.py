@@ -12,6 +12,7 @@ import configparser
 from dotenv import load_dotenv
 from discord.ext import commands
 from discord import app_commands
+from discord.ui import Select, View
 from treys import Card, Evaluator, Deck
 from typing import Literal
 from datetime import datetime
@@ -1021,6 +1022,34 @@ def get_payout(bet):
 
     return payout_map.get(bet, 0)  # Retourne 0 si le type de pari n'est pas reconnu
 
+# Menu déroulant pour les types de mises
+class BetTypeView(View):
+    def __init__(self):
+        super().__init__()
+        self.bet_type = None
+
+    @discord.ui.select(
+        placeholder="Choisissez votre type de pari",
+        options=[
+            discord.SelectOption(label="Rouge", value="rouge"),
+            discord.SelectOption(label="Noir", value="noir"),
+            discord.SelectOption(label="Pair", value="pair"),
+            discord.SelectOption(label="Impair", value="impair"),
+            discord.SelectOption(label="1-18", value="1-18"),
+            discord.SelectOption(label="19-36", value="19-36"),
+            discord.SelectOption(label="Douzaine 1-12", value="douzaine 1-12"),
+            discord.SelectOption(label="Douzaine 13-24", value="douzaine 13-24"),
+            discord.SelectOption(label="Douzaine 25-36", value="douzaine 25-36"),
+            discord.SelectOption(label="Colonne 1", value="colonne 1"),
+            discord.SelectOption(label="Colonne 2", value="colonne 2"),
+            discord.SelectOption(label="Colonne 3", value="colonne 3"),
+            discord.SelectOption(label="Numéro spécifique", value="numero")
+        ]
+    )
+    async def select_callback(self, interaction: discord.Interaction, select: Select):
+        self.bet_type = select.values[0]
+        self.stop()
+
 # Commande pour jouer à la roulette
 @bot.tree.command(name="roulette", description="Jouer à la roulette")
 @app_commands.describe(amount="Montant à miser", bet="Type de mise (par exemple: 'rouge', 'noir', 'pair', 'impair', '1', '2', ...)")
@@ -1052,6 +1081,31 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
         embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez d'argent pour ce pari. Votre solde actuel est de {cash} {COIN_EMOJI}.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
+
+    view = BetTypeView()
+    embed = discord.Embed(title="Roulette", description="Choisissez votre type de pari", color=color_blue)
+    await interaction.response.send_message(embed=embed, view=view)
+    
+    await view.wait()
+    
+    if view.bet_type is None:
+        await interaction.followup.send("Temps écoulé ou sélection annulée.", ephemeral=True)
+        return
+
+    bet = view.bet_type
+    
+    if bet == "numero":
+        await interaction.followup.send("Veuillez entrer un numéro entre 0 et 36:", ephemeral=True)
+        
+        def check(m):
+            return m.author.id == interaction.user.id and m.channel.id == interaction.channel.id and m.content.isdigit() and 0 <= int(m.content) <= 36
+
+        try:
+            msg = await bot.wait_for('message', check=check, timeout=30.0)
+            bet = msg.content
+        except asyncio.TimeoutError:
+            await interaction.followup.send("Temps écoulé. Pari annulé.", ephemeral=True)
+            return
 
     winning_conditions = {
         "rouge": lambda x: x in [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36],
@@ -1122,8 +1176,8 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
 
     # Envoyer le résultat
     if winning_conditions[bet](winning_number):
-        winnings = amount * payout - amount  # Calculer les gains nets
-        embed = discord.Embed(title="🎉 Victoire à la Roulette ! 🎉", color=color_green)
+        winnings = amount * payout - amount
+        embed = discord.Embed(title="🎉 Victoire à la Roulette ! 🎉", color=color_green )
         embed.description = f"**Félicitations, {interaction.user.display_name} !** Votre pari a porté ses fruits !"
         embed.add_field(name="Votre pari", value=f"{bet.capitalize()} : {amount} {COIN_EMOJI}", inline=True)
         embed.add_field(name="Multiplicateur", value=f"x{payout}", inline=True)
@@ -1138,7 +1192,7 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
     embed.add_field(name="Nouveau solde", value=f"**{new_balance}** {COIN_EMOJI}", inline=False)
     embed.set_footer(text="Bonne chance pour votre prochain pari !")
 
-    await interaction.response.send_message(embed=embed)
+    await interaction.followup.send(embed=embed)
 
 
 # POKER
