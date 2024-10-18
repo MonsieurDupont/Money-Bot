@@ -1868,7 +1868,7 @@ class BlackJackSession:
         self.dealer_revealed = False
 
     # End session
-    def end_game(user_id):
+    def end_game(self, user_id):
         del blackjack_sessions[user_id]
         
         
