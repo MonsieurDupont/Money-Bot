@@ -1002,22 +1002,22 @@ def card_to_name(card):
 # Utilisation des constantes de payout
 def get_payout(bet):
     payout_map = {
-        "rouge": PAYOUT_ROUGE,
-        "noir": PAYOUT_NOIR,
-        "pair": PAYOUT_PAIR,
-        "impair": PAYOUT_IMPAIR,
-        "1-18": PAYOUT_1_18,
-        "19-36": PAYOUT_19_36,
-        "douzaine 1-12": PAYOUT_DOUZAINE,
-        "douzaine 13-24": PAYOUT_DOUZAINE,
-        "douzaine 25-36": PAYOUT_DOUZAINE,
-        "colonne 1": PAYOUT_COLONNE,
-        "colonne 2": PAYOUT_COLONNE,
-        "colonne 3": PAYOUT_COLONNE,
+        "rouge": ROULETTE_PAYOUT_ROUGE,
+        "noir": ROULETTE_PAYOUT_NOIR,
+        "pair": ROULETTE_PAYOUT_PAIR,
+        "impair": ROULETTE_PAYOUT_IMPAIR,
+        "1-18": ROULETTE_PAYOUT_1_18,
+        "19-36": ROULETTE_PAYOUT_19_36,
+        "douzaine 1-12": ROULETTE_PAYOUT_DOUZAINE,
+        "douzaine 13-24": ROULETTE_PAYOUT_DOUZAINE,
+        "douzaine 25-36": ROULETTE_PAYOUT_DOUZAINE,
+        "colonne 1": ROULETTE_PAYOUT_COLONNE,
+        "colonne 2": ROULETTE_PAYOUT_COLONNE,
+        "colonne 3": ROULETTE_PAYOUT_COLONNE,
     }
     
     if bet.isdigit():  # Si le pari est un numéro spécifique
-        return PAYOUT_NUMERO
+        return ROULETTE_PAYOUT_NUMERO
 
     return payout_map.get(bet, 0)  # Retourne 0 si le type de pari n'est pas reconnu
 
