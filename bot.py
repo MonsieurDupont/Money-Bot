@@ -1266,9 +1266,9 @@ class AmountInputModal(discord.ui.Modal, title="Entrer le montant du pari"):
         except Exception as e:
             await handle_error(interaction, e, "Une erreur est survenue lors du placement du pari.")
 
-class NumberBetModal(discord.ui.Modal):
+class NumberBetModal(discord.ui.Modal, title="Choisissez un numéro"):
     def __init__(self, game: RouletteGame):
-        super().__init__("Choisissez un numéro")
+        super().__init__()
         self.game = game
         self.number = None
 
@@ -1289,7 +1289,7 @@ class NumberBetModal(discord.ui.Modal):
             await interaction.response.send_message("Veuillez entrer un numéro valide.", ephemeral=True)
             return
 
-        modal = AmountInputModal(self.game, "number", self.number)
+        modal = AmountInputModal(self.game, "number", str(self.number))
         await interaction.response.send_modal(modal)
 
 class ColorBetModal(discord.ui.Modal, title="Pari sur une couleur"):
