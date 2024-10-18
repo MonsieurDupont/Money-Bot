@@ -1820,7 +1820,7 @@ class BlackJackView(discord.ui.View):
             embed.add_field(name="Résultat", value="Vous avez dépassé 21! Perdu!")
             # self.disable_all_items()  # Disable buttons
         await interaction.response.edit_message(embed=embed, view=self)
-        self.session.end_game(interaction.user.id)
+        self.session.end_game()
 
     @discord.ui.button(label="Stand", style=discord.ButtonStyle.gray)
     async def stand(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -1856,7 +1856,7 @@ class BlackJackView(discord.ui.View):
         # Disable buttons after standing
         # self.disable_all_items()
         await interaction.response.edit_message(embed=embed, view=self)
-        self.session.end_game(interaction.user.id)
+        self.session.end_game()
 
 class BlackJackSession:
     def __init__(self):
