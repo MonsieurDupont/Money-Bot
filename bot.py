@@ -1264,7 +1264,7 @@ class Roulette(commands.Cog):
 
         await interaction.response.send_message(embed=embed)
 
-    @commands.slash_command(name="roulette_start", description="Démarrer la partie de roulette")
+    @bot.tree.slash_command(name="roulette_start", description="Démarrer la partie de roulette")
     async def roulette_start(self, interaction: Interaction):
         user_id = interaction.user.id
 
