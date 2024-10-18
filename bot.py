@@ -12,7 +12,7 @@ import configparser
 from dotenv import load_dotenv
 from discord.ext import commands
 from discord import app_commands
-from discord.ui import Select, View
+from discord.ui import Select, View, Button
 from treys import Card, Evaluator, Deck
 from typing import Literal
 from datetime import datetime
@@ -1027,27 +1027,36 @@ class BetTypeView(View):
     def __init__(self):
         super().__init__()
         self.bet_type = None
+        self.add_item(self.create_select_menu())
 
-    @discord.ui.select(
-        placeholder="Choisissez votre type de pari",
-        options=[
-            discord.SelectOption(label="Rouge", value="rouge"),
-            discord.SelectOption(label="Noir", value="noir"),
-            discord.SelectOption(label="Pair", value="pair"),
-            discord.SelectOption(label="Impair", value="impair"),
-            discord.SelectOption(label="1-18", value="1-18"),
-            discord.SelectOption(label="19-36", value="19-36"),
-            discord.SelectOption(label="Douzaine 1-12", value="douzaine 1-12"),
-            discord.SelectOption(label="Douzaine 13-24", value="douzaine 13-24"),
-            discord.SelectOption(label="Douzaine 25-36", value="douzaine 25-36"),
-            discord.SelectOption(label="Colonne 1", value="colonne 1"),
-            discord.SelectOption(label="Colonne 2", value="colonne 2"),
-            discord.SelectOption(label="Colonne 3", value="colonne 3"),
-            discord.SelectOption(label="Numéro spécifique", value="numero")
+    def create_select_menu(self):
+        options = [
+            discord.SelectOption(label="Rouge", value="rouge", emoji="🔴", description="Mise sur les numéros rouges"),
+            discord.SelectOption(label="Noir", value="noir", emoji="⚫", description="Mise sur les numéros noirs"),
+            discord.SelectOption(label="Pair", value="pair", emoji="2️⃣", description="Mise sur les numéros pairs"),
+            discord.SelectOption(label="Impair", value="impair", emoji="1️⃣", description="Mise sur les numéros impairs"),
+            discord.SelectOption(label="1-18", value="1-18", emoji="⬇️", description="Mise sur les numéros de 1 à 18"),
+            discord.SelectOption(label="19-36", value="19-36", emoji="⬆️", description="Mise sur les numéros de 19 à 36"),
+            discord.SelectOption(label="Douzaine 1-12", value="douzaine 1-12", emoji="1️⃣", description="Mise sur la première douzaine"),
+            discord.SelectOption(label="Douzaine 13-24", value="douzaine 13-24", emoji="2️⃣", description="Mise sur la deuxième douzaine"),
+            discord.SelectOption(label="Douzaine 25-36", value="douzaine 25-36", emoji="3️⃣", description="Mise sur la troisième douzaine"),
+            discord.SelectOption(label="Colonne 1", value="colonne 1", emoji="🏛️", description="Mise sur la première colonne"),
+            discord.SelectOption(label="Colonne 2", value="colonne 2", emoji="🏛️", description="Mise sur la deuxième colonne"),
+            discord.SelectOption(label="Colonne 3", value="colonne 3", emoji="🏛️", description="Mise sur la troisième colonne"),
+            discord.SelectOption(label="Numéro spécifique", value="numero", emoji="🔢", description="Mise sur un numéro spécifique")
         ]
-    )
+        return Select(placeholder="Choisissez votre type de pari", options=options, custom_id="bet_type")
+
+    @discord.ui.select(custom_id="bet_type")
     async def select_callback(self, interaction: discord.Interaction, select: Select):
         self.bet_type = select.values[0]
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="Annuler", style=discord.ButtonStyle.red)
+    async def cancel(self, interaction: discord.Interaction, button: Button):
+        self.bet_type = "cancel"
+        await interaction.response.defer()
         self.stop()
 
 # Commande pour jouer à la roulette
@@ -1082,8 +1091,10 @@ async def roulette(interaction: discord.Interaction, amount: int):
         await interaction.response.send_message(embed=embed)
         return
 
+    # Menu déroulant pour les types de mises
     view = BetTypeView()
-    embed = discord.Embed(title="Roulette", description="Choisissez votre type de pari", color=color_blue)
+    embed = discord.Embed(title="🎰 Roulette", description="Choisissez votre type de pari", color=color_blue)
+    embed.add_field(name="Mise", value=f"{amount} {COIN_EMOJI}", inline=False)
     await interaction.response.send_message(embed=embed, view=view)
     
     await view.wait()
@@ -1094,6 +1105,10 @@ async def roulette(interaction: discord.Interaction, amount: int):
 
     bet = view.bet_type
     
+    if bet == "cancel":
+        await interaction.followup.send("Pari annulé.", ephemeral=True)
+        return
+
     if bet == "numero":
         await interaction.followup.send("Veuillez entrer un numéro entre 0 et 36:", ephemeral=True)
         
@@ -1107,6 +1122,7 @@ async def roulette(interaction: discord.Interaction, amount: int):
             await interaction.followup.send("Temps écoulé. Pari annulé.", ephemeral=True)
             return
 
+    # Conditions de victoire
     winning_conditions = {
         "rouge": lambda x: x in [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36],
         "noir": lambda x: x in [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35],
