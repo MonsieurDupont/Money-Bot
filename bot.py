@@ -1867,10 +1867,9 @@ class BlackJackSession:
 
     # End session
     def end_game(user_id):
-        if user_id in blackjack_sessions:
-            del blackjack_sessions[user_id]
-            print("o")
-        print("n")
+        del blackjack_sessions[user_id]
+        
+        
 
     # Deal cards to the hand
     def deal(self, hand, amount):
