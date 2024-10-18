@@ -1124,13 +1124,13 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
     if winning_conditions[bet](winning_number):
         winnings = amount * payout - amount  # Calculer les gains nets
         embed = discord.Embed(title="🎉 Victoire à la Roulette ! 🎉", color=color_green)
-        embed.description = f"**Félicitations, {interaction.user.name} !** Votre pari a porté ses fruits !"
+        embed.description = f"**Félicitations, {interaction.user.display_name} !** Votre pari a porté ses fruits !"
         embed.add_field(name="Votre pari", value=f"{bet.capitalize()} : {amount} {COIN_EMOJI}", inline=True)
         embed.add_field(name="Multiplicateur", value=f"x{payout}", inline=True)
         embed.add_field(name="Gains nets", value=f"**+{winnings}** {COIN_EMOJI}", inline=True)
     else:
         embed = discord.Embed(title="😔 Défaite à la Roulette", color=color_red)
-        embed.description = f"Désolé, {interaction.user.name}. La chance n'était pas de votre côté cette fois-ci."
+        embed.description = f"Désolé, {interaction.user.display_name}. La chance n'était pas de votre côté cette fois-ci."
         embed.add_field(name="Votre pari", value=f"{bet.capitalize()} : {amount} {COIN_EMOJI}", inline=True)
         embed.add_field(name="Pertes", value=f"**-{amount}** {COIN_EMOJI}", inline=True)
 
