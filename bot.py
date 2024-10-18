@@ -14,6 +14,7 @@ from discord.ext import commands
 from treys import Card, Deck
 from datetime import datetime
 from typing import List, Dict
+from discord.ui import TextInput, Select
 
 # Chargement des variables d'environnement
 load_dotenv()
@@ -1235,16 +1236,22 @@ class ColorBetModal(discord.ui.Modal, title="Pari sur une couleur"):
     def __init__(self, game: RouletteGame):
         super().__init__()
         self.game = game
+        self.color = discord.ui.Select(
+            placeholder="Choisissez une couleur",
+            options=[
+                discord.SelectOption(label="Rouge", value="red"),
+                discord.SelectOption(label="Noir", value="black"),
+                discord.SelectOption(label="Vert", value="green")
+            ]
+        )
+        self.add_item(self.color)
 
-    color = discord.ui.TextInput(label="Couleur (red, black, green)", min_length=3, max_length=5)
     amount = discord.ui.TextInput(label=f"Montant ({ROULETTE_MIN_BET}-{ROULETTE_MAX_BET})", min_length=1, max_length=6)
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
-            color = self.color.value.lower()
+            color = self.color.values[0]
             amount = int(self.amount.value)
-            if color not in ["red", "black", "green"]:
-                raise ValueError("La couleur doit être red, black ou green.")
             if amount < ROULETTE_MIN_BET or amount > ROULETTE_MAX_BET:
                 raise ValueError(f"La mise doit être entre {ROULETTE_MIN_BET} et {ROULETTE_MAX_BET}.")
             await self.game.place_bet(interaction, amount, "color", color)
@@ -1257,16 +1264,21 @@ class EvenOddBetModal(discord.ui.Modal, title="Pari Pair/Impair"):
     def __init__(self, game: RouletteGame):
         super().__init__()
         self.game = game
+        self.choice = discord.ui.Select(
+            placeholder="Choisissez pair ou impair",
+            options=[
+                discord.SelectOption(label="Pair", value="pair"),
+                discord.SelectOption(label="Impair", value="impair")
+            ]
+        )
+        self.add_item(self.choice)
 
-    choice = discord.ui.TextInput(label="Choix (pair ou impair)", min_length=4, max_length=6)
     amount = discord.ui.TextInput(label=f"Montant ({ROULETTE_MIN_BET}-{ROULETTE_MAX_BET})", min_length=1, max_length=6)
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
-            choice = self.choice.value.lower()
+            choice = self.choice.values[0]
             amount = int(self.amount.value)
-            if choice not in ["pair", "impair"]:
-                raise ValueError("Le choix doit être 'pair' ou 'impair'.")
             if amount < ROULETTE_MIN_BET or amount > ROULETTE_MAX_BET:
                 raise ValueError(f"La mise doit être entre {ROULETTE_MIN_BET} et {ROULETTE_MAX_BET}.")
             await self.game.place_bet(interaction, amount, "even_odd", choice)
@@ -1279,16 +1291,22 @@ class DozenBetModal(discord.ui.Modal, title="Pari Douzaine"):
     def __init__(self, game: RouletteGame):
         super().__init__()
         self.game = game
+        self.choice = discord.ui.Select(
+            placeholder="Choisissez une douzaine",
+            options=[
+                discord.SelectOption(label="1-12", value="1-12"),
+                discord.SelectOption(label="13-24", value="13-24"),
+                discord.SelectOption(label="25-36", value="25-36")
+            ]
+        )
+        self.add_item(self.choice)
 
-    choice = discord.ui.TextInput(label="Choix (1-12, 13-24, 25-36)", min_length=4, max_length=5)
     amount = discord.ui.TextInput(label=f"Montant ({ROULETTE_MIN_BET}-{ROULETTE_MAX_BET})", min_length=1, max_length=6)
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
-            choice = self.choice.value
+            choice = self.choice.values[0]
             amount = int(self.amount.value)
-            if choice not in ["1-12", "13-24", "25-36"]:
-                raise ValueError("Le choix doit être '1-12', '13-24', ou '25-36'.")
             if amount < ROULETTE_MIN_BET or amount > ROULETTE_MAX_BET:
                 raise ValueError(f"La mise doit être entre {ROULETTE_MIN_BET} et {ROULETTE_MAX_BET}.")
             await self.game.place_bet(interaction, amount, "dozen", choice)
@@ -1301,16 +1319,22 @@ class ColumnBetModal(discord.ui.Modal, title="Pari Colonne"):
     def __init__(self, game: RouletteGame):
         super().__init__()
         self.game = game
+        self.choice = discord.ui.Select(
+            placeholder="Choisissez une colonne",
+            options=[
+                discord.SelectOption(label="Première colonne", value="1"),
+                discord.SelectOption(label="Deuxième colonne", value="2"),
+                discord.SelectOption(label="Troisième colonne", value="3")
+            ]
+        )
+        self.add_item(self.choice)
 
-    choice = discord.ui.TextInput(label="Choix (1, 2, 3)", min_length=1, max_length=1)
     amount = discord.ui.TextInput(label=f"Montant ({ROULETTE_MIN_BET}-{ROULETTE_MAX_BET})", min_length=1, max_length=6)
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
-            choice = self.choice.value
+            choice = self.choice.values[0]
             amount = int(self.amount.value)
-            if choice not in ["1", "2", "3"]:
-                raise ValueError("Le choix doit être '1', '2', ou '3'.")
             if amount < ROULETTE_MIN_BET or amount > ROULETTE_MAX_BET:
                 raise ValueError(f"La mise doit être entre {ROULETTE_MIN_BET} et {ROULETTE_MAX_BET}.")
             await self.game.place_bet(interaction, amount, "column", choice)
