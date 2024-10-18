@@ -1209,7 +1209,8 @@ class RouletteView(discord.ui.View):
             except discord.NotFound:
                 pass  # Message already deleted, ignore
 
-        self.last_message = await interaction.response.send_message(content, view=view, ephemeral=True)
+        await interaction.response.defer()
+        self.last_message = await interaction.followup.send(content, view=view, ephemeral=True)
 
     @discord.ui.button(label="Numéro", style=discord.ButtonStyle.red)
     async def number_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -1217,22 +1218,22 @@ class RouletteView(discord.ui.View):
 
     @discord.ui.button(label="Couleur", style=discord.ButtonStyle.blurple)
     async def color_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        view = ColorBetView(self.game)
+        view = ColorBetView(self.game, self)
         await self.send_bet_view(interaction, view, "Choisissez une couleur :")
 
     @discord.ui.button(label="Pair/Impair", style=discord.ButtonStyle.green)
     async def even_odd_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        view = EvenOddBetView(self.game)
+        view = EvenOddBetView(self.game, self)
         await self.send_bet_view(interaction, view, "Choisissez Pair ou Impair :")
 
     @discord.ui.button(label="Douzaine", style=discord.ButtonStyle.grey)
     async def dozen_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        view = DozenBetView(self.game)
+        view = DozenBetView(self.game, self)
         await self.send_bet_view(interaction, view, "Choisissez une douzaine :")
 
     @discord.ui.button(label="Colonne", style=discord.ButtonStyle.primary)
     async def column_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        view = ColumnBetView(self.game)
+        view = ColumnBetView(self.game, self)
         await self.send_bet_view(interaction, view, "Choisissez une colonne :")
 
     @discord.ui.button(label="Voir les paris", style=discord.ButtonStyle.secondary)
@@ -1265,25 +1266,39 @@ class AmountInputModal(discord.ui.Modal, title="Entrer le montant du pari"):
         except Exception as e:
             await handle_error(interaction, e, "Une erreur est survenue lors du placement du pari.")
 
-class NumberBetModal(discord.ui.Modal, title="Pari sur un numéro"):
+class NumberBetModal(discord.ui.Modal, title="Placer un pari sur un numéro"):
     def __init__(self, game: RouletteGame):
         super().__init__()
         self.game = game
 
-    number = discord.ui.TextInput(label="Numéro (0-36)", min_length=1, max_length=2)
-    amount = discord.ui.TextInput(label=f"Montant ({ROULETTE_MIN_BET}-{ROULETTE_MAX_BET})", min_length=1, max_length=6)
+    number_input = discord.ui.TextInput(
+        label="Numéro",
+        placeholder="Entrez un numéro entre 0 et 36",
+        min_length=1,
+        max_length=2
+    )
+
+    amount_input = discord.ui.TextInput(
+        label=f"Montant ({ROULETTE_MIN_BET}-{ROULETTE_MAX_BET})",
+        placeholder=f"Entrez un montant entre {ROULETTE_MIN_BET} et {ROULETTE_MAX_BET}",
+        min_length=1,
+        max_length=6
+    )
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
-            number = int(self.number.value)
-            amount = int(self.amount.value)
+            number = int(self.number_input.value)
+            amount = int(self.amount_input.value)
+
             if number < 0 or number > 36:
-                raise ValueError("Le numéro doit être entre 0 et 36.")
+                raise ValueError(f"Veuillez entrer un numéro entre 0 et 36.")
+
             if amount < ROULETTE_MIN_BET or amount > ROULETTE_MAX_BET:
                 raise ValueError(f"La mise doit être entre {ROULETTE_MIN_BET} et {ROULETTE_MAX_BET}.")
+
             await self.game.place_bet(interaction, amount, "number", str(number))
         except ValueError as e:
-            await handle_error(interaction, e, "Erreur de saisie.")
+            await interaction.response.send_message(str(e), ephemeral=True)
         except Exception as e:
             await handle_error(interaction, e, "Une erreur est survenue lors du placement du pari.")
 
@@ -1316,9 +1331,10 @@ class ColorBetModal(discord.ui.Modal, title="Pari sur une couleur"):
             await handle_error(interaction, e, "Une erreur est survenue lors du placement du pari.")
 
 class ColorBetView(discord.ui.View):
-    def __init__(self, game: RouletteGame):
+    def __init__(self, game: RouletteGame, parent_view: RouletteView):
         super().__init__()
         self.game = game
+        self.parent_view = parent_view
         self.color = None
 
     @discord.ui.select(
@@ -1341,10 +1357,9 @@ class ColorBetView(discord.ui.View):
 
         modal = AmountInputModal(self.game, "color", self.color)
         await interaction.response.send_modal(modal)
-        self.stop()  # Stop the view after placing the bet
 
-    async def on_timeout(self) -> None:
-        self.stop()  # Stop the view after timeout
+    async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item) -> None:
+        await interaction.response.send_message(f"Erreur : {error}", ephemeral=True)
 
 class EvenOddBetModal(discord.ui.Modal, title="Pari Pair/Impair"):
     def __init__(self, game: RouletteGame):
@@ -1374,9 +1389,10 @@ class EvenOddBetModal(discord.ui.Modal, title="Pari Pair/Impair"):
             await handle_error(interaction, e, "Une erreur est survenue lors du placement du pari.")
 
 class EvenOddBetView(discord.ui.View):
-    def __init__(self, game: RouletteGame):
+    def __init__(self, game: RouletteGame, parent_view: RouletteView):
         super().__init__()
         self.game = game
+        self.parent_view = parent_view
         self.choice = None
 
     @discord.ui.select(
@@ -1398,10 +1414,9 @@ class EvenOddBetView(discord.ui.View):
 
         modal = AmountInputModal(self.game, "even_odd", self.choice)
         await interaction.response.send_modal(modal)
-        self.stop()
 
-    async def on_timeout(self) -> None:
-        self.stop()
+    async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item) -> None:
+        await interaction.response.send_message(f"Erreur : {error}", ephemeral=True)
 
 class DozenBetModal(discord.ui.Modal, title="Pari Douzaine"):
     def __init__(self, game: RouletteGame):
@@ -1432,9 +1447,10 @@ class DozenBetModal(discord.ui.Modal, title="Pari Douzaine"):
             await handle_error(interaction, e, "Une erreur est survenue lors du placement du pari.")
 
 class DozenBetView(discord.ui.View):
-    def __init__(self, game: RouletteGame):
+    def __init__(self, game: RouletteGame, parent_view: RouletteView):
         super().__init__()
         self.game = game
+        self.parent_view = parent_view
         self.choice = None
 
     @discord.ui.select(
@@ -1457,10 +1473,9 @@ class DozenBetView(discord.ui.View):
 
         modal = AmountInputModal(self.game, "dozen", self.choice)
         await interaction.response.send_modal(modal)
-        self.stop()
 
-    async def on_timeout(self) -> None:
-        self.stop()
+    async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item) -> None:
+        await interaction.response.send_message(f"Erreur : {error}", ephemeral=True)
 
 class ColumnBetModal(discord.ui.Modal, title="Pari Colonne"):
     def __init__(self, game: RouletteGame):
@@ -1491,9 +1506,10 @@ class ColumnBetModal(discord.ui.Modal, title="Pari Colonne"):
             await handle_error(interaction, e, "Une erreur est survenue lors du placement du pari.")
 
 class ColumnBetView(discord.ui.View):
-    def __init__(self, game: RouletteGame):
+    def __init__(self, game: RouletteGame, parent_view: RouletteView):
         super().__init__()
         self.game = game
+        self.parent_view = parent_view
         self.choice = None
 
     @discord.ui.select(
@@ -1516,10 +1532,9 @@ class ColumnBetView(discord.ui.View):
 
         modal = AmountInputModal(self.game, "column", self.choice)
         await interaction.response.send_modal(modal)
-        self.stop()
 
-    async def on_timeout(self) -> None:
-        self.stop()
+    async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item) -> None:
+        await interaction.response.send_message(f"Erreur : {error}", ephemeral=True)
 
 
 @bot.tree.command(name="roulette", description="Lancer une nouvelle partie de roulette")
