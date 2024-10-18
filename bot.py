@@ -1186,19 +1186,23 @@ class RouletteView(discord.ui.View):
 
     @discord.ui.button(label="Couleur", style=discord.ButtonStyle.blurple)
     async def color_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(ColorBetModal(self.game))
+        view = ColorBetView(self.game)
+        await interaction.response.send_message("Choisissez une couleur :", view=view)
 
     @discord.ui.button(label="Pair/Impair", style=discord.ButtonStyle.green)
     async def even_odd_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(EvenOddBetModal(self.game))
+        view = EvenOddBetView(self.game)
+        await interaction.response.send_message("Choisissez Pair ou Impair :", view=view)
 
-    @discord.ui.button(label="Douzaine", style=discord.ButtonStyle.gray)
+    @discord.ui.button(label="Douzaine", style=discord.ButtonStyle.grey)
     async def dozen_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(DozenBetModal(self.game))
+        view = DozenBetView(self.game)
+        await interaction.response.send_message("Choisissez une douzaine :", view=view)
 
-    @discord.ui.button(label="Colonne", style=discord.ButtonStyle.gray)
+    @discord.ui.button(label="Colonne", style=discord.ButtonStyle.orange)
     async def column_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(ColumnBetModal(self.game))
+        view = ColumnBetView(self.game)
+        await interaction.response.send_message("Choisissez une colonne :", view=view)
 
     @discord.ui.button(label="Voir les paris", style=discord.ButtonStyle.secondary)
     async def show_bets(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -1209,6 +1213,26 @@ class RouletteView(discord.ui.View):
     def disable_all_items(self):
         for item in self.children:
             item.disabled = True
+
+class AmountInputModal(discord.ui.Modal, title="Entrer le montant du pari"):
+    def __init__(self, game: RouletteGame, bet_type: str, bet_value: str):
+        super().__init__()
+        self.game = game
+        self.bet_type = bet_type
+        self.bet_value = bet_value
+
+    amount = discord.ui.TextInput(label=f"Montant ({ROULETTE_MIN_BET}-{ROULETTE_MAX_BET})", min_length=1, max_length=6)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            amount = int(self.amount.value)
+            if amount < ROULETTE_MIN_BET or amount > ROULETTE_MAX_BET:
+                raise ValueError(f"La mise doit être entre {ROULETTE_MIN_BET} et {ROULETTE_MAX_BET}.")
+            await self.game.place_bet(interaction, amount, self.bet_type, self.bet_value)
+        except ValueError as e:
+            await handle_error(interaction, e, "Erreur de saisie.")
+        except Exception as e:
+            await handle_error(interaction, e, "Une erreur est survenue lors du placement du pari.")
 
 class NumberBetModal(discord.ui.Modal, title="Pari sur un numéro"):
     def __init__(self, game: RouletteGame):
@@ -1260,6 +1284,34 @@ class ColorBetModal(discord.ui.Modal, title="Pari sur une couleur"):
         except Exception as e:
             await handle_error(interaction, e, "Une erreur est survenue lors du placement du pari.")
 
+class ColorBetView(discord.ui.View):
+    def __init__(self, game: RouletteGame):
+        super().__init__()
+        self.game = game
+        self.color = None
+        self.amount = None
+
+    @discord.ui.select(
+        placeholder="Choisissez une couleur",
+        options=[
+            discord.SelectOption(label="Rouge", value="red"),
+            discord.SelectOption(label="Noir", value="black"),
+            discord.SelectOption(label="Vert", value="green")
+        ]
+    )
+    async def select_color(self, interaction: discord.Interaction, select: discord.ui.Select):
+        self.color = select.values[0]
+        await interaction.response.defer()
+
+    @discord.ui.button(label="Placer le pari", style=discord.ButtonStyle.primary)
+    async def place_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.color is None:
+            await interaction.response.send_message("Veuillez choisir une couleur.", ephemeral=True)
+            return
+
+        modal = AmountInputModal(self.game, "color", self.color)
+        await interaction.response.send_modal(modal)
+
 class EvenOddBetModal(discord.ui.Modal, title="Pari Pair/Impair"):
     def __init__(self, game: RouletteGame):
         super().__init__()
@@ -1286,6 +1338,32 @@ class EvenOddBetModal(discord.ui.Modal, title="Pari Pair/Impair"):
             await handle_error(interaction, e, "Erreur de saisie.")
         except Exception as e:
             await handle_error(interaction, e, "Une erreur est survenue lors du placement du pari.")
+
+class EvenOddBetView(discord.ui.View):
+    def __init__(self, game: RouletteGame):
+        super().__init__()
+        self.game = game
+        self.choice = None
+
+    @discord.ui.select(
+        placeholder="Choisissez pair ou impair",
+        options=[
+            discord.SelectOption(label="Pair", value="pair"),
+            discord.SelectOption(label="Impair", value="impair")
+        ]
+    )
+    async def select_even_odd(self, interaction: discord.Interaction, select: discord.ui.Select):
+        self.choice = select.values[0]
+        await interaction.response.defer()
+
+    @discord.ui.button(label="Placer le pari", style=discord.ButtonStyle.primary)
+    async def place_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.choice is None:
+            await interaction.response.send_message("Veuillez choisir pair ou impair.", ephemeral=True)
+            return
+
+        modal = AmountInputModal(self.game, "even_odd", self.choice)
+        await interaction.response.send_modal(modal)
 
 class DozenBetModal(discord.ui.Modal, title="Pari Douzaine"):
     def __init__(self, game: RouletteGame):
@@ -1315,6 +1393,33 @@ class DozenBetModal(discord.ui.Modal, title="Pari Douzaine"):
         except Exception as e:
             await handle_error(interaction, e, "Une erreur est survenue lors du placement du pari.")
 
+class DozenBetView(discord.ui.View):
+    def __init__(self, game: RouletteGame):
+        super().__init__()
+        self.game = game
+        self.choice = None
+
+    @discord.ui.select(
+        placeholder="Choisissez une douzaine",
+        options=[
+            discord.SelectOption(label="1-12", value="1-12"),
+            discord.SelectOption(label="13-24", value="13-24"),
+            discord.SelectOption(label="25-36", value="25-36")
+        ]
+    )
+    async def select_dozen(self, interaction: discord.Interaction, select: discord.ui.Select):
+        self.choice = select.values[0]
+        await interaction.response.defer()
+
+    @discord.ui.button(label="Placer le pari", style=discord.ButtonStyle.primary)
+    async def place_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.choice is None:
+            await interaction.response.send_message("Veuillez choisir une douzaine.", ephemeral=True)
+            return
+
+        modal = AmountInputModal(self.game, "dozen", self.choice)
+        await interaction.response.send_modal(modal)
+
 class ColumnBetModal(discord.ui.Modal, title="Pari Colonne"):
     def __init__(self, game: RouletteGame):
         super().__init__()
@@ -1342,6 +1447,33 @@ class ColumnBetModal(discord.ui.Modal, title="Pari Colonne"):
             await handle_error(interaction, e, "Erreur de saisie.")
         except Exception as e:
             await handle_error(interaction, e, "Une erreur est survenue lors du placement du pari.")
+
+class ColumnBetView(discord.ui.View):
+    def __init__(self, game: RouletteGame):
+        super().__init__()
+        self.game = game
+        self.choice = None
+
+    @discord.ui.select(
+        placeholder="Choisissez une colonne",
+        options=[
+            discord.SelectOption(label="Première colonne", value="1"),
+            discord.SelectOption(label="Deuxième colonne", value="2"),
+            discord.SelectOption(label="Troisième colonne", value="3")
+        ]
+    )
+    async def select_column(self, interaction: discord.Interaction, select: discord.ui.Select):
+        self.choice = select.values[0]
+        await interaction.response.defer()
+
+    @discord.ui.button(label="Placer le pari", style=discord.ButtonStyle.primary)
+    async def place_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.choice is None:
+            await interaction.response.send_message("Veuillez choisir une colonne.", ephemeral=True)
+            return
+
+        modal = AmountInputModal(self.game, "column", self.choice)
+        await interaction.response.send_modal(modal)
 
 
 @bot.tree.command(name="roulette", description="Lancer une nouvelle partie de roulette")
