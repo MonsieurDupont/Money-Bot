@@ -1018,7 +1018,7 @@ async def work(interaction: discord.Interaction):
 
 # GAMES
 
-# Convertir une carte en emoji
+# Congreenir une carte en emoji
 def card_to_emoji(card):
    return card_map.get(card.lower(), "❓")
 
@@ -1050,62 +1050,6 @@ class RouletteBet:
         self.amount = amount
         self.bet_type = bet_type
         self.bet_value = bet_value
-
-def calculate_winnings(self, bet: RouletteBet, winning_number: int, winning_color: str) -> int:
-    try:
-        if bet.bet_type not in ROULETTE_BET_TYPES:
-            raise ValueError(f"Type de pari invalide : {bet.bet_type}")
-
-        payout = ROULETTE_BET_TYPES[bet.bet_type]['payout']
-
-        if bet.bet_type == "number":
-            if int(bet.bet_value) == winning_number:
-                return bet.amount * (payout + 1)
-        elif bet.bet_type == "color":
-            if bet.bet_value == winning_color:
-                return bet.amount * (payout + 1)
-        elif bet.bet_type == "even_odd":
-            if winning_number != 0:  # Le zéro n'est ni pair ni impair
-                if (bet.bet_value == "pair" and winning_number % 2 == 0) or \
-                   (bet.bet_value == "impair" and winning_number % 2 != 0):
-                    return bet.amount * (payout + 1)
-        elif bet.bet_type == "high_low":
-            if winning_number != 0:  # Le zéro n'est ni haut ni bas
-                if (bet.bet_value == "haut" and 19 <= winning_number <= 36) or \
-                   (bet.bet_value == "bas" and 1 <= winning_number <= 18):
-                    return bet.amount * (payout + 1)
-        elif bet.bet_type == "dozen":
-            if (bet.bet_value == "1-12" and 1 <= winning_number <= 12) or \
-               (bet.bet_value == "13-24" and 13 <= winning_number <= 24) or \
-               (bet.bet_value == "25-36" and 25 <= winning_number <= 36):
-                return bet.amount * (payout + 1)
-        elif bet.bet_type == "column":
-            if winning_number != 0:  # Le zéro n'appartient à aucune colonne
-                if (bet.bet_value == "1" and winning_number % 3 == 1) or \
-                   (bet.bet_value == "2" and winning_number % 3 == 2) or \
-                   (bet.bet_value == "3" and winning_number % 3 == 0):
-                    return bet.amount * (payout + 1)
-        elif bet.bet_type == "split":
-            numbers = [int(n) for n in bet.bet_value.split(',')]
-            if winning_number in numbers and len(numbers) == 2:
-                return bet.amount * (payout + 1)
-        elif bet.bet_type == "street":
-            numbers = [int(n) for n in bet.bet_value.split(',')]
-            if winning_number in numbers and len(numbers) == 3:
-                return bet.amount * (payout + 1)
-        elif bet.bet_type == "corner":
-            numbers = [int(n) for n in bet.bet_value.split(',')]
-            if winning_number in numbers and len(numbers) == 4:
-                return bet.amount * (payout + 1)
-        elif bet.bet_type == "line":
-            numbers = [int(n) for n in bet.bet_value.split(',')]
-            if winning_number in numbers and len(numbers) == 6:
-                return bet.amount * (payout + 1)
-        
-        return 0  # Si le pari n'est pas gagnant
-    except Exception as e:
-        logging.error(f"Erreur lors du calcul des gains : {str(e)}")
-        raise ValueError(f"Erreur lors du calcul des gains : {str(e)}")
 
 class RouletteGame:
     def __init__(self):
@@ -1146,6 +1090,9 @@ class RouletteGame:
             if amount < ROULETTE_MIN_BET or amount > ROULETTE_MAX_BET:
                 raise ValueError(f"La mise doit être entre {ROULETTE_MIN_BET} et {ROULETTE_MAX_BET} {COIN_EMOJI}.")
 
+            if bet_type not in ["number", "color", "even_odd", "dozen", "column"]:
+                raise ValueError(f"Type de pari invalide : {bet_type}")
+
             user_balance = await get_user_balance(interaction.user.id)
             if user_balance < amount:
                 raise ValueError(f"Solde insuffisant. Votre solde actuel est de {user_balance} {COIN_EMOJI}.")
@@ -1158,6 +1105,41 @@ class RouletteGame:
             await interaction.response.send_message(f"Pari placé ! Vous avez parié {amount} {COIN_EMOJI} sur {bet_value} {ROULETTE_COLOR_EMOJIS.get(bet_value, '')}.", ephemeral=True)
         except Exception as e:
             await handle_error(interaction, e, "Erreur lors du placement du pari.")
+
+    def calculate_winnings(self, bet: RouletteBet, winning_number: int, winning_color: str) -> int:
+        try:
+            if bet.bet_type not in ["number", "color", "even_odd", "dozen", "column"]:
+                raise ValueError(f"Type de pari invalide : {bet.bet_type}")
+
+            payout = ROULETTE_BET_TYPES[bet.bet_type]['payout']
+
+            if bet.bet_type == "number":
+                if int(bet.bet_value) == winning_number:
+                    return bet.amount * (payout + 1)
+            elif bet.bet_type == "color":
+                if bet.bet_value == winning_color:
+                    return bet.amount * (payout + 1)
+            elif bet.bet_type == "even_odd":
+                if winning_number != 0:  # Le zéro n'est ni pair ni impair
+                    if (bet.bet_value == "pair" and winning_number % 2 == 0) or \
+                       (bet.bet_value == "impair" and winning_number % 2 != 0):
+                        return bet.amount * (payout + 1)
+            elif bet.bet_type == "dozen":
+                if (bet.bet_value == "1-12" and 1 <= winning_number <= 12) or \
+                   (bet.bet_value == "13-24" and 13 <= winning_number <= 24) or \
+                   (bet.bet_value == "25-36" and 25 <= winning_number <= 36):
+                    return bet.amount * (payout + 1)
+            elif bet.bet_type == "column":
+                if winning_number != 0:  # Le zéro n'appartient à aucune colonne
+                    if (bet.bet_value == "1" and winning_number % 3 == 1) or \
+                       (bet.bet_value == "2" and winning_number % 3 == 2) or \
+                       (bet.bet_value == "3" and winning_number % 3 == 0):
+                        return bet.amount * (payout + 1)
+            
+            return 0  # Si le pari n'est pas gagnant
+        except Exception as e:
+            logging.error(f"Erreur lors du calcul des gains : {str(e)}")
+            raise ValueError(f"Erreur lors du calcul des gains : {str(e)}")
 
     async def spin_roulette(self, interaction: discord.Interaction):
         try:
@@ -1273,14 +1255,14 @@ class ColorBetModal(discord.ui.Modal):
         super().__init__("Pari sur une couleur")
         self.game = game
 
-    color = discord.ui.TextInput(label="Couleur (rouge, noir, vert)", min_length=1, max_length=5)
+    color = discord.ui.TextInput(label="Couleur (red, black, green)", min_length=1, max_length=5)
     amount = discord.ui.TextInput(label="Montant", min_length=1, max_length=5)
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
             color = self.color.value.lower()
-            if color not in ["rouge", "noir", "vert"]:
-                raise ValueError("La couleur doit être rouge, noir ou vert.")
+            if color not in ["red", "black", "green"]:
+                raise ValueError("La couleur doit être red, black ou green.")
             amount = int(self.amount.value)
             if amount < ROULETTE_MIN_BET or amount > ROULETTE_MAX_BET:
                 raise ValueError(f"Le montant doit être entre {ROULETTE_MIN_BET} et {ROULETTE_MAX_BET}.")
@@ -1312,25 +1294,6 @@ class EvenOddBetModal(discord.ui.Modal):
             bet = RouletteBet(interaction.user, amount, "even_odd", choice)
             self.game.add_bet(bet)
             await interaction.response.send_message("Pari ajouté avec succès!", ephemeral=True)
-        except ValueError:
-            await interaction.response.send_message("Le montant doit être un nombre entier.", ephemeral=True)
-
-class HighLowBetModal(discord.ui.Modal):
-    def __init__(self, game: RouletteGame):
-        super().__init__("Pari Haut/Bas")
-        self.game = game
-
-    choice = discord.ui.TextInput(label="Choix (haut ou bas)", min_length=3, max_length=4)
-    amount = discord.ui.TextInput(label="Montant", min_length=1, max_length=5)
-
-    async def on_submit(self, interaction: discord.Interaction):
-        choice = self.choice.value.lower()
-        if choice not in ["haut", "bas"]:
-            await interaction.response.send_message("Le choix doit être 'haut' ou 'bas'.", ephemeral=True)
-            return
-        try:
-            amount = int(self.amount.value)
-            await self.game.place_bet(interaction, amount, "high_low", choice)
         except ValueError:
             await interaction.response.send_message("Le montant doit être un nombre entier.", ephemeral=True)
 
@@ -1372,85 +1335,6 @@ class ColumnBetModal(discord.ui.Modal):
         except ValueError:
             await interaction.response.send_message("Le montant doit être un nombre entier.", ephemeral=True)
 
-class SplitBetModal(discord.ui.Modal):
-    def __init__(self, game: RouletteGame):
-        super().__init__("Pari Split")
-        self.game = game
-
-    choice = discord.ui.TextInput(label="Choix (deux numéros séparés par une virgule)", min_length=3, max_length=5)
-    amount = discord.ui.TextInput(label="Montant", min_length=1, max_length=5)
-
-    async def on_submit(self, interaction: discord.Interaction):
-        choice = self.choice.value
-        try:
-            numbers = [int(x) for x in choice.split(",")]
-            if len(numbers) != 2 or not all(1 <= x <= 36 for x in numbers):
-                await interaction.response.send_message("Le choix doit être deux numéros entre 1 et 36 séparés par une virgule.", ephemeral=True)
-                return
-            amount = int(self.amount.value)
-            await self.game.place_bet(interaction, amount, "split", choice)
-        except ValueError:
-            await interaction.response.send_message("Le montant doit être un nombre entier.", ephemeral=True)
-
-class StreetBetModal(discord.ui.Modal):
-    def __init__(self, game: RouletteGame):
-        super().__init__("Pari Street")
-        self.game = game
-
-    choice = discord.ui.TextInput(label="Choix (trois numéros séparés par des virgules)", min_length=5, max_length=7)
-    amount = discord.ui.TextInput(label="Montant", min_length=1, max_length=5)
-
-    async def on_submit(self, interaction: discord.Interaction):
-        choice = self.choice.value
-        try:
-            numbers = [int(x) for x in choice.split(",")]
-            if len(numbers) != 3 or not all(1 <= x <= 36 for x in numbers):
-                await interaction.response.send_message("Le choix doit être trois numéros entre 1 et 36 séparés par des virgules.", ephemeral=True)
-                return
-            amount = int(self.amount.value)
-            await self.game.place_bet(interaction, amount, "street", choice)
-        except ValueError:
-            await interaction.response.send_message("Le montant doit être un nombre entier.", ephemeral=True)
-
-class CornerBetModal(discord.ui.Modal):
-    def __init__(self, game: RouletteGame):
-        super().__init__("Pari Corner")
-        self.game = game
-
-    choice = discord.ui.TextInput(label="Choix (quatre numéros séparés par des virgules)", min_length=7, max_length=9)
-    amount = discord.ui.TextInput(label="Montant", min_length=1, max_length=5)
-
-    async def on_submit(self, interaction: discord.Interaction):
-        choice = self.choice.value
-        try:
-            numbers = [int(x) for x in choice.split(",")]
-            if len(numbers) != 4 or not all(1 <= x <= 36 for x in numbers):
-                await interaction.response.send_message("Le choix doit être quatre numéros entre 1 et 36 séparés par des virgules.", ephemeral=True)
-                return
-            amount = int(self.amount.value)
-            await self.game.place_bet(interaction, amount, "corner", choice)
-        except ValueError:
-            await interaction.response.send_message("Le montant doit être un nombre entier.", ephemeral=True)
-
-class LineBetModal(discord.ui.Modal):
-    def __init__(self, game: RouletteGame):
-        super().__init__("Pari Line")
-        self.game = game
-
-    choice = discord.ui.TextInput(label="Choix (six numéros séparés par des virgules )", min_length=11, max_length=13)
-    amount = discord.ui.TextInput(label="Montant", min_length=1, max_length=5)
-
-    async def on_submit(self, interaction: discord.Interaction):
-        choice = self.choice.value
-        try:
-            numbers = [int(x) for x in choice.split(",")]
-            if len(numbers) != 6 or not all(1 <= x <= 36 for x in numbers):
-                await interaction.response.send_message("Le choix doit être six numéros entre 1 et 36 séparés par des virgules.", ephemeral=True)
-                return
-            amount = int(self.amount.value)
-            await self.game.place_bet(interaction, amount, "line", choice)
-        except ValueError:
-            await interaction.response.send_message("Le montant doit être un nombre entier.", ephemeral=True)
 
 @bot.tree.command(name="roulette", description="Lancer une nouvelle partie de roulette")
 async def roulette(interaction: discord.Interaction):
