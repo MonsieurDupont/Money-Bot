@@ -1106,7 +1106,7 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
             await interaction.response.send_message(embed=embed)
             return
 
-        winnings = amount * payout
+        winnings = amount * payout - amount
         new_balance = cash + winnings  # Ajouter les gains au solde actuel
     else:
         winnings = 0
