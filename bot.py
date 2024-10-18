@@ -38,23 +38,29 @@ PASSWORD = os.getenv("PASSWORD")
 DATABASE = os.getenv("DATABASE")
 GUILD_ID = os.getenv("GUILD_ID")
 APPLICATION_ID = os.getenv("APPLICATION_ID")
-CoinEmoji = "<:AploucheCoin:1286080674046152724>"
-card_back = "<:cardback:1296606466920284234>"
-min_work_pay = commandsconfig.getint('Constants', 'min_pay')
-max_work_pay = commandsconfig.getint('Constants', 'max_pay')
-work_cooldown_time = commandsconfig.getint('Constants', 'work_cooldown')
-print(f"Succesfully read {len(commandsconfig.options('Constants'))} 'Constants' in 'settings.ini.'")
-initial_bet_poker = commandsconfig.getint('Poker', 'initial_bet_poker')
-min_bet_blackjack = commandsconfig.getint('Blackjack', 'min_bet_blackjack')
-PAYOUT_NUMERO = commandsconfig.getint('Roulette', 'payout_numero')
-PAYOUT_ROUGE = commandsconfig.getint('Roulette', 'payout_rouge')
-PAYOUT_NOIR = commandsconfig.getint('Roulette', 'payout_noir')
-PAYOUT_PAIR = commandsconfig.getint('Roulette', 'payout_pair')
-PAYOUT_IMPAIR = commandsconfig.getint('Roulette', 'payout_impair')
-PAYOUT_1_18 = commandsconfig.getint('Roulette', 'payout_1-18')
-PAYOUT_19_36 = commandsconfig.getint('Roulette', 'payout_19-36')
-PAYOUT_DOUZAINE = commandsconfig.getint('Roulette', 'payout_douzaine')
-PAYOUT_COLONNE = commandsconfig.getint('Roulette', 'payout_colonne')
+COIN_EMOJI = "<:AploucheCoin:1286080674046152724>"
+CARD_BACK = "<:cardback:1296606466920284234>"
+WORK_MIN_PAY = commandsconfig.getint('Work', 'min_pay')
+WORK_MAX_PAY = commandsconfig.getint('Work', 'max_pay')
+WORK_COOLDOWN = commandsconfig.getint('Work', 'work_cooldown')
+POKER_START_BET = commandsconfig.getint('Poker', 'poker_start_bet')
+BLACKJACK_MIN_BET = commandsconfig.getint('Blackjack', 'blackjack_min_bet')
+ROULETTE_PAYOUT_NUMERO = commandsconfig.getint('Roulette', 'payout_numero')
+ROULETTE_PAYOUT_ROUGE = commandsconfig.getint('Roulette', 'payout_rouge')
+ROULETTE_PAYOUT_NOIR = commandsconfig.getint('Roulette', 'payout_noir')
+ROULETTE_PAYOUT_PAIR = commandsconfig.getint('Roulette', 'payout_pair')
+ROULETTE_PAYOUT_IMPAIR = commandsconfig.getint('Roulette', 'payout_impair')
+ROULETTE_PAYOUT_1_18 = commandsconfig.getint('Roulette', 'payout_1-18')
+ROULETTE_PAYOUT_19_36 = commandsconfig.getint('Roulette', 'payout_19-36')
+ROULETTE_PAYOUT_DOUZAINE = commandsconfig.getint('Roulette', 'payout_douzaine')
+ROULETTE_PAYOUT_COLONNE = commandsconfig.getint('Roulette', 'payout_colonne')
+ROULETTE_EMOJIS = {
+    'red': '🔴',
+    'black': '⚫',
+    'green': '🟢'
+}
+ROULETTE_RED_NUMBERS = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]
+ROULETTE_BLACK_NUMBERS = [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35]
 
 # Définition des couleurs
 color_green = 0x98d444
@@ -183,7 +189,7 @@ async def register(interaction: discord.Interaction):
         """
         result = execute_query(query, (user_id,))
         if result:
-            embed = discord.Embed(title="Succès", description=f"Vous êtes maintenant inscrit, {interaction.user.mention}. Vous avez reçu 1000 {CoinEmoji} en cash.", color=color_green)
+            embed = discord.Embed(title="Succès", description=f"Vous êtes maintenant inscrit, {interaction.user.mention}. Vous avez reçu 1000 {COIN_EMOJI} en cash.", color=color_green)
             embed.add_field(name="Prochaines étapes", value="Vous pouvez maintenant utiliser les commandes `/balance`, `/deposit`, `/withdraw` et `/transaction`.", inline=False)
             embed.add_field(name="Aide", value="Si vous avez des questions, n'hésitez pas à demander.", inline=False)
             embed.set_footer(text="Bienvenue dans notre communauté !")
@@ -250,11 +256,11 @@ async def stats(interaction: discord.Interaction):
     moyenne_revenus = total_revenus / (total_revenus + abs(total_depenses)) if total_revenus + abs(total_depenses) > 0 else 0
 
     embed = discord.Embed(title="Statistiques", description=f"Voici vos statistiques, {interaction.user.mention}.", color=color_green)
-    embed.add_field(name="Cash", value=f"{cash} {CoinEmoji}", inline=False)
-    embed.add_field(name="Banque", value=f"{bank} {CoinEmoji}", inline=False)
-    embed.add_field(name="Total", value=f"{total} {CoinEmoji}", inline=False)
-    embed.add_field(name="Revenus", value=f"{total_revenus} {CoinEmoji}", inline=False)
-    embed.add_field(name="Dépenses", value=f"{total_depenses} {CoinEmoji}", inline=False)
+    embed.add_field(name="Cash", value=f"{cash} {COIN_EMOJI}", inline=False)
+    embed.add_field(name="Banque", value=f"{bank} {COIN_EMOJI}", inline=False)
+    embed.add_field(name="Total", value=f"{total} {COIN_EMOJI}", inline=False)
+    embed.add_field(name="Revenus", value=f"{total_revenus} {COIN_EMOJI}", inline=False)
+    embed.add_field(name="Dépenses", value=f"{total_depenses} {COIN_EMOJI}", inline=False)
     embed.add_field(name="Moyenne des dépenses", value=f"{moyenne_depenses * 100:.2f}%", inline=False)
     embed.add_field(name="Moyenne des revenus", value=f"{moyenne_revenus * 100:.2f}%", inline=False)
     await interaction.response.send_message(embed=embed)
@@ -292,7 +298,7 @@ async def balance(interaction: discord.Interaction, user: typing.Optional[discor
         return
 
     total = cash + bank
-    embed = discord.Embed(title=f"Solde", description=f"**Cash** : {cash:,} {CoinEmoji}\n**Banque** : {bank:,} {CoinEmoji}\n**Total** : {total:,} {CoinEmoji}", color=color_blue)
+    embed = discord.Embed(title=f"Solde", description=f"**Cash** : {cash:,} {COIN_EMOJI}\n**Banque** : {bank:,} {COIN_EMOJI}\n**Total** : {total:,} {COIN_EMOJI}", color=color_blue)
     embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
     if total <= 0:
         embed.add_field(name="", value="Wesh c'est la hess la ", inline=False)
@@ -387,7 +393,7 @@ async def deposit(interaction: discord.Interaction, amount: typing.Optional[int]
     """
     result = execute_query(query, (amount, amount, user_id))
     if result:
-        embed = discord.Embed(title="Succès", description=f"Vous avez déposé {amount} {CoinEmoji} avec succès.", color=color_green)
+        embed = discord.Embed(title="Succès", description=f"Vous avez déposé {amount} {COIN_EMOJI} avec succès.", color=color_green)
         await interaction.response.send_message(embed=embed)
     else:
         embed = discord.Embed(title="Erreur", description="Erreur lors du dépôt.", color=color_red)
@@ -463,7 +469,7 @@ async def withdraw(interaction: discord.Interaction, amount: int):
     """
     result = execute_query(query, (amount, amount, user_id))
     if result:
-        embed = discord.Embed(title="Succès", description=f"Vous avez retiré {amount} {CoinEmoji} avec succès.", color=color_green)
+        embed = discord.Embed(title="Succès", description=f"Vous avez retiré {amount} {COIN_EMOJI} avec succès.", color=color_green)
         await interaction.response.send_message(embed=embed)
     else:
         embed = discord.Embed(title="Erreur", description="Erreur lors du retrait.", color=color_red)
@@ -524,7 +530,7 @@ async def steal(interaction: discord.Interaction, user: discord.Member):
     if randoma <= proba:
         execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_USER_ID} = %s", (amount, user.id))
         execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_USER_ID} = %s", (amount, user_id))
-        embed = discord.Embed(title="Vol réussi", description=f"Vous avez volé {amount :,} {CoinEmoji} à {user.mention}.", color=color_green)
+        embed = discord.Embed(title="Vol réussi", description=f"Vous avez volé {amount :,} {COIN_EMOJI} à {user.mention}.", color=color_green)
         await interaction.response.send_message(embed=embed)
     else:
         execute_query(f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} - %s WHERE {FIELD_USER_ID} = %s", (amount, user_id))
@@ -611,7 +617,7 @@ async def transaction(interaction: discord.Interaction, user: discord.Member, am
         """
         result = execute_query(query, (user.id, amount))
         if result:
-            embed = discord.Embed(title="Succès", description=f"Vous avez envoyé {amount} {CoinEmoji} avec succès.", color=color_green)
+            embed = discord.Embed(title="Succès", description=f"Vous avez envoyé {amount} {COIN_EMOJI} avec succès.", color=color_green)
             # # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
             await interaction.response.send_message(embed=embed)
         else:
@@ -661,9 +667,9 @@ async def leaderboard(interaction: discord.Interaction):
            continue
         # await interaction.response.send_message(f"#{i} {user.display_name} {total} ")
         if i <= 3:
-            embed.add_field(name=f"#{i}", value=f"<@{user.id}> : **{total:,}** {CoinEmoji}", inline=False)  
+            embed.add_field(name=f"#{i}", value=f"<@{user.id}> : **{total:,}** {COIN_EMOJI}", inline=False)  
         else:
-            embed.add_field(name=f"", value=f"**{i}** • <@{user.id}> : **{total:,}** {CoinEmoji}", inline=False)
+            embed.add_field(name=f"", value=f"**{i}** • <@{user.id}> : **{total:,}** {COIN_EMOJI}", inline=False)
     # embed.set_footer(text="Note : Ce classement est mis à jour en temps réel.")
     await interaction.response.send_message(embed=embed)
 
@@ -706,7 +712,7 @@ async def transaction_history(interaction: discord.Interaction, user: typing.Opt
     embed = discord.Embed(title=f"Historique de {foo.name}", description="Voici la liste des 10 dernieres transactions :", color=color_blue)
     embed.add_field(name="", value="**Montant** | **Type**", inline=False)
     for i, (transaction_id, amount, transaction_type) in enumerate(transactions[::-1][:10], start=1):
-        embed.add_field(name="", value=f"**{i}** : {amount:,} {CoinEmoji} | {transaction_type}", inline=False)
+        embed.add_field(name="", value=f"**{i}** : {amount:,} {COIN_EMOJI} | {transaction_type}", inline=False)
     # embed.set_footer(text="Note : Ce classement est mis à jour en temps réel.")
     await interaction.response.send_message(embed=embed)
 
@@ -830,9 +836,9 @@ async def give(interaction: discord.Interaction, amount: int, user: typing.Optio
         await interaction.response.send_message(embed=embed, ephemeral=True)
         return
     if interaction.user.id == user_id:
-        embed = discord.Embed(title="", description=f"{amount} {CoinEmoji} ont étés ajouté a votre compte", color=color_green)
+        embed = discord.Embed(title="", description=f"{amount} {COIN_EMOJI} ont étés ajouté a votre compte", color=color_green)
     else:
-        embed = discord.Embed(title="", description=f"{amount} {CoinEmoji} ont étés ajouté au compte de <@{user.id}>", color=color_green)
+        embed = discord.Embed(title="", description=f"{amount} {COIN_EMOJI} ont étés ajouté au compte de <@{user.id}>", color=color_green)
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 # Commande pour retirer l'argent d'un utilisateur
@@ -859,9 +865,9 @@ async def remove(interaction: discord.Interaction, amount: int, user: typing.Opt
         await interaction.response.send_message(embed=embed, ephemeral=True)
         return
     if interaction.user.id == user_id:
-        embed = discord.Embed(title="", description=f"{amount} {CoinEmoji} ont étés retirés a votre compte", color=color_green)
+        embed = discord.Embed(title="", description=f"{amount} {COIN_EMOJI} ont étés retirés a votre compte", color=color_green)
     else:
-        embed = discord.Embed(title="", description=f"{amount} {CoinEmoji} ont étés retirés au compte de <@{user.id}>", color=color_green)
+        embed = discord.Embed(title="", description=f"{amount} {COIN_EMOJI} ont étés retirés au compte de <@{user.id}>", color=color_green)
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 # Commande pour travailler
@@ -874,7 +880,7 @@ async def work(interaction: discord.Interaction):
         return
 
 
-    if work_cooldown_time <= 0:
+    if WORK_COOLDOWN <= 0:
         embed = discord.Embed(title="Erreur", description="La valeur de cooldown est invalide.", color=color_red)
         await interaction.response.send_message(embed=embed, ephemeral=True)
         return
@@ -895,11 +901,11 @@ async def work(interaction: discord.Interaction):
         last_work_time = data[0][0]
         current_time = datetime.now()
         time_diff = (current_time - last_work_time).total_seconds()
-        if time_diff < work_cooldown_time:
-            embed = discord.Embed(title="Erreur", description=f"Vous devez attendre {work_cooldown_time - int(time_diff)} secondes avant de travailler à nouveau.", color=color_red)
+        if time_diff < WORK_COOLDOWN:
+            embed = discord.Embed(title="Erreur", description=f"Vous devez attendre {WORK_COOLDOWN - int(time_diff)} secondes avant de travailler à nouveau.", color=color_red)
             await interaction.response.send_message(embed=embed)
             return
-    biased_pay = min_work_pay + (max_work_pay - min_work_pay) * (random.random() ** 2)
+    biased_pay = WORK_MIN_PAY + (WORK_MAX_PAY - WORK_MIN_PAY) * (random.random() ** 2)
     pay = int(biased_pay)   # Nombre aleatoire definissant la paye
     if pay <= 0:
         embed = discord.Embed(title="Erreur", description="La valeur de pay est invalide.", color=color_red)
@@ -964,8 +970,9 @@ async def work(interaction: discord.Interaction):
         await interaction.response.send_message(embed=embed, ephemeral=True)
         return
 
-    embed = discord.Embed(title=(f"{interaction.user.display_name}"), description=random_phrase.format(pay=pay) + CoinEmoji, color=color_green)
+    embed = discord.Embed(title=(f"{interaction.user.display_name}"), description=random_phrase.format(pay=pay) + COIN_EMOJI, color=color_green)
     await interaction.response.send_message(embed=embed)
+
 
 # GAMES
 
@@ -987,6 +994,9 @@ def card_to_name(card):
     suit = suit_map.get(card[-1].lower(), 'Unknown Suit')
 
     return f"{value} de {suit}"
+
+
+# ROULETTE
 
 # Utilisation des constantes de payout
 def get_payout(bet):
@@ -1038,7 +1048,7 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
     
     cash = data[0][0]
     if cash < amount:
-        embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez d'argent pour ce pari. Votre solde actuel est de {cash} {CoinEmoji}.", color=color_red)
+        embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez d'argent pour ce pari. Votre solde actuel est de {cash} {COIN_EMOJI}.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
 
@@ -1076,6 +1086,17 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
     # Simuler le lancement de la roulette
     winning_number = random.randint(0, 36)
 
+    # Déterminer la couleur du numéro gagnant
+    if winning_number == 0:
+        color = 'green'
+    elif winning_number in ROULETTE_RED_NUMBERS:
+        color = 'red'
+    else:
+        color = 'black'
+
+    # Créer une représentation visuelle du résultat
+    result_visual = f"{ROULETTE_EMOJIS[color]} {winning_number}"
+
     # Vérifier si le joueur a gagné
     if winning_conditions[bet](winning_number):
         payout = get_payout(bet)
@@ -1089,15 +1110,22 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
         query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = %s WHERE {FIELD_USER_ID} = %s"
         execute_query(query, (new_balance, user_id))
 
-        embed = discord.Embed(title="Résultat", description=f"Félicitations ! Vous avez gagné {winnings} {CoinEmoji} avec un pari de {amount} {CoinEmoji} sur {bet}. Votre nouveau solde est de {new_balance} {CoinEmoji}.", color=color_green)
+        embed = discord.Embed(title="Résultat", description=f"Félicitations ! Vous avez gagné {winnings} {COIN_EMOJI} avec un pari de {amount} {COIN_EMOJI} sur {bet}.", color=color_green)
+        embed.add_field(name="Numéro gagnant", value=result_visual, inline=False)
+        embed.add_field(name="Nouveau solde", value=f"{new_balance} {COIN_EMOJI}", inline=False)
         await interaction.response.send_message(embed=embed)
     else:
         new_balance = cash - amount
         query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = %s WHERE {FIELD_USER_ID} = %s"
         execute_query(query, (new_balance, user_id))
 
-        embed = discord.Embed(title="Résultat", description=f"Désolé, vous avez perdu votre pari de {amount} {CoinEmoji} sur {bet}. Votre nouveau solde est de {new_balance} {CoinEmoji}.", color=color_red)
+        embed = discord.Embed(title="Résultat", description=f"Désolé, vous avez perdu votre pari de {amount} {COIN_EMOJI} sur {bet}.", color=color_red)
+        embed.add_field(name="Numéro gagnant", value=result_visual, inline=False)
+        embed.add_field(name=" Nouveau solde", value=f"{new_balance} {COIN_EMOJI}", inline=False)
         await interaction.response.send_message(embed=embed)
+
+
+# POKER
 
 class PokerPlayerClass:
     def __init__(self, id):
@@ -1133,7 +1161,7 @@ class PokerSessionClass:
 Poker_game_in_progress = False
 poker_session = None
 
-@bot.tree.command(name="poker", description=f"Jouer au poker. La mise initiale est de {initial_bet_poker}")
+@bot.tree.command(name="poker", description=f"Jouer au poker. La mise initiale est de {POKER_START_BET}")
 async def poker(interaction: discord.Interaction):
     user_id = interaction.user.id
     global Poker_game_in_progress, poker_session
@@ -1144,7 +1172,7 @@ async def poker(interaction: discord.Interaction):
     cash, bank = data[0]
     total = cash + bank
 
-    if total < initial_bet_poker:
+    if total < POKER_START_BET:
         embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez d'argent pour la mise initiale", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
@@ -1215,6 +1243,7 @@ async def poker_start(interaction: discord.Interaction):
         deckname = [card_to_name(Card.int_to_str(card)) for card in player.deck]
         embed.set_footer(text=f'{" | ".join(deckname)}')
         await interaction.channel.send(embed=embed)  
+
 
 # BLACKJACK
 
@@ -1299,8 +1328,8 @@ async def blackjack(interaction: discord.Interaction, amount: int):
         return """
 
     # Verifier si la mise est inferieure a la mise minimale
-    if amount < min_bet_blackjack:
-        embed = discord.Embed(title="Erreur", description=f"La mise minimale est de **{initial_bet_poker}** {CoinEmoji}", color=color_red)
+    if amount < BLACKJACK_MIN_BET:
+        embed = discord.Embed(title="Erreur", description=f"La mise minimale est de **{POKER_START_BET}** {COIN_EMOJI}", color=color_red)
         await interaction.response.send_message(embed=embed, ephemeral=True)
         return
     
@@ -1334,7 +1363,7 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     # Cartes initiales du joueur
     embed.add_field(name="Vous", value="".join([card_to_emoji(Card.int_to_str(card)) for card in player_cards]))
     # Cartes initiales du croupier
-    embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(dealer_cards[0]))} {card_back}")
+    embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(dealer_cards[0]))} {CARD_BACK}")
     embed.add_field(name="", value="\n")
     embed.add_field(name="", value=f"Score: {blackjack_sessions[user_id].evaluate_hand(player_cards)}")
     embed.add_field(name="", value=f"Score: {blackjack_sessions[user_id].evaluate_hand(dealer_cards)}")
