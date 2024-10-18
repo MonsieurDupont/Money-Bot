@@ -1199,7 +1199,7 @@ class RouletteView(discord.ui.View):
         view = DozenBetView(self.game)
         await interaction.response.send_message("Choisissez une douzaine :", view=view)
 
-    @discord.ui.button(label="Colonne", style=discord.ButtonStyle.orange)
+    @discord.ui.button(label="Colonne", style=discord.ButtonStyle.primary)
     async def column_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = ColumnBetView(self.game)
         await interaction.response.send_message("Choisissez une colonne :", view=view)
