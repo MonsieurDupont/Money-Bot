@@ -40,8 +40,8 @@ GUILD_ID = os.getenv("GUILD_ID")
 APPLICATION_ID = os.getenv("APPLICATION_ID")
 COIN_EMOJI = "<:AploucheCoin:1286080674046152724>"
 CARD_BACK = "<:cardback:1296606466920284234>"
-WORK_MIN_PAY = commandsconfig.getint('Work', 'min_pay')
-WORK_MAX_PAY = commandsconfig.getint('Work', 'max_pay')
+WORK_MIN_PAY = commandsconfig.getint('Work', 'work_min_pay')
+WORK_MAX_PAY = commandsconfig.getint('Work', 'work_max_pay')
 WORK_COOLDOWN = commandsconfig.getint('Work', 'work_cooldown')
 POKER_START_BET = commandsconfig.getint('Poker', 'poker_start_bet')
 BLACKJACK_MIN_BET = commandsconfig.getint('Blackjack', 'blackjack_min_bet')
@@ -54,6 +54,7 @@ ROULETTE_PAYOUT_1_18 = commandsconfig.getint('Roulette', 'payout_1-18')
 ROULETTE_PAYOUT_19_36 = commandsconfig.getint('Roulette', 'payout_19-36')
 ROULETTE_PAYOUT_DOUZAINE = commandsconfig.getint('Roulette', 'payout_douzaine')
 ROULETTE_PAYOUT_COLONNE = commandsconfig.getint('Roulette', 'payout_colonne')
+
 ROULETTE_EMOJIS = {
     'red': '🔴',
     'black': '⚫',
