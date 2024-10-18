@@ -1041,6 +1041,27 @@ def card_to_name(card):
 
 # ROULETTE
 
+class RouletteError(Exception):
+    """Classe de base pour les erreurs spécifiques à la roulette."""
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
+class InsufficientFundsError(RouletteError):
+    """Erreur levée quand un joueur n'a pas assez d'argent."""
+    def __init__(self, message):
+        super().__init__(message)
+
+class InvalidBetError(RouletteError):
+    """Erreur levée quand un pari est invalide."""
+    def __init__(self, message):
+        super().__init__(message)
+
+class GameAlreadyRunningError(RouletteError):
+    """Erreur levée quand une partie est déjà en cours."""
+    def __init__(self, message):
+        super().__init__(message)
+
 class RouletteBet:
     def __init__(self, user: discord.Member, amount: int, bet_type: str, bet_value: str):
         if amount <= 0:
@@ -1052,45 +1073,106 @@ class RouletteBet:
         self.bet_type = bet_type
         self.bet_value = bet_value
 
+class RouletteView(discord.ui.View):
+    def __init__(self, game: RouletteGame):
+        super().__init__()
+        self.game = game
+        self.last_message = None
+
+    def disable_all_items(self):
+        for item in self.children:
+            item.disabled = True
+
+    async def send_bet_view(self, interaction: discord.Interaction, view, content):
+        if self.last_message:
+            try:
+                await self.last_message.delete()
+            except discord.NotFound:
+                pass  # Message already deleted, ignore
+
+        await interaction.response.defer()
+        self.last_message = await interaction.followup.send(content, view=view, ephemeral=True)
+
+    @discord.ui.button(label="Numéro", style=discord.ButtonStyle.red)
+    async def number_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(NumberBetModal(self.game))
+
+    @discord.ui.button(label="Couleur", style=discord.ButtonStyle.blurple)
+    async def color_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = ColorBetView(self.game, self)
+        await self.send_bet_view(interaction, view, "Choisissez une couleur :")
+
+    @discord.ui.button(label="Pair/Impair", style=discord.ButtonStyle.green)
+    async def even_odd_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = EvenOddBetView(self.game, self)
+        await self.send_bet_view(interaction, view, "Choisissez Pair ou Impair :")
+
+    @discord.ui.button(label="Douzaine", style=discord.ButtonStyle.grey)
+    async def dozen_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = DozenBetView(self.game, self)
+        await self.send_bet_view(interaction, view, "Choisissez une douzaine :")
+
+    @discord.ui.button(label="Colonne", style=discord.ButtonStyle.primary)
+    async def column_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = ColumnBetView(self.game, self)
+        await self.send_bet_view(interaction, view, "Choisissez une colonne :")
+
+    @discord.ui.button(label="Voir les paris", style=discord.ButtonStyle.secondary)
+    async def show_bets(self, interaction: discord.Interaction, button: discord.ui.Button):
+        bets_summary = self.game.get_current_bets_summary()
+        embed = discord.Embed(title="Paris actuels", description=bets_summary, color=discord.Color.blue())
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    def disable_all_items(self):
+        for item in self.children:
+            item.disabled = True
+
 class RouletteGame:
     def __init__(self):
         self.is_running = False
         self.bets = []
 
     async def start_game(self, interaction: discord.Interaction):
-        self.is_running = True
-        self.bets = []
+        if self.is_running:
+            raise GameAlreadyRunningError("Une partie de roulette est déjà en cours.")
+        
+        try:
+            self.is_running = True
+            self.bets = []
 
-        embed = discord.Embed(title="🎰 Nouvelle partie de Roulette ! 🎰",
-                            description=f"La roulette va tourner dans {ROULETTE_WAIT_TIME} secondes !\n"
-                                        f"Utilisez les boutons ci-dessous pour placer vos paris ! ",
-                            color=discord.Color.gold())
-        embed.add_field(name="Mise minimale", value=f"{ROULETTE_MIN_BET} {ROULETTE_MONEY_EMOJI}")
-        embed.add_field(name="Mise maximale", value=f"{ROULETTE_MAX_BET} {ROULETTE_MONEY_EMOJI}")
-        embed.add_field(name="Temps restant", value=f"{ROULETTE_TIMER_EMOJI} {ROULETTE_WAIT_TIME} secondes")
+            embed = discord.Embed(title="🎰 Nouvelle partie de Roulette ! 🎰",
+                                description=f"La roulette va tourner dans {ROULETTE_WAIT_TIME} secondes !\n"
+                                            f"Utilisez les boutons ci-dessous pour placer vos paris ! ",
+                                color=discord.Color.gold())
+            embed.add_field(name="Mise minimale", value=f"{ROULETTE_MIN_BET} {ROULETTE_MONEY_EMOJI}")
+            embed.add_field(name="Mise maximale", value=f"{ROULETTE_MAX_BET} {ROULETTE_MONEY_EMOJI}")
+            embed.add_field(name="Temps restant", value=f"{ROULETTE_TIMER_EMOJI} {ROULETTE_WAIT_TIME} secondes")
 
-        view = RouletteView(self)
-        await interaction.response.send_message(embed=embed, view=view)
-        message = await interaction.original_response()
+            view = RouletteView(self)
+            await interaction.response.send_message(embed=embed, view=view)
+            message = await interaction.original_response()
 
-        for i in range(ROULETTE_WAIT_TIME, 0, -1):
-            if i % 10 == 0 or i <= 5:
-                embed.set_field_at(2, name="Temps restant", value=f"{ROULETTE_TIMER_EMOJI} {i} secondes")
-                await message.edit(embed=embed)
-            await asyncio.sleep(1)
+            for i in range(ROULETTE_WAIT_TIME, 0, -1):
+                if i % 10 == 0 or i <= 5:
+                    embed.set_field_at(2, name="Temps restant", value=f"{ROULETTE_TIMER_EMOJI} {i} secondes")
+                    await message.edit(embed=embed)
+                await asyncio.sleep(1)
 
-        view.disable_all_items()  # Désactiver les boutons avant de faire tourner la roulette
-        await message.edit(view=view)
-        await self.spin_roulette(message, view)
+            view.disable_all_items()
+            await message.edit(view=view)
+            await self.spin_roulette(message, view)
+        except Exception as e:
+            self.is_running = False
+            raise RouletteError(f"Erreur lors du démarrage de la partie : {str(e)}")
 
     async def place_bet(self, interaction: discord.Interaction, amount: int, bet_type: str, bet_value: str):
         try:
             if amount < ROULETTE_MIN_BET or amount > ROULETTE_MAX_BET:
-                raise ValueError(f"La mise doit être entre {ROULETTE_MIN_BET} et {ROULETTE_MAX_BET} {COIN_EMOJI}.")
+                raise InvalidBetError(f"La mise doit être entre {ROULETTE_MIN_BET} et {ROULETTE_MAX_BET} {COIN_EMOJI}.")
 
             user_balance = await get_user_balance(interaction.user.id)
             if user_balance < amount:
-                raise ValueError(f"Solde insuffisant. Votre solde actuel est de {user_balance} {COIN_EMOJI}.")
+                raise InsufficientFundsError(f"Solde insuffisant. Votre solde actuel est de {user_balance} {COIN_EMOJI}.")
 
             if bet_type not in ["number", "color", "even_odd", "dozen", "column"]:
                 raise ValueError(f"Type de pari invalide : {bet_type}")
@@ -1139,7 +1221,7 @@ class RouletteGame:
             logging.error(f"Erreur lors du calcul des gains : {str(e)}")
             raise ValueError(f"Erreur lors du calcul des gains : {str(e)}")
 
-    async def spin_roulette(self, message: discord.InteractionMessage):
+    async def spin_roulette(self, message: discord.InteractionMessage, view: RouletteView):
         try:
             if not self.bets:
                 await message.edit(content="Aucun pari n'a été placé pour cette rotation.")
@@ -1202,60 +1284,6 @@ class RouletteGame:
             summary.append(bet_info)
         
         return "\n".join(summary)
-
-class RouletteView(discord.ui.View):
-    def __init__(self, game: RouletteGame):
-        super().__init__()
-        self.game = game
-        self.last_message = None
-
-    def disable_all_items(self):
-        for item in self.children:
-            item.disabled = True
-
-    async def send_bet_view(self, interaction: discord.Interaction, view, content):
-        if self.last_message:
-            try:
-                await self.last_message.delete()
-            except discord.NotFound:
-                pass  # Message already deleted, ignore
-
-        await interaction.response.defer()
-        self.last_message = await interaction.followup.send(content, view=view, ephemeral=True)
-
-    @discord.ui.button(label="Numéro", style=discord.ButtonStyle.red)
-    async def number_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(NumberBetModal(self.game))
-
-    @discord.ui.button(label="Couleur", style=discord.ButtonStyle.blurple)
-    async def color_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        view = ColorBetView(self.game, self)
-        await self.send_bet_view(interaction, view, "Choisissez une couleur :")
-
-    @discord.ui.button(label="Pair/Impair", style=discord.ButtonStyle.green)
-    async def even_odd_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        view = EvenOddBetView(self.game, self)
-        await self.send_bet_view(interaction, view, "Choisissez Pair ou Impair :")
-
-    @discord.ui.button(label="Douzaine", style=discord.ButtonStyle.grey)
-    async def dozen_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        view = DozenBetView(self.game, self)
-        await self.send_bet_view(interaction, view, "Choisissez une douzaine :")
-
-    @discord.ui.button(label="Colonne", style=discord.ButtonStyle.primary)
-    async def column_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        view = ColumnBetView(self.game, self)
-        await self.send_bet_view(interaction, view, "Choisissez une colonne :")
-
-    @discord.ui.button(label="Voir les paris", style=discord.ButtonStyle.secondary)
-    async def show_bets(self, interaction: discord.Interaction, button: discord.ui.Button):
-        bets_summary = self.game.get_current_bets_summary()
-        embed = discord.Embed(title="Paris actuels", description=bets_summary, color=discord.Color.blue())
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-    def disable_all_items(self):
-        for item in self.children:
-            item.disabled = True
 
 class AmountInputModal(discord.ui.Modal, title="Entrer le montant du pari"):
     def __init__(self, game: RouletteGame, bet_type: str, bet_value: str):
@@ -1547,7 +1575,6 @@ class ColumnBetView(discord.ui.View):
     async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item) -> None:
         await interaction.response.send_message(f"Erreur : {error}", ephemeral=True)
 
-
 @bot.tree.command(name="roulette", description="Lancer une nouvelle partie de roulette")
 async def roulette(interaction: discord.Interaction):
     try:
@@ -1555,9 +1582,36 @@ async def roulette(interaction: discord.Interaction):
         game = RouletteGame()
         logging.info("Instance de RouletteGame créée avec succès")
         await game.start_game(interaction)
+    except GameAlreadyRunningError as gare:
+        logging.warning(f"Tentative de démarrer une partie alors qu'une est déjà en cours : {str(gare)}")
+        await interaction.response.send_message("Une partie de roulette est déjà en cours. Veuillez attendre qu'elle se termine.", ephemeral=True)
+    except InsufficientFundsError as ife:
+        logging.info(f"Tentative de pari avec des fonds insuffisants : {str(ife)}")
+        await interaction.response.send_message(str(ife), ephemeral=True)
+    except InvalidBetError as ibe:
+        logging.info(f"Tentative de pari invalide : {str(ibe)}")
+        await interaction.response.send_message(str(ibe ), ephemeral=True)
+    except RouletteError as re:
+        logging.error(f"Erreur lors du démarrage de la partie : {str(re)}")
+        await interaction.response.send_message("Erreur lors du démarrage de la partie. Veuillez réessayer.", ephemeral=True)
+    except discord.errors.HTTPException as he:
+        logging.error(f"Erreur HTTP Discord : {str(he)}")
+        await interaction.response.send_message("Erreur de communication avec Discord. Veuillez réessayer plus tard.", ephemeral=True)
+    except asyncio.TimeoutError:
+        logging.error("Timeout lors du lancement de la partie de roulette")
+        await interaction.response.send_message("La partie a expiré. Veuillez réessayer.", ephemeral=True)
     except Exception as e:
-        logging.error(f"Erreur lors du lancement de la partie de roulette : {str(e)}")
-        await handle_error(interaction, e, "Erreur lors du lancement de la partie de roulette.")
+        logging.error(f"Erreur inattendue lors du lancement de la partie de roulette : {str(e)}")
+        await interaction.response.send_message("Erreur inattendue. Veuillez réessayer ou contacter un administrateur.", ephemeral=True)
+
+async def send_error_message(interaction: discord.Interaction, message: str):
+    try:
+        if not interaction.response.is_done():
+            await interaction.response.send_message(message, ephemeral=True)
+        else:
+            await interaction.followup.send(message, ephemeral=True)
+    except discord.errors.HTTPException:
+        logging.error("Impossible d'envoyer le message d'erreur à l'utilisateur")
 
 
 # POKER
