@@ -11,13 +11,9 @@ import json
 import configparser
 from dotenv import load_dotenv
 from discord.ext import commands
-from discord import app_commands, Embed, Interaction, Member
-from discord.ui import View, Select, Button
 from treys import Card, Deck
 from datetime import datetime
-from typing import Dict, Set, Tuple
-from mysql.connector import  Error
-
+from typing import List, Dict
 
 # Chargement des variables d'environnement
 load_dotenv()
@@ -32,8 +28,8 @@ with open('commandphrases.json') as file:
     workphrases = workdata["workphrases"]
 with open('cards.json') as file:
     card_map = json.load(file)
-with open('constants.json') as file:
-    CONSTANTS = json.load(file)
+with open('roulette_config.json') as f:
+    config = json.load(f)
 
 # Définition des constantes
 TOKEN = os.getenv("TOKEN")
@@ -50,7 +46,16 @@ WORK_MAX_PAY = commandsconfig.getint('Work', 'work_max_pay')
 WORK_COOLDOWN = commandsconfig.getint('Work', 'work_cooldown')
 POKER_START_BET = commandsconfig.getint('Poker', 'poker_start_bet')
 BLACKJACK_MIN_BET = commandsconfig.getint('Blackjack', 'blackjack_min_bet')
-ROULETTE = CONSTANTS['ROULETTE']
+ROULETTE_NUMBERS = config['ROULETTE_NUMBERS']
+ROULETTE_COLORS = config['ROULETTE_COLORS']
+ROULETTE_MIN_BET = config['ROULETTE_MIN_BET']
+ROULETTE_MAX_BET = config['ROULETTE_MAX_BET']
+ROULETTE_WAIT_TIME = config['ROULETTE_WAIT_TIME']
+ROULETTE_NUMBER_EMOJIS = config['ROULETTE_NUMBER_EMOJIS']
+ROULETTE_COLOR_EMOJIS = config['ROULETTE_COLOR_EMOJIS']
+ROULETTE_MONEY_EMOJI = config['ROULETTE_MONEY_EMOJI']
+ROULETTE_TIMER_EMOJI = config['ROULETTE_TIMER_EMOJI']
+ROULETTE_BET_TYPES = config['ROULETTE_BET_TYPES']
 
 # Définition des couleurs
 color_green = 0x98d444
@@ -78,7 +83,6 @@ bot = commands.Bot(command_prefix="/", intents=intents)
 
 # Fonction pour se connecter à la base de données
 def get_db_connection():
-    # Tentative de connexion à la base de données
     try:
         return mysql.connector.connect(
             host=HOST,
@@ -87,7 +91,6 @@ def get_db_connection():
             database=DATABASE
         )
     except mysql.connector.Error as err:
-        # Envoi d'un message d'erreur si la connexion échoue
         logging.error("Erreur de connexion à la base de données : {}".format(err))
         return None
 
@@ -95,6 +98,8 @@ def get_db_connection():
 def execute_query(query, params=None):
     try:
         conn = get_db_connection()
+        if conn is None:
+            raise mysql.connector.Error("Impossible de se connecter à la base de données")
         cursor = conn.cursor()
         if params is not None:
             cursor.execute(query, params)
@@ -104,12 +109,17 @@ def execute_query(query, params=None):
         return True
     except mysql.connector.Error as err:
         logging.error("Erreur de requête SQL : {}".format(err))
-        return False
+        raise
+    finally:
+        if conn:
+            conn.close()
 
 # Fonction pour récupérer des données de la base de données
 def fetch_data(query, params=None):
     try:
         conn = get_db_connection()
+        if conn is None:
+            raise mysql.connector.Error("Impossible de se connecter à la base de données")
         cursor = conn.cursor()
         if params is not None:
             cursor.execute(query, params)
@@ -118,15 +128,20 @@ def fetch_data(query, params=None):
         return cursor.fetchall()
     except mysql.connector.Error as err:
         logging.error("Erreur de requête SQL : {}".format(err))
-        return []
+        raise
+    finally:
+        if conn:
+            conn.close()
 
 # Fonction pour vérifier si un utilisateur est inscrit
 def is_registered(user_id):
-    query = f"SELECT * FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
-    data = fetch_data(query, (user_id,))
-    if data is None:
-        return False
-    return len(data) > 0
+    try:
+        query = f"SELECT * FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
+        data = fetch_data(query, (user_id,))
+        return len(data) > 0
+    except mysql.connector.Error as err:
+        logging.error("Erreur lors de la vérification de l'enregistrement : {}".format(err))
+        raise
 
 # Fonction pour ajouter une transaction
 def add_transaction(user_id, amount, transaction_type):
@@ -135,6 +150,42 @@ def add_transaction(user_id, amount, transaction_type):
         execute_query(query, (user_id, amount, transaction_type))
     except mysql.connector.Error as err:
         logging.error("Erreur lors de l'ajout d'une transaction : {}".format(err))
+        raise
+
+# Gestion d'erreur
+async def handle_error(interaction: discord.Interaction, error: Exception, message: str = None):
+    if isinstance(error, ValueError):
+        await interaction.response.send_message(f"Erreur de valeur : {str(error)}", ephemeral=True)
+    elif isinstance(error, mysql.connector.Error):
+        logging.error(f"Erreur de base de données : {str(error)}")
+        await interaction.response.send_message("Une erreur de base de données s'est produite. Veuillez réessayer plus tard.", ephemeral=True)
+    elif isinstance(error, asyncio.TimeoutError):
+        await interaction.response.send_message("Le temps d'attente est écoulé. Veuillez réessayer.", ephemeral=True)
+    else:
+        logging.error(f"Erreur inattendue : {str(error)}")
+        await interaction.response.send_message(message or "Une erreur inattendue s'est produite.", ephemeral=True)
+
+# Récupérer le solde d'un utilisateur
+async def get_user_balance(user_id: int) -> int:
+    try:
+        query = f"SELECT {FIELD_CASH} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
+        data = fetch_data(query, (user_id,))
+        if data and data[0]:
+            return data[0][0]
+        else:
+            return 0
+    except Exception as e:
+        logging.error(f"Erreur lors de la récupération du solde de l'utilisateur : {str(e)}")
+        raise
+
+# Mettre à jour le solde d'un utilisateur
+async def update_user_balance(user_id: int, amount: int) -> None:
+    try:
+        query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_USER_ID} = %s"
+        execute_query(query, (amount, user_id))
+    except Exception as e:
+        logging.error(f"Erreur lors de la mise à jour du solde de l'utilisateur : {str(e)}")
+        raise
 
 # Synchronisation des commandes
 @bot.event
@@ -989,309 +1040,431 @@ def card_to_name(card):
 
 # ROULETTE
 
-class RouletteSession:
-    def __init__(self, bot, channel_id: int):
-        self.bot = bot
-        self.channel_id = channel_id
-        self.players: Dict[int, int] = {}  # user_id: bet_amount
-        self.bets: Dict[int, str] = {}  # user_id: bet_type
-        self.bet_types: Dict[str, Set[int]] = {
-            "rouge": set(), "noir": set(), "pair": set(), "impair": set(),
-            "1-18": set(), "19-36": set(),
-            "douzaine 1-12": set(), "douzaine 13-24": set(), "douzaine 25-36": set(),
-            "colonne 1": set(), "colonne 2": set(), "colonne 3": set()
-        }
-        self.is_active = False
-        self.winning_number = None
-
-    async def add_player(self, user_id: int, bet_type: str, amount: int):
-        if self.is_active:
-            return False
-
-        # Vérification des fonds
-        user_balance = await self.get_user_balance(user_id)
-        if user_balance < amount:
-            return False  # Fonds insuffisants
-
-        self.players[user_id] = amount
-        self.bets[user_id] = bet_type
-        self.bet_types[bet_type].add(user_id)
-        return True
-
-    async def spin_wheel(self):
-        self.is_active = True
-        self.winning_number = random.randint(0, 36)
-        color = self.get_color(self.winning_number)
-        color_emoji = CONSTANTS['ROULETTE']['EMOJIS'][color]
-
-        channel = self.bot.get_channel(self.channel_id)
-        embed = Embed(title="Roulette", description=f"La roue tourne... et le numéro gagnant est: **{self.winning_number}** {color_emoji}", color=0x0000ff)
-        await channel.send(embed=embed)
-
-        await self.process_results()
-
-    def get_color(self, number: int) -> str:
-        if number == 0:
-            return "green"
-        elif number in CONSTANTS['ROULETTE']['RED_NUMBERS']:
-            return "red"
-        else:
-            return "black"
-
-    async def process_results(self):
-        results: Dict[int, Tuple[int, int]] = {}  # user_id: (winning_amount, bet_amount)
-        
-        for bet_type, users in self.bet_types.items():
-            multiplier = self.get_multiplier(bet_type)
-            for user_id in users:
-                bet_amount = self.players[user_id]
-                winning_amount = bet_amount * multiplier if multiplier > 0 else 0
-                results[user_id] = (winning_amount, bet_amount)
-
-        await self.update_player_balances(results)
-        await self.send_results(results)
-
-    def get_multiplier(self, bet_type: str) -> int:
-        if bet_type == "rouge" and self.winning_number in CONSTANTS['ROULETTE']['RED_NUMBERS']:
-            return CONSTANTS['ROULETTE']['PAYOUT_ROUGE']
-        elif bet_type == "noir" and self.winning_number in CONSTANTS['ROULETTE']['BLACK_NUMBERS']:
-            return CONSTANTS['ROULETTE']['PAYOUT_NOIR']
-        elif bet_type == "pair" and self.winning_number % 2 == 0 and self.winning_number != 0:
-            return CONSTANTS['ROULETTE']['PAYOUT_PAIR']
-        elif bet_type == "impair" and self.winning_number % 2 != 0:
-            return CONSTANTS['ROULETTE']['PAYOUT_IMPAIR']
-        elif bet_type == "1-18" and 1 <= self.winning_number <= 18:
-            return CONSTANTS['ROULETTE']['PAYOUT_1_18']
-        elif bet_type == "19-36" and 19 <= self.winning_number <= 36:
-            return CONSTANTS['ROULETTE']['PAYOUT_19_36']
-        elif bet_type == "douzaine 1-12" and 1 <= self.winning_number <= 12:
-            return CONSTANTS['ROULETTE']['PAYOUT_DOUZINE_1_12']
-        elif bet_type == "douzaine 13-24" and 13 <= self.winning_number <= 24:
-            return CONSTANTS['ROULETTE']['PAYOUT_DOUZINE_13_24']
-        elif bet_type == "douzaine 25-36" and 25 <= self.winning_number <= 36:
-            return CONSTANTS['ROULETTE']['PAYOUT_DOUZINE_25_36']
-        elif bet_type == "colonne 1" and self.winning_number in CONSTANTS['ROULETTE']['COLONNE_1']:
-            return CONSTANTS['ROULETTE']['PAYOUT_COLONNE_1']
-        elif bet_type == "colonne 2" and self.winning_number in CONSTANTS['ROULETTE']['COLONNE_2']:
-            return CONSTANTS['ROULETTE']['PAYOUT_COLONNE_2']
-        elif bet_type == "colonne 3" and self.winning_number in CONSTANTS['ROULETTE']['COLONNE_3']:
-            return CONSTANTS['ROULETTE']['PAYOUT_COLONNE_3']
-        else:
-            return 0
-
-    async def update_player_balances(self, results: Dict[int, Tuple[int, int]]):
-        try:
-            connection = mysql.connector.connect(
-                host=HOST,
-                user=USER,
-                password=PASSWORD,
-                database=DATABASE
-            )
-
-            cursor = connection.cursor()
-
-            # Début de la transaction
-            connection.start_transaction()
-
-            update_query = f"""
-                UPDATE {TABLE_USERS} 
-                SET {FIELD_CASH} = CASE
-                    WHEN {FIELD_USER_ID} = %s THEN {FIELD_CASH} + %s
-                    ELSE {FIELD_CASH}
-                END
-                WHERE {FIELD_USER_ID} IN ({','.join(['%s'] * len(results))})
-            """
-
-            # Préparer les données pour la mise à jour
-            update_data = []
-            user_ids = []
-            for user_id, (winning_amount, bet_amount) in results.items():
-                update_data.extend([user_id, winning_amount - bet_amount])
-                user_ids.append(user_id)
-
-            # Exécuter la mise à jour
-            cursor.execute(update_query, update_data + user_ids)
-
-            # Insérer les transactions
-            insert_query = f"""
-                INSERT INTO {TABLE_TRANSACTIONS} 
-                ({FIELD_USER_ID}, {FIELD_AMOUNT}, {FIELD_TYPE}) 
-                VALUES (%s, %s, %s)
-            """
-            transaction_data = [
-                (user_id, winning_amount - bet_amount, 'Roulette')
-                for user_id, (winning_amount, bet_amount) in results.items()
-            ]
-            cursor.executemany(insert_query, transaction_data)
-
-            # Valider la transaction
-            connection.commit()
-
-            print(f"Successfully updated balances for {len(results)} players.")
-
-        except Error as e:
-            print(f"Error updating player balances: {e}")
-            connection.rollback()
-
-        finally:
-            if connection.is_connected():
-                cursor.close()
-                connection.close()
-
-    async def send_results(self, results: Dict[int, Tuple[int, int]]):
-        channel = self.bot.get_channel(self.channel_id)
-        embed = Embed(title="Résultats de la Roulette", color=0x0000ff)
-        for user_id, (winning_amount, bet_amount) in results.items():
-            user = await self.bot.fetch_user(user_id)
-            if winning_amount > 0:
-                embed.add_field(name=f"{user.name}", value=f"Gagné: {winning_amount} 🎉", inline=False)
-            else:
-                embed.add_field(name=f"{user.name}", value=f"Perdu: {bet_amount} 😢", inline=False)
-        
-        await channel.send(embed=embed)
-
-roulette_sessions = {}
-
-# Menu déroulant pour les types de mises
-class BetTypeView(View):
-    def __init__(self, session, user_id):
-        super().__init__(timeout=60)
-        self.session = session
-        self.user_id = user_id
-
-    @discord.ui.select(
-        placeholder="Choisissez votre type de pari",
-        options=[
-            discord.SelectOption(label="Rouge", value="rouge", emoji="🔴"),
-            discord.SelectOption(label="Noir", value="noir", emoji="⚫"),
-            discord.SelectOption(label="Pair", value="pair", emoji="2️⃣"),
-            discord.SelectOption(label="Impair", value="impair", emoji="1️⃣"),
-            discord.SelectOption(label="1-18", value="1-18", emoji="⬇️"),
-            discord.SelectOption(label="19-36", value="19-36", emoji="⬆️"),
-            discord.SelectOption(label="Douzaine 1-12", value="douzaine 1-12", emoji="1️⃣"),
-            discord.SelectOption(label="Douzaine 13-24", value="douzaine 13-24", emoji=" 2️⃣"),
-            discord.SelectOption(label="Douzaine 25-36", value="douzaine 25-36", emoji="3️⃣"),
-            discord.SelectOption(label="Colonne 1", value="colonne 1", emoji="🏛️"),
-            discord.SelectOption(label="Colonne 2", value="colonne 2", emoji="🏛️"),
-            discord.SelectOption(label="Colonne 3", value="colonne 3", emoji="🏛️"),
-        ]
-    )
-
-    async def select_callback(self, interaction: Interaction, select: Select):
-        bet_type = select.values[0]
-        self.session.bets[self.user_id] = bet_type
-
-        if bet_type == "numero":
-            await interaction.response.send_message("Veuillez entrer un numéro entre 0 et 36:", ephemeral=True)
-            
-            def check(m):
-                return m.author.id == self.user_id and m.channel.id == interaction.channel.id and m.content.isdigit() and 0 <= int(m.content) <= 36
-
-            try:
-                msg = await bot.wait_for('message', check=check, timeout=30.0)
-                self.session.bets[self.user_id] = int(msg.content)
-            except asyncio.TimeoutError:
-                await interaction.followup.send("Temps écoulé. Pari annulé.", ephemeral=True)
-                del self.session.players[self.user_id]
-                return
-        else:
-            await interaction.response.send_message(f"Vous avez choisi de parier sur: {bet_type}", ephemeral=True)
-
-        # Si tous les joueurs ont parié, lancer la roulette
-        if len(self.session.bets) == len(self.session.players):
-            await spin_wheel(interaction, self.session)
-
-    @discord.ui.button(label="Annuler", style=discord.ButtonStyle.red)
-    async def cancel_button(self, interaction: Interaction, button: Button):
-        del self.session.players[self.user_id]
-        await interaction.response.send_message("Pari annulé.", ephemeral=True)
-
-class Roulette(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.sessions = {}  # {channel_id: RouletteSession}
-
-    @bot.tree.command(name="roulette", description="Rejoindre une partie de roulette")
-    async def roulette(self, interaction: Interaction, amount: int):
-        user_id = interaction.user.id
-
-        # Vérification de l'inscription
-        if not is_registered(user_id):
-            embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register` avant de jouer à la roulette.", color=color_red)
-            await interaction.response.send_message(embed=embed)
-            return
-
-        # Vérification de la validité du montant parié
+class RouletteBet:
+    def __init__(self, user: discord.Member, amount: int, bet_type: str, bet_value: str):
         if amount <= 0:
-            embed = discord.Embed(title="Erreur", description="Le montant du pari doit être supérieur à 0.", color=color_red)
-            await interaction.response.send_message(embed=embed)
-            return
+            raise ValueError("Le montant du pari doit être positif")
+        if bet_type not in ["number", "color", "even_odd", "high_low", "dozen", "column", "split", "street", "corner", "line"]:
+            raise ValueError("Type de pari invalide")
+        self.user = user
+        self.amount = amount
+        self.bet_type = bet_type
+        self.bet_value = bet_value
 
-        # Récupération du solde de l'utilisateur
-        query = f"SELECT {FIELD_CASH} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
-        data = fetch_data(query, (user_id,))
-        if not data:
-            embed = discord.Embed(title="Erreur", description="Impossible de récupérer vos données. Veuillez réessayer plus tard.", color=color_red)
-            await interaction.response.send_message(embed=embed)
-            return
+def calculate_winnings(self, bet: RouletteBet, winning_number: int, winning_color: str) -> int:
+    try:
+        if bet.bet_type not in ROULETTE_BET_TYPES:
+            raise ValueError(f"Type de pari invalide : {bet.bet_type}")
+
+        payout = ROULETTE_BET_TYPES[bet.bet_type]['payout']
+
+        if bet.bet_type == "number":
+            if int(bet.bet_value) == winning_number:
+                return bet.amount * (payout + 1)
+        elif bet.bet_type == "color":
+            if bet.bet_value == winning_color:
+                return bet.amount * (payout + 1)
+        elif bet.bet_type == "even_odd":
+            if winning_number != 0:  # Le zéro n'est ni pair ni impair
+                if (bet.bet_value == "pair" and winning_number % 2 == 0) or \
+                   (bet.bet_value == "impair" and winning_number % 2 != 0):
+                    return bet.amount * (payout + 1)
+        elif bet.bet_type == "high_low":
+            if winning_number != 0:  # Le zéro n'est ni haut ni bas
+                if (bet.bet_value == "haut" and 19 <= winning_number <= 36) or \
+                   (bet.bet_value == "bas" and 1 <= winning_number <= 18):
+                    return bet.amount * (payout + 1)
+        elif bet.bet_type == "dozen":
+            if (bet.bet_value == "1-12" and 1 <= winning_number <= 12) or \
+               (bet.bet_value == "13-24" and 13 <= winning_number <= 24) or \
+               (bet.bet_value == "25-36" and 25 <= winning_number <= 36):
+                return bet.amount * (payout + 1)
+        elif bet.bet_type == "column":
+            if winning_number != 0:  # Le zéro n'appartient à aucune colonne
+                if (bet.bet_value == "1" and winning_number % 3 == 1) or \
+                   (bet.bet_value == "2" and winning_number % 3 == 2) or \
+                   (bet.bet_value == "3" and winning_number % 3 == 0):
+                    return bet.amount * (payout + 1)
+        elif bet.bet_type == "split":
+            numbers = [int(n) for n in bet.bet_value.split(',')]
+            if winning_number in numbers and len(numbers) == 2:
+                return bet.amount * (payout + 1)
+        elif bet.bet_type == "street":
+            numbers = [int(n) for n in bet.bet_value.split(',')]
+            if winning_number in numbers and len(numbers) == 3:
+                return bet.amount * (payout + 1)
+        elif bet.bet_type == "corner":
+            numbers = [int(n) for n in bet.bet_value.split(',')]
+            if winning_number in numbers and len(numbers) == 4:
+                return bet.amount * (payout + 1)
+        elif bet.bet_type == "line":
+            numbers = [int(n) for n in bet.bet_value.split(',')]
+            if winning_number in numbers and len(numbers) == 6:
+                return bet.amount * (payout + 1)
         
-        # Vérification du solde de l'utilisateur
-        cash = data[0][0]
-        if cash < amount:
-            embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez d'argent pour ce pari. Votre solde actuel est de {cash} {COIN_EMOJI}.", color=color_red)
-            await interaction.response.send_message(embed=embed)
+        return 0  # Si le pari n'est pas gagnant
+    except Exception as e:
+        logging.error(f"Erreur lors du calcul des gains : {str(e)}")
+        raise ValueError(f"Erreur lors du calcul des gains : {str(e)}")
+
+class RouletteGame:
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+        self.bets: List[RouletteBet] = []
+        self.is_running = False
+
+    async def start_game(self, ctx: commands.Context):
+        if self.is_running:
+            await ctx.send("Une partie est déjà en cours !")
             return
 
-        # Vérification  de la présence d'une partie en cours
-        if user_id in roulette_sessions:
-            embed = Embed(title="Erreur", description="Vous avez déjà une partie de roulette en cours.", color=0xff0000)
-            await interaction.response.send_message(embed=embed)
-            return
+        self.is_running = True
+        self.bets = []
 
-        # Création d'une nouvelle session ou participation à une session existante
-        if not roulette_sessions:
-            roulette_sessions[user_id] = RouletteSession(user_id)
-            embed = Embed(title="Roulette", description=f"Vous avez créé une nouvelle partie de roulette. Utilisez `/roulette_start` pour commencer la partie.", color=0x0000ff)
-        else:
-            host_id = next(iter(roulette_sessions))
-            session = roulette_sessions[host_id]
-            if session.is_active:
-                embed = Embed(title="Erreur", description="Une partie est déjà en cours. Veuillez attendre la prochaine partie.", color=0xff0000)
-                await interaction.response.send_message(embed=embed)
+        embed = discord.Embed(title="🎰 Nouvelle partie de Roulette ! 🎰",
+                              description=f"La roulette va tourner dans {ROULETTE_WAIT_TIME} secondes !\n"
+                                          f"Utilisez les boutons ci-dessous pour placer vos paris !",
+                              color=discord.Color.gold())
+        embed.add_field(name="Mise minimale", value=f"{ROULETTE_MIN_BET} {ROULETTE_MONEY_EMOJI}")
+        embed.add_field(name="Mise maximale", value=f"{ROULETTE_MAX_BET} {ROULETTE_MONEY_EMOJI}")
+
+        view = RouletteView(self)
+        message = await ctx.send(embed=embed, view=view)
+
+        for i in range(ROULETTE_WAIT_TIME, 0, -1):
+            if i % 10 == 0 or i <= 5:
+                embed.set_field_at(0, name="Temps restant", value=f"{ROULETTE_TIMER_EMOJI} {i} secondes")
+                await message.edit(embed=embed)
+            await asyncio.sleep(1)
+
+        view.disable_all_items()
+        await message.edit(view=view)
+
+        await self.spin_roulette(ctx)
+
+    async def place_bet(self, interaction: discord.Interaction, amount: int, bet_type: str, bet_value: str):
+        try:
+            if amount < ROULETTE_MIN_BET or amount > ROULETTE_MAX_BET:
+                raise ValueError(f"La mise doit être entre {ROULETTE_MIN_BET} et {ROULETTE_MAX_BET} {COIN_EMOJI}.")
+
+            user_balance = await get_user_balance(interaction.user.id)
+            if user_balance < amount:
+                raise ValueError(f"Solde insuffisant. Votre solde actuel est de {user_balance} {COIN_EMOJI}.")
+
+            bet = RouletteBet(interaction.user, amount, bet_type, bet_value)
+            self.bets.append(bet)
+
+            await update_user_balance(interaction.user.id, -amount)
+
+            await interaction.response.send_message(f"Pari placé ! Vous avez parié {amount} {COIN_EMOJI} sur {bet_value} {ROULETTE_COLOR_EMOJIS.get(bet_value, '')}.", ephemeral=True)
+        except Exception as e:
+            await handle_error(interaction, e, "Erreur lors du placement du pari.")
+
+    async def spin_roulette(self, interaction: discord.Interaction):
+        try:
+            winning_number = random.choice(ROULETTE_NUMBERS)
+            winning_color = ROULETTE_COLORS[str(winning_number)]
+
+            embed = discord.Embed(title="La roulette a tourné !", 
+                                  description=f"Le numéro gagnant est {winning_number} {ROULETTE_NUMBER_EMOJIS[str(winning_number)]} {ROULETTE_COLOR_EMOJIS[winning_color]}.", 
+                                  color=discord.Color.red())
+
+            for bet in self.bets:
+                try:
+                    winnings = self.calculate_winnings(bet, winning_number, winning_color)
+                    if winnings > 0:
+                        await update_user_balance(bet.user.id, winnings)
+                        embed.add_field(name=f"{bet.user.name} a gagné !", value=f"{winnings} {COIN_EMOJI}", inline=False)
+                except Exception as e:
+                    await handle_error (interaction, e, f"Erreur lors de la distribution des gains pour {bet.user.name}.")
+
+            await interaction.response.send_message(embed=embed)
+        except Exception as e:
+            await handle_error(interaction, e, "Erreur lors de la rotation de la roulette.")
+
+    def get_current_bets_summary(self) -> str:
+        if not self.bets:
+            return "Aucun pari n'a encore été placé."
+        
+        summary = []
+        for bet in self.bets:
+            bet_info = f"{bet.user.name}: {bet.amount} {COIN_EMOJI} sur {bet.bet_value} ({bet.bet_type})"
+            summary.append(bet_info)
+        
+        return "\n".join(summary)
+
+class RouletteView(discord.ui.View):
+    async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item) -> None:
+        await handle_error(interaction, error, "Erreur lors de l'interaction avec la roulette.")
+
+    def __init__(self, game: RouletteGame):
+        super().__init__()
+        self.game = game
+
+    @discord.ui.button(label="Numéro", style=discord.ButtonStyle.red)
+    async def number_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(NumberBetModal(self.game))
+
+    @discord.ui.button(label="Couleur", style=discord.ButtonStyle.blurple)
+    async def color_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(ColorBetModal(self.game))
+
+    @discord.ui.button(label="Pair/Impair", style=discord.ButtonStyle.green)
+    async def even_odd_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(EvenOddBetModal(self.game))
+
+    @discord.ui.button(label="Haut/Bas", style=discord.ButtonStyle.green)
+    async def high_low_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(HighLowBetModal(self.game))
+
+    @discord.ui.button(label="Douzaine", style=discord.ButtonStyle.gray)
+    async def dozen_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(DozenBetModal(self.game))
+
+    @discord.ui.button(label="Colonne", style=discord.ButtonStyle.gray)
+    async def column_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(ColumnBetModal(self.game))
+
+    @discord.ui.button(label="Split", style=discord.ButtonStyle.blurple)
+    async def split_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(SplitBetModal(self.game))
+
+    @discord.ui.button(label="Street", style=discord.ButtonStyle.blurple)
+    async def street_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(StreetBetModal(self.game))
+
+    @discord.ui.button(label="Corner", style=discord.ButtonStyle.blurple)
+    async def corner_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(CornerBetModal(self.game))
+
+    @discord.ui.button(label="Line", style=discord.ButtonStyle.blurple)
+    async def line_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(LineBetModal(self.game))
+
+    @discord.ui.button(label="Voir les paris", style=discord.ButtonStyle.secondary)
+    async def show_bets(self, interaction: discord.Interaction, button: discord.ui.Button):
+        bets_summary = self.game.get_current_bets_summary()
+        embed = discord.Embed(title="Paris actuels", description=bets_summary, color=discord.Color.blue())
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    def disable_all_items(self):
+        for item in self.children:
+            item.disabled = True
+
+class NumberBetModal(discord.ui.Modal):
+    def __init__(self, game: RouletteGame):
+        super().__init__("Pari sur un numéro")
+        self.game = game
+
+    number = discord.ui.TextInput(label="Numéro (0-36)", min_length=1, max_length=2)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            number = int(self.number.value)
+            if number < 0 or number > 36:
+                raise ValueError("Le numéro doit être entre 0 et 36.")
+            await self.game.place_bet(interaction, ROULETTE_MIN_BET, "number", str(number))
+        except ValueError as e:
+            await handle_error(interaction, e, "Erreur de saisie du numéro.")
+        except Exception as e:
+            await handle_error(interaction, e, "Une erreur est survenue lors du placement du pari.")
+
+class ColorBetModal(discord.ui.Modal):
+    def __init__(self, game: RouletteGame):
+        super().__init__("Pari sur une couleur")
+        self.game = game
+
+    color = discord.ui.TextInput(label="Couleur (rouge, noir, vert)", min_length=1, max_length=5)
+    amount = discord.ui.TextInput(label="Montant", min_length=1, max_length=5)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            color = self.color.value.lower()
+            if color not in ["rouge", "noir", "vert"]:
+                raise ValueError("La couleur doit être rouge, noir ou vert.")
+            amount = int(self.amount.value)
+            if amount < ROULETTE_MIN_BET or amount > ROULETTE_MAX_BET:
+                raise ValueError(f"Le montant doit être entre {ROULETTE_MIN_BET} et {ROULETTE_MAX_BET}.")
+            await self.game.place_bet(interaction, amount, "color", color)
+        except ValueError as e:
+            await handle_error(interaction, e, "Erreur de saisie.")
+        except Exception as e:
+            await handle_error(interaction, e, "Une erreur est survenue lors du placement du pari.")
+
+class EvenOddBetModal(discord.ui.Modal):
+    def __init__(self, game: RouletteGame):
+        super().__init__("Pari Pair/Impair")
+        self.game = game
+
+    choice = discord.ui.TextInput(label="Choix (pair ou impair)", min_length=4, max_length=6)
+    amount = discord.ui.TextInput(label="Montant", min_length=1, max_length=5)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        choice = self.choice.value.lower()
+        if choice not in ["pair", "impair"]:
+            await interaction.response.send_message("Le choix doit être 'pair' ou 'impair'.", ephemeral=True)
+            return
+        try:
+            amount = int(self.amount.value) # Vérifiez si le montant est valide
+            if amount <= 0:
+                await interaction.response.send_message("Le montant doit être supérieur à 0.", ephemeral=True)
                 return
-            session.players[user_id] = amount
-            embed = Embed(title="Roulette", description=f"Vous avez rejoint la partie de roulette. Attendez que l'hôte démarre la partie.", color=0x0000ff)
+            # Créez un objet RouletteBet avec les informations du pari
+            bet = RouletteBet(interaction.user, amount, "even_odd", choice)
+            self.game.add_bet(bet)
+            await interaction.response.send_message("Pari ajouté avec succès!", ephemeral=True)
+        except ValueError:
+            await interaction.response.send_message("Le montant doit être un nombre entier.", ephemeral=True)
 
-        await interaction.response.send_message(embed=embed)
+class HighLowBetModal(discord.ui.Modal):
+    def __init__(self, game: RouletteGame):
+        super().__init__("Pari Haut/Bas")
+        self.game = game
 
-    @bot.tree.command(name="roulette_start", description="Démarrer la partie de roulette")
-    async def roulette_start(self, interaction: Interaction):
-        user_id = interaction.user.id
+    choice = discord.ui.TextInput(label="Choix (haut ou bas)", min_length=3, max_length=4)
+    amount = discord.ui.TextInput(label="Montant", min_length=1, max_length=5)
 
-        # Vérification des permission d'hôte de l'utilisateur
-        if user_id not in roulette_sessions:
-            embed = Embed(title="Erreur", description="Vous n'êtes pas l'hôte d'une partie de roulette.", color=0xff0000)
-            await interaction.response.send_message(embed=embed)
+    async def on_submit(self, interaction: discord.Interaction):
+        choice = self.choice.value.lower()
+        if choice not in ["haut", "bas"]:
+            await interaction.response.send_message("Le choix doit être 'haut' ou 'bas'.", ephemeral=True)
+            return
+        try:
+            amount = int(self.amount.value)
+            await self.game.place_bet(interaction, amount, "high_low", choice)
+        except ValueError:
+            await interaction.response.send_message("Le montant doit être un nombre entier.", ephemeral=True)
+
+class DozenBetModal(discord.ui.Modal):
+    def __init__(self, game: RouletteGame):
+        super().__init__("Pari Douzaine")
+        self.game = game
+
+    choice = discord.ui.TextInput(label="Choix (1-12, 13-24, 25-36)", min_length=4, max_length=5)
+    amount = discord.ui.TextInput(label="Montant", min_length=1, max_length=5)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        choice = self.choice.value
+        if choice not in ["1-12", "13-24", "25-36"]:
+            await interaction.response.send_message("Le choix doit être '1-12', '13-24', ou '25-36'.", ephemeral=True)
+            return
+        try:
+            amount = int(self.amount.value)
+            await self .game.place_bet(interaction, amount, "dozen", choice)
+        except ValueError:
+            await interaction.response.send_message("Le montant doit être un nombre entier.", ephemeral=True)
+
+class ColumnBetModal(discord.ui.Modal):
+    def __init__(self, game: RouletteGame):
+        super().__init__("Pari Colonne")
+        self.game = game
+
+    choice = discord.ui.TextInput(label="Choix (1, 2, 3)", min_length=1, max_length=1)
+    amount = discord.ui.TextInput(label="Montant", min_length=1, max_length=5)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        choice = self.choice.value
+        if choice not in ["1", "2", "3"]:
+            await interaction.response.send_message("Le choix doit être '1', '2', ou '3'.", ephemeral=True)
+            return
+        try:
+            amount = int(self.amount.value)
+            await self.game.place_bet(interaction, amount, "column", choice)
+        except ValueError:
+            await interaction.response.send_message("Le montant doit être un nombre entier.", ephemeral=True)
+
+class SplitBetModal(discord.ui.Modal):
+    def __init__(self, game: RouletteGame):
+        super().__init__("Pari Split")
+        self.game = game
+
+    choice = discord.ui.TextInput(label="Choix (deux numéros séparés par une virgule)", min_length=3, max_length=5)
+    amount = discord.ui.TextInput(label="Montant", min_length=1, max_length=5)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        choice = self.choice.value
+        try:
+            numbers = [int(x) for x in choice.split(",")]
+            if len(numbers) != 2 or not all(1 <= x <= 36 for x in numbers):
+                await interaction.response.send_message("Le choix doit être deux numéros entre 1 et 36 séparés par une virgule.", ephemeral=True)
+                return
+            amount = int(self.amount.value)
+            await self.game.place_bet(interaction, amount, "split", choice)
+        except ValueError:
+            await interaction.response.send_message("Le montant doit être un nombre entier.", ephemeral=True)
+
+class StreetBetModal(discord.ui.Modal):
+    def __init__(self, game: RouletteGame):
+        super().__init__("Pari Street")
+        self.game = game
+
+    choice = discord.ui.TextInput(label="Choix (trois numéros séparés par des virgules)", min_length=5, max_length=7)
+    amount = discord.ui.TextInput(label="Montant", min_length=1, max_length=5)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        choice = self.choice.value
+        try:
+            numbers = [int(x) for x in choice.split(",")]
+            if len(numbers) != 3 or not all(1 <= x <= 36 for x in numbers):
+                await interaction.response.send_message("Le choix doit être trois numéros entre 1 et 36 séparés par des virgules.", ephemeral=True)
+                return
+            amount = int(self.amount.value)
+            await self.game.place_bet(interaction, amount, "street", choice)
+        except ValueError:
+            await interaction.response.send_message("Le montant doit être un nombre entier.", ephemeral=True)
+
+class CornerBetModal(discord.ui.Modal):
+    def __init__(self, game: RouletteGame):
+        super().__init__("Pari Corner")
+        self.game = game
+
+    choice = discord.ui.TextInput(label="Choix (quatre numéros séparés par des virgules)", min_length=7, max_length=9)
+    amount = discord.ui.TextInput(label="Montant", min_length=1, max_length=5)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        choice = self.choice.value
+        try:
+            numbers = [int(x) for x in choice.split(",")]
+            if len(numbers) != 4 or not all(1 <= x <= 36 for x in numbers):
+                await interaction.response.send_message("Le choix doit être quatre numéros entre 1 et 36 séparés par des virgules.", ephemeral=True)
+                return
+            amount = int(self.amount.value)
+            await self.game.place_bet(interaction, amount, "corner", choice)
+        except ValueError:
+            await interaction.response.send_message("Le montant doit être un nombre entier.", ephemeral=True)
+
+class LineBetModal(discord.ui.Modal):
+    def __init__(self, game: RouletteGame):
+        super().__init__("Pari Line")
+        self.game = game
+
+    choice = discord.ui.TextInput(label="Choix (six numéros séparés par des virgules )", min_length=11, max_length=13)
+    amount = discord.ui.TextInput(label="Montant", min_length=1, max_length=5)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        choice = self.choice.value
+        try:
+            numbers = [int(x) for x in choice.split(",")]
+            if len(numbers) != 6 or not all(1 <= x <= 36 for x in numbers):
+                await interaction.response.send_message("Le choix doit être six numéros entre 1 et 36 séparés par des virgules.", ephemeral=True)
+                return
+            amount = int(self.amount.value)
+            await self.game.place_bet(interaction, amount, "line", choice)
+        except ValueError:
+            await interaction.response.send_message("Le montant doit être un nombre entier.", ephemeral=True)
+
+@bot.tree.command(name="roulette", description="Lancer une nouvelle partie de roulette")
+async def roulette(interaction: discord.Interaction):
+    try:
+        if RouletteGame.is_game_running():
+            await interaction.response.send_message("Une partie de roulette est déjà en cours. Veuillez attendre la fin de la partie actuelle.", ephemeral=True)
             return
 
-        # Vérification de l'état de la session
-        session = roulette_sessions[user_id]
-        if session.is_active:
-            embed = Embed(title="Erreur", description="La partie est déjà en cours.", color=0xff0000)
-            await interaction.response.send_message(embed=embed)
-            return
+        game = RouletteGame()
+        await interaction.response.send_message("La partie de roulette a commencé !", view=RouletteView(game), ephemeral=True)
+    except Exception as e:
+        await handle_error(interaction, e, "Erreur lors du lancement de la partie de roulette.")
 
-        # Commencement de la session
-        session.is_active = True
-        embed = Embed(title="Roulette", description="La partie de roulette commence! Choisissez votre type de pari.", color=0x0000ff)
-        await interaction.response.send_message(embed=embed)
-
-        # Demander les paris à chaque joueur
-        for player_id in session.players:
-            player = await self.bot.fetch_user(player_id)
-            view = BetTypeView(session, player_id)
-            embed = Embed(title="🎰  Roulette", description="Choisissez votre type de pari:", color=0x0000ff)
-            await player.send(embed=embed, view=view)
 
 # POKER
 
@@ -1540,9 +1713,5 @@ async def blackjack(interaction: discord.Interaction, amount: int):
 
 
 
-async def setup(bot):
-    await bot.add_cog(Roulette(bot))
-
 if __name__ == "__main__":
-    asyncio.run(setup(bot))
     bot.run(TOKEN)
