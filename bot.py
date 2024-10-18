@@ -1293,8 +1293,6 @@ class Roulette(commands.Cog):
             embed = Embed(title="🎰  Roulette", description="Choisissez votre type de pari:", color=0x0000ff)
             await player.send(embed=embed, view=view)
 
-bot.add_cog(Roulette(bot))
-
 # POKER
 
 class PokerPlayerClass:
@@ -1540,5 +1538,11 @@ async def blackjack(interaction: discord.Interaction, amount: int):
 
     await interaction.response.send_message(embed=embed, view=view)
 
+
+
+async def setup(bot):
+    await bot.add_cog(Roulette(bot))
+
 if __name__ == "__main__":
+    asyncio.run(setup(bot))
     bot.run(TOKEN)
