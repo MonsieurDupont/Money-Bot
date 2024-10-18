@@ -1802,7 +1802,7 @@ class BlackJackView(discord.ui.View):
         # Check if player busts
         if self.session.evaluate_hand(player_cards) > 21:
             embed.add_field(name="Résultat", value="Vous avez dépassé 21! Perdu!")
-            self.disable_all_items()  # Disable buttons
+            # self.disable_all_items()  # Disable buttons
         await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label="Stand", style=discord.ButtonStyle.gray)
