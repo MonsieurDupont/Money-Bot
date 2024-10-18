@@ -1147,40 +1147,38 @@ class RouletteGame:
                                 description=f"Le numéro gagnant est {winning_number} {ROULETTE_NUMBER_EMOJIS[str(winning_number)]} {ROULETTE_COLOR_EMOJIS[winning_color]}.",
                                 color=discord.Color.red())
 
-            winners = []
-            losers = []
-            total_winnings = 0
-            total_losses = 0
+            user_results = {}
 
             for bet in self.bets:
                 try:
                     winnings = self.calculate_winnings(bet, winning_number, winning_color)
-                    if winnings > 0:
-                        await update_user_balance(bet.user.id, winnings)
-                        winners.append((bet.user.name, winnings))
-                        total_winnings += winnings
-                    else:
-                        losers.append((bet.user.name, bet.amount))
-                        total_losses += bet.amount
+                    net_result = winnings - bet.amount
+                    
+                    if bet.user.name not in user_results:
+                        user_results[bet.user.name] = 0
+                    user_results[bet.user.name] += net_result
+
+                    await update_user_balance(bet.user.id, net_result)
                 except Exception as e:
                     logging.error(f"Erreur lors de la distribution des gains pour {bet.user.name}: {str(e)}")
 
-            # Ajouter les informations sur les gagnants
-            if winners:
-                winners_text = "\n".join([f"{name} a gagné {amount} {COIN_EMOJI}" for name, amount in winners])
-                embed.add_field(name="Gagnants", value=winners_text, inline=False)
-            else:
-                embed.add_field(name="Gagnants", value="Aucun gagnant cette fois-ci.", inline=False)
+            # Trier les résultats des utilisateurs
+            sorted_results = sorted(user_results.items(), key=lambda x: x[1], reverse=True)
 
-            # Ajouter les informations sur les perdants
-            if losers:
-                losers_text = "\n".join([f"{name} a perdu {amount} {COIN_EMOJI}" for name, amount in losers])
-                embed.add_field(name="Perdants", value=losers_text, inline=False)
-            else:
-                embed.add_field(name="Perdants", value="Aucun perdant cette fois-ci.", inline=False)
+            # Ajouter les résultats à l'embed
+            results_text = ""
+            for name, result in sorted_results:
+                if result > 0:
+                    results_text += f"{name} a gagné {result} {COIN_EMOJI}\n"
+                elif result < 0:
+                    results_text += f"{name} a perdu {abs(result)} {COIN_EMOJI}\n"
+                else:
+                    results_text += f"{name} n'a ni gagné ni perdu\n"
 
-            # Ajouter le résumé des gains et pertes
-            embed.add_field(name="Résumé", value=f"Total des gains : {total_winnings} {COIN_EMOJI}\nTotal des pertes : {total_losses} {COIN_EMOJI}", inline=False)
+            if results_text:
+                embed.add_field(name="Résultats", value=results_text, inline=False)
+            else:
+                embed.add_field(name="Résultats", value="Aucun pari n'a été placé pour cette rotation.", inline=False)
 
             await message.edit(embed=embed)
         except Exception as e:
@@ -1199,12 +1197,19 @@ class RouletteGame:
         return "\n".join(summary)
 
 class RouletteView(discord.ui.View):
-    async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item) -> None:
-        await handle_error(interaction, error, "Erreur lors de l'interaction avec la roulette.")
-
     def __init__(self, game: RouletteGame):
         super().__init__()
         self.game = game
+        self.last_message = None
+
+    async def send_bet_view(self, interaction: discord.Interaction, view, content):
+        if self.last_message:
+            try:
+                await self.last_message.delete()
+            except discord.NotFound:
+                pass  # Message already deleted, ignore
+
+        self.last_message = await interaction.response.send_message(content, view=view, ephemeral=True)
 
     @discord.ui.button(label="Numéro", style=discord.ButtonStyle.red)
     async def number_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -1213,22 +1218,22 @@ class RouletteView(discord.ui.View):
     @discord.ui.button(label="Couleur", style=discord.ButtonStyle.blurple)
     async def color_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = ColorBetView(self.game)
-        await interaction.response.send_message("Choisissez une couleur :", view=view)
+        await self.send_bet_view(interaction, view, "Choisissez une couleur :")
 
     @discord.ui.button(label="Pair/Impair", style=discord.ButtonStyle.green)
     async def even_odd_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = EvenOddBetView(self.game)
-        await interaction.response.send_message("Choisissez Pair ou Impair :", view=view)
+        await self.send_bet_view(interaction, view, "Choisissez Pair ou Impair :")
 
     @discord.ui.button(label="Douzaine", style=discord.ButtonStyle.grey)
     async def dozen_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = DozenBetView(self.game)
-        await interaction.response.send_message("Choisissez une douzaine :", view=view)
+        await self.send_bet_view(interaction, view, "Choisissez une douzaine :")
 
     @discord.ui.button(label="Colonne", style=discord.ButtonStyle.primary)
     async def column_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = ColumnBetView(self.game)
-        await interaction.response.send_message("Choisissez une colonne :", view=view)
+        await self.send_bet_view(interaction, view, "Choisissez une colonne :")
 
     @discord.ui.button(label="Voir les paris", style=discord.ButtonStyle.secondary)
     async def show_bets(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -1315,7 +1320,6 @@ class ColorBetView(discord.ui.View):
         super().__init__()
         self.game = game
         self.color = None
-        self.amount = None
 
     @discord.ui.select(
         placeholder="Choisissez une couleur",
@@ -1337,6 +1341,10 @@ class ColorBetView(discord.ui.View):
 
         modal = AmountInputModal(self.game, "color", self.color)
         await interaction.response.send_modal(modal)
+        self.stop()  # Stop the view after placing the bet
+
+    async def on_timeout(self) -> None:
+        self.stop()  # Stop the view after timeout
 
 class EvenOddBetModal(discord.ui.Modal, title="Pari Pair/Impair"):
     def __init__(self, game: RouletteGame):
@@ -1390,6 +1398,10 @@ class EvenOddBetView(discord.ui.View):
 
         modal = AmountInputModal(self.game, "even_odd", self.choice)
         await interaction.response.send_modal(modal)
+        self.stop()
+
+    async def on_timeout(self) -> None:
+        self.stop()
 
 class DozenBetModal(discord.ui.Modal, title="Pari Douzaine"):
     def __init__(self, game: RouletteGame):
@@ -1445,6 +1457,10 @@ class DozenBetView(discord.ui.View):
 
         modal = AmountInputModal(self.game, "dozen", self.choice)
         await interaction.response.send_modal(modal)
+        self.stop()
+
+    async def on_timeout(self) -> None:
+        self.stop()
 
 class ColumnBetModal(discord.ui.Modal, title="Pari Colonne"):
     def __init__(self, game: RouletteGame):
@@ -1500,6 +1516,10 @@ class ColumnBetView(discord.ui.View):
 
         modal = AmountInputModal(self.game, "column", self.choice)
         await interaction.response.send_modal(modal)
+        self.stop()
+
+    async def on_timeout(self) -> None:
+        self.stop()
 
 
 @bot.tree.command(name="roulette", description="Lancer une nouvelle partie de roulette")
