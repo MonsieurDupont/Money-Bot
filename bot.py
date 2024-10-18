@@ -1577,31 +1577,32 @@ class ColumnBetView(discord.ui.View):
 
 @bot.tree.command(name="roulette", description="Lancer une nouvelle partie de roulette")
 async def roulette(interaction: discord.Interaction):
+    user_id = interaction.user.id
     try:
-        logging.info("Démarrage d'une nouvelle partie de roulette")
+        logging.info(f"Utilisateur {user_id} démarre une nouvelle partie de roulette")
         game = RouletteGame()
-        logging.info("Instance de RouletteGame créée avec succès")
+        logging.info(f"Instance de RouletteGame créée avec succès pour l'utilisateur {user_id}")
         await game.start_game(interaction)
     except GameAlreadyRunningError as gare:
-        logging.warning(f"Tentative de démarrer une partie alors qu'une est déjà en cours : {str(gare)}")
+        logging.warning(f"Utilisateur {user_id} tente de démarrer une partie alors qu'une est déjà en cours : {str(gare)}")
         await interaction.response.send_message("Une partie de roulette est déjà en cours. Veuillez attendre qu'elle se termine.", ephemeral=True)
     except InsufficientFundsError as ife:
-        logging.info(f"Tentative de pari avec des fonds insuffisants : {str(ife)}")
+        logging.info(f"Utilisateur {user_id} tente un pari avec des fonds insuffisants : {str(ife)}")
         await interaction.response.send_message(str(ife), ephemeral=True)
     except InvalidBetError as ibe:
-        logging.info(f"Tentative de pari invalide : {str(ibe)}")
-        await interaction.response.send_message(str(ibe ), ephemeral=True)
+        logging.info(f"Utilisateur {user_id} tente un pari invalide : {str(ibe)}")
+        await interaction.response.send_message(str(ibe), ephemeral=True)
     except RouletteError as re:
-        logging.error(f"Erreur lors du démarrage de la partie : {str(re)}")
+        logging.error(f"Erreur lors du démarrage de la partie pour l'utilisateur {user_id} : {str(re)}")
         await interaction.response.send_message("Erreur lors du démarrage de la partie. Veuillez réessayer.", ephemeral=True)
     except discord.errors.HTTPException as he:
-        logging.error(f"Erreur HTTP Discord : {str(he)}")
+        logging.error(f"Erreur HTTP Discord pour l'utilisateur {user_id} : {str(he)}")
         await interaction.response.send_message("Erreur de communication avec Discord. Veuillez réessayer plus tard.", ephemeral=True)
     except asyncio.TimeoutError:
-        logging.error("Timeout lors du lancement de la partie de roulette")
+        logging.error(f"Timeout lors du lancement de la partie de roulette pour l'utilisateur {user_id}")
         await interaction.response.send_message("La partie a expiré. Veuillez réessayer.", ephemeral=True)
     except Exception as e:
-        logging.error(f"Erreur inattendue lors du lancement de la partie de roulette : {str(e)}")
+        logging.error(f"Erreur inattendue lors du lancement de la partie de roulette pour l'utilisateur {user_id} : {str(e)}")
         await interaction.response.send_message("Erreur inattendue. Veuillez réessayer ou contacter un administrateur.", ephemeral=True)
 
 async def send_error_message(interaction: discord.Interaction, message: str):
