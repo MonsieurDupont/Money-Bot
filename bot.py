@@ -1045,16 +1045,16 @@ class BetTypeView(View):
             discord.SelectOption(label="Colonne 3", value="colonne 3", emoji="🏛️", description="Mise sur la troisième colonne"),
             discord.SelectOption(label="Numéro spécifique", value="numero", emoji="🔢", description="Mise sur un numéro spécifique")
         ]
-        return Select(placeholder="Choisissez votre type de pari", options=options, custom_id="bet_type")
+        return discord.ui.Select(placeholder="Choisissez votre type de pari", options=options, custom_id="bet_type")
 
     @discord.ui.select(custom_id="bet_type")
-    async def select_callback(self, interaction: discord.Interaction, select: Select):
+    async def select_callback(self, interaction: discord.Interaction, select: discord.ui.Select):
         self.bet_type = select.values[0]
         await interaction.response.defer()
         self.stop()
 
     @discord.ui.button(label="Annuler", style=discord.ButtonStyle.red)
-    async def cancel(self, interaction: discord.Interaction, button: Button):
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.bet_type = "cancel"
         await interaction.response.defer()
         self.stop()
