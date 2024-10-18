@@ -12,9 +12,8 @@ import configparser
 from dotenv import load_dotenv
 from discord.ext import commands
 from discord import app_commands
-from discord.ui import Select, View, Button
-from treys import Card, Evaluator, Deck
-from typing import Literal
+from discord.ui import View
+from treys import Card, Deck
 from datetime import datetime
 
 # Chargement des variables d'environnement
