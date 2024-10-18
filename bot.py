@@ -1107,13 +1107,14 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
             return
 
         winnings = amount * payout
-        new_balance = cash + winnings - amount  # Soustraire la mise initiale
+        new_balance = cash + winnings  # Ajouter les gains au solde actuel
     else:
-        new_balance = cash - amount
+        winnings = 0
+        new_balance = cash - amount  # Retirer seulement la mise en cas de perte
 
     # Mettre à jour le solde de l'utilisateur
     query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = %s WHERE {FIELD_USER_ID} = %s"
-    success = execute_query(query, (new_balance , user_id))
+    success = execute_query(query, (new_balance, user_id))
     if not success:
         embed = discord.Embed(title="Erreur", description="Impossible de mettre à jour votre solde. Veuillez réessayer plus tard.", color=color_red)
         await interaction.response.send_message(embed=embed)
