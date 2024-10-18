@@ -1108,39 +1108,38 @@ def calculate_winnings(self, bet: RouletteBet, winning_number: int, winning_colo
         raise ValueError(f"Erreur lors du calcul des gains : {str(e)}")
 
 class RouletteGame:
-    def __init__(self, bot: commands.Bot):
-        self.bot = bot
-        self.bets: List[RouletteBet] = []
+    def __init__(self):
         self.is_running = False
+        self.bets = []
 
-    async def start_game(self, ctx: commands.Context):
-        if self.is_running:
-            await ctx.send("Une partie est déjà en cours !")
-            return
-
+    async def start_game(self, interaction: discord.Interaction):
         self.is_running = True
         self.bets = []
 
         embed = discord.Embed(title="🎰 Nouvelle partie de Roulette ! 🎰",
-                              description=f"La roulette va tourner dans {ROULETTE_WAIT_TIME} secondes !\n"
-                                          f"Utilisez les boutons ci-dessous pour placer vos paris !",
-                              color=discord.Color.gold())
+                            description=f"La roulette va tourner dans {ROULETTE_WAIT_TIME} secondes !\n"
+                                        f"Utilisez les boutons ci-dessous pour placer vos paris !",
+                            color=discord.Color.gold())
         embed.add_field(name="Mise minimale", value=f"{ROULETTE_MIN_BET} {ROULETTE_MONEY_EMOJI}")
         embed.add_field(name="Mise maximale", value=f"{ROULETTE_MAX_BET} {ROULETTE_MONEY_EMOJI}")
+        embed.add_field(name="Temps restant", value=f"{ROULETTE_TIMER_EMOJI} {ROULETTE_WAIT_TIME} secondes")
 
         view = RouletteView(self)
-        message = await ctx.send(embed=embed, view=view)
+        await interaction.response.defer()
+        message = await interaction.original_response()
+
+        await message.edit(embed=embed, view=view)
 
         for i in range(ROULETTE_WAIT_TIME, 0, -1):
             if i % 10 == 0 or i <= 5:
-                embed.set_field_at(0, name="Temps restant", value=f"{ROULETTE_TIMER_EMOJI} {i} secondes")
+                embed.set_field_at(2, name="Temps restant", value=f"{ROULETTE_TIMER_EMOJI} {i} secondes")
                 await message.edit(embed=embed)
             await asyncio.sleep(1)
 
         view.disable_all_items()
         await message.edit(view=view)
 
-        await self.spin_roulette(ctx)
+        await self.spin_roulette(message)
 
     async def place_bet(self, interaction: discord.Interaction, amount: int, bet_type: str, bet_value: str):
         try:
@@ -1456,12 +1455,14 @@ class LineBetModal(discord.ui.Modal):
 @bot.tree.command(name="roulette", description="Lancer une nouvelle partie de roulette")
 async def roulette(interaction: discord.Interaction):
     try:
-        if RouletteGame.is_game_running():
+        # Vérifiez si une instance de RouletteGame existe déjà
+        if hasattr(bot, 'roulette_game') and bot.roulette_game.is_running:
             await interaction.response.send_message("Une partie de roulette est déjà en cours. Veuillez attendre la fin de la partie actuelle.", ephemeral=True)
             return
 
-        game = RouletteGame()
-        await interaction.response.send_message("La partie de roulette a commencé !", view=RouletteView(game), ephemeral=True)
+        # Créez une nouvelle instance de RouletteGame
+        bot.roulette_game = RouletteGame()
+        await bot.roulette_game.start_game(interaction)
     except Exception as e:
         await handle_error(interaction, e, "Erreur lors du lancement de la partie de roulette.")
 

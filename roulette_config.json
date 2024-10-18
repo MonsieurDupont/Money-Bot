@@ -40,7 +40,7 @@
       "36": "red"
     },
     "ROULETTE_MIN_BET": 10,
-    "ROULETTE_MAX_BET": 1000,
+    "ROULETTE_MAX_BET": 999999999,
     "ROULETTE_WAIT_TIME": 60,
     "ROULETTE_NUMBER_EMOJIS": {
       "0": "0️⃣", "1": "1️⃣", "2": "2️⃣", "3": "3️⃣", "4": "4️⃣", "5": "5️⃣", "6": "6️⃣", "7": "7️⃣", "8": "8️⃣", "9": "9️⃣",
