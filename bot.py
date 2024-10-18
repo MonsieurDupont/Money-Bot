@@ -1345,7 +1345,7 @@ class ColorBetView(discord.ui.View):
             await interaction.response.send_message("Veuillez choisir une couleur.", ephemeral=True)
             return
 
-        modal = AmountInputModal(self.game, self.color)
+        modal = AmountInputModal(self.game, "color", self.color)
         await interaction.response.send_modal(modal)
 
     async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item) -> None:
