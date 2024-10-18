@@ -156,15 +156,15 @@ def add_transaction(user_id, amount, transaction_type):
 # Gestion d'erreur
 async def handle_error(interaction: discord.Interaction, error: Exception, message: str = None):
     if isinstance(error, ValueError):
-        await interaction.response.send_message(f"Erreur de valeur : {str(error)}", ephemeral=True)
+        await interaction.followup.send(f"Erreur de valeur : {str(error)}", ephemeral=True)
     elif isinstance(error, mysql.connector.Error):
         logging.error(f"Erreur de base de données : {str(error)}")
-        await interaction.response.send_message("Une erreur de base de données s'est produite. Veuillez réessayer plus tard.", ephemeral=True)
+        await interaction.followup.send("Une erreur de base de données s'est produite. Veuillez réessayer plus tard.", ephemeral=True)
     elif isinstance(error, asyncio.TimeoutError):
-        await interaction.response.send_message("Le temps d'attente est écoulé. Veuillez réessayer.", ephemeral=True)
+        await interaction.followup.send("Le temps d'attente est écoulé. Veuillez réessayer.", ephemeral=True)
     else:
         logging.error(f"Erreur inattendue : {str(error)}")
-        await interaction.response.send_message(message or "Une erreur inattendue s'est produite.", ephemeral=True)
+        await interaction.followup.send(message or "Une erreur inattendue s'est produite.", ephemeral=True)
 
 # Récupérer le solde d'un utilisateur
 async def get_user_balance(user_id: int) -> int:
@@ -1079,7 +1079,7 @@ class RouletteGame:
                 await message.edit(embed=embed)
             await asyncio.sleep(1)
 
-        view.disable_all_items()  # Désactivez les boutons avant de faire tourner la roulette
+        view.disable_all_items()  # Désactiver les boutons avant de faire tourner la roulette
         await message.edit(view=view)
         await self.spin_roulette(message, view)
 
@@ -1556,7 +1556,7 @@ async def roulette(interaction: discord.Interaction):
         logging.info("Instance de RouletteGame créée avec succès")
         await game.start_game(interaction)
     except Exception as e:
-        logging.error(f"Erreur lors du lancement de la partie de roulette : {str(e)}", exc_info=True)
+        logging.error(f"Erreur lors du lancement de la partie de roulette : {str(e)}")
         await handle_error(interaction, e, "Erreur lors du lancement de la partie de roulette.")
 
 
