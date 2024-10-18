@@ -155,15 +155,15 @@ def add_transaction(user_id, amount, transaction_type):
 # Gestion d'erreur
 async def handle_error(interaction: discord.Interaction, error: Exception, message: str = None):
     if isinstance(error, ValueError):
-        await interaction.response.send_message(f"Erreur de valeur : {str(error)}", ephemeral=True)
+        await interaction.response.edit_message(f"Erreur de valeur : {str(error)}", ephemeral=True)
     elif isinstance(error, mysql.connector.Error):
         logging.error(f"Erreur de base de données : {str(error)}")
-        await interaction.response.send_message("Une erreur de base de données s'est produite. Veuillez réessayer plus tard.", ephemeral=True)
+        await interaction.response.edit_message("Une erreur de base de données s'est produite. Veuillez réessayer plus tard.", ephemeral=True)
     elif isinstance(error, asyncio.TimeoutError):
-        await interaction.response.send_message("Le temps d'attente est écoulé. Veuillez réessayer.", ephemeral=True)
+        await interaction.response.edit_message("Le temps d'attente est écoulé. Veuillez réessayer.", ephemeral=True)
     else:
         logging.error(f"Erreur inattendue : {str(error)}")
-        await interaction.response.send_message(message or "Une erreur inattendue s'est produite.", ephemeral=True)
+        await interaction.response.edit_message(message or "Une erreur inattendue s'est produite.", ephemeral=True)
 
 # Récupérer le solde d'un utilisateur
 async def get_user_balance(user_id: int) -> int:
@@ -1062,17 +1062,15 @@ class RouletteGame:
 
         embed = discord.Embed(title="🎰 Nouvelle partie de Roulette ! 🎰",
                             description=f"La roulette va tourner dans {ROULETTE_WAIT_TIME} secondes !\n"
-                                        f"Utilisez les boutons ci-dessous pour placer vos paris !",
+                                        f"Utilisez les boutons ci-dessous pour placer vos paris ! ",
                             color=discord.Color.gold())
         embed.add_field(name="Mise minimale", value=f"{ROULETTE_MIN_BET} {ROULETTE_MONEY_EMOJI}")
         embed.add_field(name="Mise maximale", value=f"{ROULETTE_MAX_BET} {ROULETTE_MONEY_EMOJI}")
         embed.add_field(name="Temps restant", value=f"{ROULETTE_TIMER_EMOJI} {ROULETTE_WAIT_TIME} secondes")
 
         view = RouletteView(self)
-        await interaction.response.defer()
+        await interaction.response.send_message(embed=embed, view=view)
         message = await interaction.original_response()
-
-        await message.edit(embed=embed, view=view)
 
         for i in range(ROULETTE_WAIT_TIME, 0, -1):
             if i % 10 == 0 or i <= 5:
@@ -1080,9 +1078,7 @@ class RouletteGame:
                 await message.edit(embed=embed)
             await asyncio.sleep(1)
 
-        view.disable_all_items()
-        await message.edit(view=view)
-
+        view.roulette_game = None
         await self.spin_roulette(message)
 
     async def place_bet(self, interaction: discord.Interaction, amount: int, bet_type: str, bet_value: str):
@@ -1141,27 +1137,28 @@ class RouletteGame:
             logging.error(f"Erreur lors du calcul des gains : {str(e)}")
             raise ValueError(f"Erreur lors du calcul des gains : {str(e)}")
 
-    async def spin_roulette(self, interaction: discord.Interaction):
+    async def spin_roulette(self, message: discord.InteractionMessage):
         try:
             winning_number = random.choice(ROULETTE_NUMBERS)
             winning_color = ROULETTE_COLORS[str(winning_number)]
 
-            embed = discord.Embed(title="La roulette a tourné !", 
-                                  description=f"Le numéro gagnant est {winning_number} {ROULETTE_NUMBER_EMOJIS[str(winning_number)]} {ROULETTE_COLOR_EMOJIS[winning_color]}.", 
-                                  color=discord.Color.red())
+            embed = discord.Embed(title="La roulette a tourné ! ",
+                                description=f"Le numéro gagnant est {winning_number} {ROULETTE_NUMBER_EMOJIS[str(winning_number)]} {ROULETTE_COLOR_EMOJIS[winning_color]}. ",
+                                color=discord.Color.red())
 
             for bet in self.bets:
                 try:
                     winnings = self.calculate_winnings(bet, winning_number, winning_color)
                     if winnings > 0:
                         await update_user_balance(bet.user.id, winnings)
-                        embed.add_field(name=f"{bet.user.name} a gagné !", value=f"{winnings} {COIN_EMOJI}", inline=False)
+                        embed.add_field(name=f"{bet.user.name} a gagné ! ", value=f"{winnings} {COIN_EMOJI}", inline=False)
                 except Exception as e:
-                    await handle_error (interaction, e, f"Erreur lors de la distribution des gains pour {bet.user.name}.")
+                    logging.error(f"Erreur lors de la distribution des gains pour {bet.user.name}: {str(e)}")
 
-            await interaction.response.send_message(embed=embed)
+            await message.edit(embed=embed)
         except Exception as e:
-            await handle_error(interaction, e, "Erreur lors de la rotation de la roulette.")
+            logging.error(f"Erreur lors de la rotation de la roulette : {str(e)}")
+            await message.edit(content="Une erreur s'est produite lors de la rotation de la roulette.")
 
     def get_current_bets_summary(self) -> str:
         if not self.bets:
@@ -1339,15 +1336,12 @@ class ColumnBetModal(discord.ui.Modal):
 @bot.tree.command(name="roulette", description="Lancer une nouvelle partie de roulette")
 async def roulette(interaction: discord.Interaction):
     try:
-        # Vérifiez si une instance de RouletteGame existe déjà
-        if hasattr(bot, 'roulette_game') and bot.roulette_game.is_running:
-            await interaction.response.send_message("Une partie de roulette est déjà en cours. Veuillez attendre la fin de la partie actuelle.", ephemeral=True)
-            return
-
-        # Créez une nouvelle instance de RouletteGame
-        bot.roulette_game = RouletteGame()
-        await bot.roulette_game.start_game(interaction)
+        logging.info("Démarrage d'une nouvelle partie de roulette")
+        game = RouletteGame()
+        logging.info("Instance de RouletteGame créée avec succès")
+        await game.start_game(interaction)
     except Exception as e:
+        logging.error(f"Erreur lors du lancement de la partie de roulette : {str(e)}", exc_info=True)
         await handle_error(interaction, e, "Erreur lors du lancement de la partie de roulette.")
 
 
