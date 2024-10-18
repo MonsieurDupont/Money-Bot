@@ -1079,8 +1079,9 @@ class RouletteGame:
                 await message.edit(embed=embed)
             await asyncio.sleep(1)
 
-        view.roulette_game = None
-        await self.spin_roulette(message)
+        view.disable_all_items()  # Désactivez les boutons avant de faire tourner la roulette
+        await message.edit(view=view)
+        await self.spin_roulette(message, view)
 
     async def place_bet(self, interaction: discord.Interaction, amount: int, bet_type: str, bet_value: str):
         try:
@@ -1144,12 +1145,6 @@ class RouletteGame:
                 await message.edit(content="Aucun pari n'a été placé pour cette rotation.")
                 return
 
-            # Désactiver les boutons
-            view = discord.utils.get(message.components, type=discord.ComponentType.view)
-            if isinstance(view, RouletteView):
-                view.disable_all_items()
-                await message.edit(view=view)
-                
             winning_number = random.choice(ROULETTE_NUMBERS)
             winning_color = ROULETTE_COLORS[str(winning_number)]
 
@@ -1190,7 +1185,7 @@ class RouletteGame:
             else:
                 embed.add_field(name="Résultats", value="Aucun pari n'a été placé pour cette rotation. ", inline=False)
 
-            await message.edit(embed=embed)
+            await message.edit(embed=embed, view=None)  # Supprimer la vue après avoir affiché les résultats
         except Exception as e:
             logging.error(f"Erreur lors de la rotation de la roulette : {str(e)}")
             await message.edit(content="Une erreur s'est produite lors de la rotation de la roulette.")
