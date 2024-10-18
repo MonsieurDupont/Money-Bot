@@ -1266,11 +1266,10 @@ class AmountInputModal(discord.ui.Modal, title="Entrer le montant du pari"):
         except Exception as e:
             await handle_error(interaction, e, "Une erreur est survenue lors du placement du pari.")
 
-class NumberBetModal(discord.ui.Modal, title="Choisissez un numéro"):
+class NumberBetModal(discord.ui.Modal, title="Placer un pari sur un numéro"):
     def __init__(self, game: RouletteGame):
         super().__init__()
         self.game = game
-        self.number = None
 
     number_input = discord.ui.TextInput(
         label="Numéro",
@@ -1279,18 +1278,29 @@ class NumberBetModal(discord.ui.Modal, title="Choisissez un numéro"):
         max_length=2
     )
 
+    amount_input = discord.ui.TextInput(
+        label=f"Montant ({ROULETTE_MIN_BET}-{ROULETTE_MAX_BET})",
+        placeholder=f"Entrez un montant entre {ROULETTE_MIN_BET} et {ROULETTE_MAX_BET}",
+        min_length=1,
+        max_length=6
+    )
+
     async def on_submit(self, interaction: discord.Interaction):
         try:
-            self.number = int(self.number_input.value)
-            if self.number < 0 or self.number > 36:
-                await interaction.response.send_message("Veuillez entrer un numéro entre 0 et 36.", ephemeral=True)
-                return
-        except ValueError:
-            await interaction.response.send_message("Veuillez entrer un numéro valide.", ephemeral=True)
-            return
+            number = int(self.number_input.value)
+            amount = int(self.amount_input.value)
 
-        modal = AmountInputModal(self.game, "number", str(self.number))
-        await interaction.response.send_modal(modal)
+            if number < 0 or number > 36:
+                raise ValueError(f"Veuillez entrer un numéro entre 0 et 36.")
+
+            if amount < ROULETTE_MIN_BET or amount > ROULETTE_MAX_BET:
+                raise ValueError(f"La mise doit être entre {ROULETTE_MIN_BET} et {ROULETTE_MAX_BET}.")
+
+            await self.game.place_bet(interaction, amount, "number", str(number))
+        except ValueError as e:
+            await interaction.response.send_message(str(e), ephemeral=True)
+        except Exception as e:
+            await handle_error(interaction, e, "Une erreur est survenue lors du placement du pari.")
 
 class ColorBetModal(discord.ui.Modal, title="Pari sur une couleur"):
     def __init__(self, game: RouletteGame):
