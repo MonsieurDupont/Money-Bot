@@ -1087,12 +1087,12 @@ class RouletteGame:
             if amount < ROULETTE_MIN_BET or amount > ROULETTE_MAX_BET:
                 raise ValueError(f"La mise doit être entre {ROULETTE_MIN_BET} et {ROULETTE_MAX_BET} {COIN_EMOJI}.")
 
-            if bet_type not in ["number", "color", "even_odd", "dozen", "column"]:
-                raise ValueError(f"Type de pari invalide : {bet_type}")
-
             user_balance = await get_user_balance(interaction.user.id)
             if user_balance < amount:
                 raise ValueError(f"Solde insuffisant. Votre solde actuel est de {user_balance} {COIN_EMOJI}.")
+
+            if bet_type not in ["number", "color", "even_odd", "dozen", "column"]:
+                raise ValueError(f"Type de pari invalide : {bet_type}")
 
             bet = RouletteBet(interaction.user, amount, bet_type, bet_value)
             self.bets.append(bet)
@@ -1105,7 +1105,7 @@ class RouletteGame:
 
     def calculate_winnings(self, bet: RouletteBet, winning_number: int, winning_color: str) -> int:
         try:
-            if bet.bet_type not in ["number", "color", "even_odd", "dozen", "column"]:
+            if bet.bet_type not in ROULETTE_BET_TYPES:
                 raise ValueError(f"Type de pari invalide : {bet.bet_type}")
 
             payout = ROULETTE_BET_TYPES[bet.bet_type]['payout']
@@ -1119,20 +1119,20 @@ class RouletteGame:
             elif bet.bet_type == "even_odd":
                 if winning_number != 0:  # Le zéro n'est ni pair ni impair
                     if (bet.bet_value == "pair" and winning_number % 2 == 0) or \
-                       (bet.bet_value == "impair" and winning_number % 2 != 0):
+                    (bet.bet_value == "impair" and winning_number % 2 != 0):
                         return bet.amount * (payout + 1)
             elif bet.bet_type == "dozen":
                 if (bet.bet_value == "1-12" and 1 <= winning_number <= 12) or \
-                   (bet.bet_value == "13-24" and 13 <= winning_number <= 24) or \
-                   (bet.bet_value == "25-36" and 25 <= winning_number <= 36):
+                (bet.bet_value == "13-24" and 13 <= winning_number <= 24) or \
+                (bet.bet_value == "25-36" and 25 <= winning_number <= 36):
                     return bet.amount * (payout + 1)
             elif bet.bet_type == "column":
                 if winning_number != 0:  # Le zéro n'appartient à aucune colonne
                     if (bet.bet_value == "1" and winning_number % 3 == 1) or \
-                       (bet.bet_value == "2" and winning_number % 3 == 2) or \
-                       (bet.bet_value == "3" and winning_number % 3 == 0):
+                    (bet.bet_value == "2" and winning_number % 3 == 2) or \
+                    (bet.bet_value == "3" and winning_number % 3 == 0):
                         return bet.amount * (payout + 1)
-            
+
             return 0  # Si le pari n'est pas gagnant
         except Exception as e:
             logging.error(f"Erreur lors du calcul des gains : {str(e)}")
@@ -1140,11 +1140,21 @@ class RouletteGame:
 
     async def spin_roulette(self, message: discord.InteractionMessage):
         try:
+            if not self.bets:
+                await message.edit(content="Aucun pari n'a été placé pour cette rotation.")
+                return
+
+            # Désactiver les boutons
+            view = discord.utils.get(message.components, type=discord.ComponentType.view)
+            if isinstance(view, RouletteView):
+                view.disable_all_items()
+                await message.edit(view=view)
+                
             winning_number = random.choice(ROULETTE_NUMBERS)
             winning_color = ROULETTE_COLORS[str(winning_number)]
 
-            embed = discord.Embed(title="La roulette a tourné !",
-                                description=f"Le numéro gagnant est {winning_number} {ROULETTE_NUMBER_EMOJIS[str(winning_number)]} {ROULETTE_COLOR_EMOJIS[winning_color]}.",
+            embed = discord.Embed(title="La roulette a tourné ! ",
+                                description=f"Le numéro gagnant est {winning_number} {ROULETTE_NUMBER_EMOJIS[str(winning_number)]} {ROULETTE_COLOR_EMOJIS[winning_color]}. ",
                                 color=discord.Color.red())
 
             user_results = {}
@@ -1152,8 +1162,8 @@ class RouletteGame:
             for bet in self.bets:
                 try:
                     winnings = self.calculate_winnings(bet, winning_number, winning_color)
-                    net_result = winnings - bet.amount
-                    
+                    net_result = winnings - bet.amount  # Calcul du résultat net
+
                     if bet.user.name not in user_results:
                         user_results[bet.user.name] = 0
                     user_results[bet.user.name] += net_result
@@ -1178,12 +1188,14 @@ class RouletteGame:
             if results_text:
                 embed.add_field(name="Résultats", value=results_text, inline=False)
             else:
-                embed.add_field(name="Résultats", value="Aucun pari n'a été placé pour cette rotation.", inline=False)
+                embed.add_field(name="Résultats", value="Aucun pari n'a été placé pour cette rotation. ", inline=False)
 
             await message.edit(embed=embed)
         except Exception as e:
             logging.error(f"Erreur lors de la rotation de la roulette : {str(e)}")
             await message.edit(content="Une erreur s'est produite lors de la rotation de la roulette.")
+        finally:
+            self.bets.clear()  # Nettoyez la liste des paris après chaque tour
 
     def get_current_bets_summary(self) -> str:
         if not self.bets:
@@ -1201,6 +1213,10 @@ class RouletteView(discord.ui.View):
         super().__init__()
         self.game = game
         self.last_message = None
+
+    def disable_all_items(self):
+        for item in self.children:
+            item.disabled = True
 
     async def send_bet_view(self, interaction: discord.Interaction, view, content):
         if self.last_message:
