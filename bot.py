@@ -1122,12 +1122,22 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
 
     # Envoyer le résultat
     if winning_conditions[bet](winning_number):
-        embed = discord.Embed(title="Résultat", description=f"Félicitations ! Vous avez gagné {winnings} {COIN_EMOJI} avec un pari de {amount} {COIN_EMOJI} sur {bet}.", color=color_green)
+        winnings = amount * payout - amount  # Calculer les gains nets
+        embed = discord.Embed(title="🎉 Victoire à la Roulette ! 🎉", color=color_green)
+        embed.description = f"**Félicitations, {interaction.user.name} !** Votre pari a porté ses fruits !"
+        embed.add_field(name="Votre pari", value=f"{bet.capitalize()} : {amount} {COIN_EMOJI}", inline=True)
+        embed.add_field(name="Multiplicateur", value=f"x{payout}", inline=True)
+        embed.add_field(name="Gains nets", value=f"**+{winnings}** {COIN_EMOJI}", inline=True)
     else:
-        embed = discord.Embed(title="Résultat", description=f"Désolé, vous avez perdu votre pari de {amount} {COIN_EMOJI} sur {bet}.", color=color_red)
+        embed = discord.Embed(title="😔 Défaite à la Roulette", color=color_red)
+        embed.description = f"Désolé, {interaction.user.name}. La chance n'était pas de votre côté cette fois-ci."
+        embed.add_field(name="Votre pari", value=f"{bet.capitalize()} : {amount} {COIN_EMOJI}", inline=True)
+        embed.add_field(name="Pertes", value=f"**-{amount}** {COIN_EMOJI}", inline=True)
 
-    embed.add_field(name="Numéro gagnant", value=result_visual, inline=False)
-    embed.add_field(name="Nouveau solde", value=f"{new_balance} {COIN_EMOJI}", inline=False)
+    embed.add_field(name="Résultat", value=f"**{result_visual}**", inline=False)
+    embed.add_field(name="Nouveau solde", value=f"**{new_balance}** {COIN_EMOJI}", inline=False)
+    embed.set_footer(text="Bonne chance pour votre prochain pari !")
+
     await interaction.response.send_message(embed=embed)
 
 
