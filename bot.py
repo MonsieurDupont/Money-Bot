@@ -12,7 +12,7 @@ import configparser
 from dotenv import load_dotenv
 from discord.ext import commands
 from discord import app_commands
-from discord.ui import View
+from discord.ui import View, Select
 from treys import Card, Deck
 from datetime import datetime
 
@@ -1026,9 +1026,7 @@ class BetTypeView(View):
     def __init__(self):
         super().__init__()
         self.bet_type = None
-        self.add_item(self.create_select_menu())
 
-    def create_select_menu(self):
         options = [
             discord.SelectOption(label="Rouge", value="rouge", emoji="🔴", description="Mise sur les numéros rouges"),
             discord.SelectOption(label="Noir", value="noir", emoji="⚫", description="Mise sur les numéros noirs"),
@@ -1044,11 +1042,13 @@ class BetTypeView(View):
             discord.SelectOption(label="Colonne 3", value="colonne 3", emoji="🏛️", description="Mise sur la troisième colonne"),
             discord.SelectOption(label="Numéro spécifique", value="numero", emoji="🔢", description="Mise sur un numéro spécifique")
         ]
-        return discord.ui.Select(placeholder="Choisissez votre type de pari", options=options, custom_id="bet_type")
 
-    @discord.ui.select(custom_id="bet_type")
-    async def select_callback(self, interaction: discord.Interaction, select: discord.ui.Select):
-        self.bet_type = select.values[0]
+        self.select = Select(placeholder="Choisissez votre type de pari", options=options)
+        self.select.callback = self.select_callback
+        self.add_item(self.select)
+
+    async def select_callback(self, interaction: discord.Interaction):
+        self.bet_type = self.select.values[0]
         await interaction.response.defer()
         self.stop()
 
@@ -1093,7 +1093,7 @@ async def roulette(interaction: discord.Interaction, amount: int):
     # Menu déroulant pour les types de mises
     view = BetTypeView()
     embed = discord.Embed(title="🎰 Roulette", description="Choisissez votre type de pari", color=color_blue)
-    embed.add_field(name="Mise", value=f"{amount} {COIN_EMOJI}", inline=False)
+    embed.add_field(name=" Montant à miser", value=f"{amount} {COIN_EMOJI}", inline=False)
     await interaction.response.send_message(embed=embed, view=view)
     
     await view.wait()
