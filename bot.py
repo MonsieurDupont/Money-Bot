@@ -11,10 +11,13 @@ import json
 import configparser
 from dotenv import load_dotenv
 from discord.ext import commands
-from discord import app_commands
-from discord.ui import View, Select
+from discord import app_commands, Embed, Interaction, Member
+from discord.ui import View, Select, Button
 from treys import Card, Deck
 from datetime import datetime
+from typing import Dict, Set, Tuple
+from mysql.connector import  Error
+
 
 # Chargement des variables d'environnement
 load_dotenv()
@@ -29,6 +32,8 @@ with open('commandphrases.json') as file:
     workphrases = workdata["workphrases"]
 with open('cards.json') as file:
     card_map = json.load(file)
+with open('constants.json') as file:
+    CONSTANTS = json.load(file)
 
 # Définition des constantes
 TOKEN = os.getenv("TOKEN")
@@ -45,23 +50,7 @@ WORK_MAX_PAY = commandsconfig.getint('Work', 'work_max_pay')
 WORK_COOLDOWN = commandsconfig.getint('Work', 'work_cooldown')
 POKER_START_BET = commandsconfig.getint('Poker', 'poker_start_bet')
 BLACKJACK_MIN_BET = commandsconfig.getint('Blackjack', 'blackjack_min_bet')
-ROULETTE_PAYOUT_NUMERO = commandsconfig.getint('Roulette', 'payout_numero')
-ROULETTE_PAYOUT_ROUGE = commandsconfig.getint('Roulette', 'payout_rouge')
-ROULETTE_PAYOUT_NOIR = commandsconfig.getint('Roulette', 'payout_noir')
-ROULETTE_PAYOUT_PAIR = commandsconfig.getint('Roulette', 'payout_pair')
-ROULETTE_PAYOUT_IMPAIR = commandsconfig.getint('Roulette', 'payout_impair')
-ROULETTE_PAYOUT_1_18 = commandsconfig.getint('Roulette', 'payout_1-18')
-ROULETTE_PAYOUT_19_36 = commandsconfig.getint('Roulette', 'payout_19-36')
-ROULETTE_PAYOUT_DOUZAINE = commandsconfig.getint('Roulette', 'payout_douzaine')
-ROULETTE_PAYOUT_COLONNE = commandsconfig.getint('Roulette', 'payout_colonne')
-
-ROULETTE_EMOJIS = {
-    'red': '🔴',
-    'black': '⚫',
-    'green': '🟢'
-}
-ROULETTE_RED_NUMBERS = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]
-ROULETTE_BLACK_NUMBERS = [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35]
+ROULETTE = CONSTANTS['ROULETTE']
 
 # Définition des couleurs
 color_green = 0x98d444
@@ -139,6 +128,7 @@ def is_registered(user_id):
         return False
     return len(data) > 0
 
+# Fonction pour ajouter une transaction
 def add_transaction(user_id, amount, transaction_type):
     try:
         query = f"INSERT INTO {TABLE_TRANSACTIONS} ({FIELD_USER_ID}, {FIELD_AMOUNT}, {FIELD_TYPE}) VALUES (%s, %s, %s)"
@@ -999,216 +989,311 @@ def card_to_name(card):
 
 # ROULETTE
 
-# Utilisation des constantes de payout
-def get_payout(bet):
-    payout_map = {
-        "rouge": ROULETTE_PAYOUT_ROUGE,
-        "noir": ROULETTE_PAYOUT_NOIR,
-        "pair": ROULETTE_PAYOUT_PAIR,
-        "impair": ROULETTE_PAYOUT_IMPAIR,
-        "1-18": ROULETTE_PAYOUT_1_18,
-        "19-36": ROULETTE_PAYOUT_19_36,
-        "douzaine 1-12": ROULETTE_PAYOUT_DOUZAINE,
-        "douzaine 13-24": ROULETTE_PAYOUT_DOUZAINE,
-        "douzaine 25-36": ROULETTE_PAYOUT_DOUZAINE,
-        "colonne 1": ROULETTE_PAYOUT_COLONNE,
-        "colonne 2": ROULETTE_PAYOUT_COLONNE,
-        "colonne 3": ROULETTE_PAYOUT_COLONNE,
-    }
-    
-    if bet.isdigit():  # Si le pari est un numéro spécifique
-        return ROULETTE_PAYOUT_NUMERO
+class RouletteSession:
+    def __init__(self, bot, channel_id: int):
+        self.bot = bot
+        self.channel_id = channel_id
+        self.players: Dict[int, int] = {}  # user_id: bet_amount
+        self.bets: Dict[int, str] = {}  # user_id: bet_type
+        self.bet_types: Dict[str, Set[int]] = {
+            "rouge": set(), "noir": set(), "pair": set(), "impair": set(),
+            "1-18": set(), "19-36": set(),
+            "douzaine 1-12": set(), "douzaine 13-24": set(), "douzaine 25-36": set(),
+            "colonne 1": set(), "colonne 2": set(), "colonne 3": set()
+        }
+        self.is_active = False
+        self.winning_number = None
 
-    return payout_map.get(bet, 0)  # Retourne 0 si le type de pari n'est pas reconnu
+    async def add_player(self, user_id: int, bet_type: str, amount: int):
+        if self.is_active:
+            return False
+
+        # Vérification des fonds
+        user_balance = await self.get_user_balance(user_id)
+        if user_balance < amount:
+            return False  # Fonds insuffisants
+
+        self.players[user_id] = amount
+        self.bets[user_id] = bet_type
+        self.bet_types[bet_type].add(user_id)
+        return True
+
+    async def spin_wheel(self):
+        self.is_active = True
+        self.winning_number = random.randint(0, 36)
+        color = self.get_color(self.winning_number)
+        color_emoji = CONSTANTS['ROULETTE']['EMOJIS'][color]
+
+        channel = self.bot.get_channel(self.channel_id)
+        embed = Embed(title="Roulette", description=f"La roue tourne... et le numéro gagnant est: **{self.winning_number}** {color_emoji}", color=0x0000ff)
+        await channel.send(embed=embed)
+
+        await self.process_results()
+
+    def get_color(self, number: int) -> str:
+        if number == 0:
+            return "green"
+        elif number in CONSTANTS['ROULETTE']['RED_NUMBERS']:
+            return "red"
+        else:
+            return "black"
+
+    async def process_results(self):
+        results: Dict[int, Tuple[int, int]] = {}  # user_id: (winning_amount, bet_amount)
+        
+        for bet_type, users in self.bet_types.items():
+            multiplier = self.get_multiplier(bet_type)
+            for user_id in users:
+                bet_amount = self.players[user_id]
+                winning_amount = bet_amount * multiplier if multiplier > 0 else 0
+                results[user_id] = (winning_amount, bet_amount)
+
+        await self.update_player_balances(results)
+        await self.send_results(results)
+
+    def get_multiplier(self, bet_type: str) -> int:
+        if bet_type == "rouge" and self.winning_number in CONSTANTS['ROULETTE']['RED_NUMBERS']:
+            return CONSTANTS['ROULETTE']['PAYOUT_ROUGE']
+        elif bet_type == "noir" and self.winning_number in CONSTANTS['ROULETTE']['BLACK_NUMBERS']:
+            return CONSTANTS['ROULETTE']['PAYOUT_NOIR']
+        elif bet_type == "pair" and self.winning_number % 2 == 0 and self.winning_number != 0:
+            return CONSTANTS['ROULETTE']['PAYOUT_PAIR']
+        elif bet_type == "impair" and self.winning_number % 2 != 0:
+            return CONSTANTS['ROULETTE']['PAYOUT_IMPAIR']
+        elif bet_type == "1-18" and 1 <= self.winning_number <= 18:
+            return CONSTANTS['ROULETTE']['PAYOUT_1_18']
+        elif bet_type == "19-36" and 19 <= self.winning_number <= 36:
+            return CONSTANTS['ROULETTE']['PAYOUT_19_36']
+        elif bet_type == "douzaine 1-12" and 1 <= self.winning_number <= 12:
+            return CONSTANTS['ROULETTE']['PAYOUT_DOUZINE_1_12']
+        elif bet_type == "douzaine 13-24" and 13 <= self.winning_number <= 24:
+            return CONSTANTS['ROULETTE']['PAYOUT_DOUZINE_13_24']
+        elif bet_type == "douzaine 25-36" and 25 <= self.winning_number <= 36:
+            return CONSTANTS['ROULETTE']['PAYOUT_DOUZINE_25_36']
+        elif bet_type == "colonne 1" and self.winning_number in CONSTANTS['ROULETTE']['COLONNE_1']:
+            return CONSTANTS['ROULETTE']['PAYOUT_COLONNE_1']
+        elif bet_type == "colonne 2" and self.winning_number in CONSTANTS['ROULETTE']['COLONNE_2']:
+            return CONSTANTS['ROULETTE']['PAYOUT_COLONNE_2']
+        elif bet_type == "colonne 3" and self.winning_number in CONSTANTS['ROULETTE']['COLONNE_3']:
+            return CONSTANTS['ROULETTE']['PAYOUT_COLONNE_3']
+        else:
+            return 0
+
+    async def update_player_balances(self, results: Dict[int, Tuple[int, int]]):
+        try:
+            connection = mysql.connector.connect(
+                host=HOST,
+                user=USER,
+                password=PASSWORD,
+                database=DATABASE
+            )
+
+            cursor = connection.cursor()
+
+            # Début de la transaction
+            connection.start_transaction()
+
+            update_query = f"""
+                UPDATE {TABLE_USERS} 
+                SET {FIELD_CASH} = CASE
+                    WHEN {FIELD_USER_ID} = %s THEN {FIELD_CASH} + %s
+                    ELSE {FIELD_CASH}
+                END
+                WHERE {FIELD_USER_ID} IN ({','.join(['%s'] * len(results))})
+            """
+
+            # Préparer les données pour la mise à jour
+            update_data = []
+            user_ids = []
+            for user_id, (winning_amount, bet_amount) in results.items():
+                update_data.extend([user_id, winning_amount - bet_amount])
+                user_ids.append(user_id)
+
+            # Exécuter la mise à jour
+            cursor.execute(update_query, update_data + user_ids)
+
+            # Insérer les transactions
+            insert_query = f"""
+                INSERT INTO {TABLE_TRANSACTIONS} 
+                ({FIELD_USER_ID}, {FIELD_AMOUNT}, {FIELD_TYPE}) 
+                VALUES (%s, %s, %s)
+            """
+            transaction_data = [
+                (user_id, winning_amount - bet_amount, 'Roulette')
+                for user_id, (winning_amount, bet_amount) in results.items()
+            ]
+            cursor.executemany(insert_query, transaction_data)
+
+            # Valider la transaction
+            connection.commit()
+
+            print(f"Successfully updated balances for {len(results)} players.")
+
+        except Error as e:
+            print(f"Error updating player balances: {e}")
+            connection.rollback()
+
+        finally:
+            if connection.is_connected():
+                cursor.close()
+                connection.close()
+
+    async def send_results(self, results: Dict[int, Tuple[int, int]]):
+        channel = self.bot.get_channel(self.channel_id)
+        embed = Embed(title="Résultats de la Roulette", color=0x0000ff)
+        for user_id, (winning_amount, bet_amount) in results.items():
+            user = await self.bot.fetch_user(user_id)
+            if winning_amount > 0:
+                embed.add_field(name=f"{user.name}", value=f"Gagné: {winning_amount} 🎉", inline=False)
+            else:
+                embed.add_field(name=f"{user.name}", value=f"Perdu: {bet_amount} 😢", inline=False)
+        
+        await channel.send(embed=embed)
+
+roulette_sessions = {}
 
 # Menu déroulant pour les types de mises
 class BetTypeView(View):
-    def __init__(self):
-        super().__init__()
-        self.bet_type = None
+    def __init__(self, session, user_id):
+        super().__init__(timeout=60)
+        self.session = session
+        self.user_id = user_id
 
-        options = [
-            discord.SelectOption(label="Rouge", value="rouge", emoji="🔴", description="Mise sur les numéros rouges"),
-            discord.SelectOption(label="Noir", value="noir", emoji="⚫", description="Mise sur les numéros noirs"),
-            discord.SelectOption(label="Pair", value="pair", emoji="2️⃣", description="Mise sur les numéros pairs"),
-            discord.SelectOption(label="Impair", value="impair", emoji="1️⃣", description="Mise sur les numéros impairs"),
-            discord.SelectOption(label="1-18", value="1-18", emoji="⬇️", description="Mise sur les numéros de 1 à 18"),
-            discord.SelectOption(label="19-36", value="19-36", emoji="⬆️", description="Mise sur les numéros de 19 à 36"),
-            discord.SelectOption(label="Douzaine 1-12", value="douzaine 1-12", emoji="1️⃣", description="Mise sur la première douzaine"),
-            discord.SelectOption(label="Douzaine 13-24", value="douzaine 13-24", emoji="2️⃣", description="Mise sur la deuxième douzaine"),
-            discord.SelectOption(label="Douzaine 25-36", value="douzaine 25-36", emoji="3️⃣", description="Mise sur la troisième douzaine"),
-            discord.SelectOption(label="Colonne 1", value="colonne 1", emoji="🏛️", description="Mise sur la première colonne"),
-            discord.SelectOption(label="Colonne 2", value="colonne 2", emoji="🏛️", description="Mise sur la deuxième colonne"),
-            discord.SelectOption(label="Colonne 3", value="colonne 3", emoji="🏛️", description="Mise sur la troisième colonne"),
-            discord.SelectOption(label="Numéro spécifique", value="numero", emoji="🔢", description="Mise sur un numéro spécifique")
+    @discord.ui.select(
+        placeholder="Choisissez votre type de pari",
+        options=[
+            discord.SelectOption(label="Rouge", value="rouge", emoji="🔴"),
+            discord.SelectOption(label="Noir", value="noir", emoji="⚫"),
+            discord.SelectOption(label="Pair", value="pair", emoji="2️⃣"),
+            discord.SelectOption(label="Impair", value="impair", emoji="1️⃣"),
+            discord.SelectOption(label="1-18", value="1-18", emoji="⬇️"),
+            discord.SelectOption(label="19-36", value="19-36", emoji="⬆️"),
+            discord.SelectOption(label="Douzaine 1-12", value="douzaine 1-12", emoji="1️⃣"),
+            discord.SelectOption(label="Douzaine 13-24", value="douzaine 13-24", emoji=" 2️⃣"),
+            discord.SelectOption(label="Douzaine 25-36", value="douzaine 25-36", emoji="3️⃣"),
+            discord.SelectOption(label="Colonne 1", value="colonne 1", emoji="🏛️"),
+            discord.SelectOption(label="Colonne 2", value="colonne 2", emoji="🏛️"),
+            discord.SelectOption(label="Colonne 3", value="colonne 3", emoji="🏛️"),
         ]
+    )
 
-        self.select = Select(placeholder="Choisissez votre type de pari", options=options)
-        self.select.callback = self.select_callback
-        self.add_item(self.select)
+    async def select_callback(self, interaction: Interaction, select: Select):
+        bet_type = select.values[0]
+        self.session.bets[self.user_id] = bet_type
 
-    async def select_callback(self, interaction: discord.Interaction):
-        self.bet_type = self.select.values[0]
-        await interaction.response.defer()
-        self.stop()
+        if bet_type == "numero":
+            await interaction.response.send_message("Veuillez entrer un numéro entre 0 et 36:", ephemeral=True)
+            
+            def check(m):
+                return m.author.id == self.user_id and m.channel.id == interaction.channel.id and m.content.isdigit() and 0 <= int(m.content) <= 36
+
+            try:
+                msg = await bot.wait_for('message', check=check, timeout=30.0)
+                self.session.bets[self.user_id] = int(msg.content)
+            except asyncio.TimeoutError:
+                await interaction.followup.send("Temps écoulé. Pari annulé.", ephemeral=True)
+                del self.session.players[self.user_id]
+                return
+        else:
+            await interaction.response.send_message(f"Vous avez choisi de parier sur: {bet_type}", ephemeral=True)
+
+        # Si tous les joueurs ont parié, lancer la roulette
+        if len(self.session.bets) == len(self.session.players):
+            await spin_wheel(interaction, self.session)
 
     @discord.ui.button(label="Annuler", style=discord.ButtonStyle.red)
-    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.bet_type = "cancel"
-        await interaction.response.defer()
-        self.stop()
+    async def cancel_button(self, interaction: Interaction, button: Button):
+        del self.session.players[self.user_id]
+        await interaction.response.send_message("Pari annulé.", ephemeral=True)
 
-# Commande pour jouer à la roulette
-@bot.tree.command(name="roulette", description="Jouer à la roulette")
-@app_commands.describe(amount="Montant à miser")
-async def roulette(interaction: discord.Interaction, amount: int):
-    user_id = interaction.user.id
+class Roulette(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        self.sessions = {}  # {channel_id: RouletteSession}
 
-    # Vérifier si l'utilisateur est inscrit
-    if not is_registered(user_id):
-        embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register` avant de jouer à la roulette.", color=color_red)
-        await interaction.response.send_message(embed=embed)
-        return
+    @commands.slash_command(name="roulette", description="Rejoindre une partie de roulette")
+    async def roulette(self, interaction: Interaction, amount: int):
+        user_id = interaction.user.id
 
-    # Vérifier si le montant du pari est valide
-    if amount <= 0:
-        embed = discord.Embed(title="Erreur", description="Le montant du pari doit être supérieur à 0.", color=color_red)
-        await interaction.response.send_message(embed=embed)
-        return
-
-    # Vérifier si l'utilisateur a assez d'argent pour parier
-    query = f"SELECT {FIELD_CASH} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
-    data = fetch_data(query, (user_id,))
-    if not data:
-        embed = discord.Embed(title="Erreur", description="Impossible de récupérer vos données. Veuillez réessayer plus tard.", color=color_red)
-        await interaction.response.send_message(embed=embed)
-        return
-
-    cash = data[0][0]
-    if cash < amount:
-        embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez d'argent pour ce pari. Votre solde actuel est de {cash} {COIN_EMOJI}.", color=color_red)
-        await interaction.response.send_message(embed=embed)
-        return
-
-    # Menu déroulant pour les types de mises
-    view = BetTypeView()
-    embed = discord.Embed(title="🎰 Roulette", description="Choisissez votre type de pari", color=color_blue)
-    embed.add_field(name=" Montant à miser", value=f"{amount} {COIN_EMOJI}", inline=False)
-    await interaction.response.send_message(embed=embed, view=view)
-    
-    await view.wait()
-    
-    if view.bet_type is None:
-        await interaction.followup.send("Temps écoulé ou sélection annulée.", ephemeral=True)
-        return
-
-    bet = view.bet_type
-    
-    if bet == "cancel":
-        await interaction.followup.send("Pari annulé.", ephemeral=True)
-        return
-
-    if bet == "numero":
-        await interaction.followup.send("Veuillez entrer un numéro entre 0 et 36:", ephemeral=True)
-        
-        def check(m):
-            return m.author.id == interaction.user.id and m.channel.id == interaction.channel.id and m.content.isdigit() and 0 <= int(m.content) <= 36
-
-        try:
-            msg = await bot.wait_for('message', check=check, timeout=30.0)
-            bet = msg.content
-        except asyncio.TimeoutError:
-            await interaction.followup.send("Temps écoulé. Pari annulé.", ephemeral=True)
-            return
-
-    # Conditions de victoire
-    winning_conditions = {
-        "rouge": lambda x: x in [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36],
-        "noir": lambda x: x in [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35],
-        "pair": lambda x: x % 2 == 0 and x != 0,
-        "impair": lambda x: x % 2 != 0,
-        "1-18": lambda x: 1 <= x <= 18,
-        "19-36": lambda x: 19 <= x <= 36,
-        "douzaine 1-12": lambda x: 1 <= x <= 12,
-        "douzaine 13-24": lambda x: 13 <= x <= 24,
-        "douzaine 25-36": lambda x: 25 <= x <= 36,
-        "colonne 1": lambda x: x in [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34],
-        "colonne 2": lambda x: x in [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35],
-        "colonne 3": lambda x: x in [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36],
-    }
-
-    # Ajouter les conditions pour les paris sur des numéros spécifiques
-    for i in range(37):
-        winning_conditions[str(i)] = lambda x, i=i: x == i
-
-    # Vérifier si le type de pari est valide
-    valid_bets = ["rouge", "noir", "pair", "impair", "1-18", "19-36", "douzaine 1-12", "douzaine 13-24", "douzaine 25-36", "colonne 1", "colonne 2", "colonne 3"]
-    if bet not in valid_bets and not bet.isdigit():
-        embed = discord.Embed(title="Erreur", description=f"Type de pari invalide. Les types de paris valides sont : {', '.join(valid_bets)} ou un nombre entre 0 et 36.", color=color_red)
-        await interaction.response.send_message(embed=embed)
-        return
-
-    if bet.isdigit() and (int(bet) < 0 or int(bet) > 36):
-        embed = discord.Embed(title="Erreur", description="Pour les paris sur un numéro spécifique, choisissez un nombre entre 0 et 36.", color=color_red)
-        await interaction.response.send_message(embed=embed)
-        return
-
-    # Simuler le lancement de la roulette
-    winning_number = random.randint(0, 36)
-
-    # Déterminer la couleur du numéro gagnant
-    if winning_number == 0:
-        color = 'green'
-    elif winning_number in ROULETTE_RED_NUMBERS:
-        color = 'red'
-    else:
-        color = 'black'
-
-    # Créer une représentation visuelle du résultat
-    result_visual = f"{ROULETTE_EMOJIS[color]} {winning_number}"
-
-    # Vérifier si le joueur a gagné
-    if winning_conditions[bet](winning_number):
-        payout = get_payout(bet)
-        if payout == 0:
-            embed = discord.Embed(title="Erreur", description="Une erreur s'est produite lors du calcul des gains. Veuillez contacter un administrateur.", color=color_red)
+        # Vérification de l'inscription
+        if not is_registered(user_id):
+            embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register` avant de jouer à la roulette.", color=color_red)
             await interaction.response.send_message(embed=embed)
             return
 
-        winnings = amount * payout - amount
-        new_balance = cash + winnings  # Ajouter les gains au solde actuel
-    else:
-        winnings = 0
-        new_balance = cash - amount  # Retirer seulement la mise en cas de perte
+        # Vérification de la validité du montant parié
+        if amount <= 0:
+            embed = discord.Embed(title="Erreur", description="Le montant du pari doit être supérieur à 0.", color=color_red)
+            await interaction.response.send_message(embed=embed)
+            return
 
-    # Mettre à jour le solde de l'utilisateur
-    query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = %s WHERE {FIELD_USER_ID} = %s"
-    success = execute_query(query, (new_balance, user_id))
-    if not success:
-        embed = discord.Embed(title="Erreur", description="Impossible de mettre à jour votre solde. Veuillez réessayer plus tard.", color=color_red)
+        # Récupération du solde de l'utilisateur
+        query = f"SELECT {FIELD_CASH} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
+        data = fetch_data(query, (user_id,))
+        if not data:
+            embed = discord.Embed(title="Erreur", description="Impossible de récupérer vos données. Veuillez réessayer plus tard.", color=color_red)
+            await interaction.response.send_message(embed=embed)
+            return
+        
+        # Vérification du solde de l'utilisateur
+        cash = data[0][0]
+        if cash < amount:
+            embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez d'argent pour ce pari. Votre solde actuel est de {cash} {COIN_EMOJI}.", color=color_red)
+            await interaction.response.send_message(embed=embed)
+            return
+
+        # Vérification  de la présence d'une partie en cours
+        if user_id in roulette_sessions:
+            embed = Embed(title="Erreur", description="Vous avez déjà une partie de roulette en cours.", color=0xff0000)
+            await interaction.response.send_message(embed=embed)
+            return
+
+        # Création d'une nouvelle session ou participation à une session existante
+        if not roulette_sessions:
+            roulette_sessions[user_id] = RouletteSession(user_id)
+            embed = Embed(title="Roulette", description=f"Vous avez créé une nouvelle partie de roulette. Utilisez `/roulette_start` pour commencer la partie.", color=0x0000ff)
+        else:
+            host_id = next(iter(roulette_sessions))
+            session = roulette_sessions[host_id]
+            if session.is_active:
+                embed = Embed(title="Erreur", description="Une partie est déjà en cours. Veuillez attendre la prochaine partie.", color=0xff0000)
+                await interaction.response.send_message(embed=embed)
+                return
+            session.players[user_id] = amount
+            embed = Embed(title="Roulette", description=f"Vous avez rejoint la partie de roulette. Attendez que l'hôte démarre la partie.", color=0x0000ff)
+
         await interaction.response.send_message(embed=embed)
-        return
 
-    # Envoyer le résultat
-    if winning_conditions[bet](winning_number):
-        winnings = amount * payout - amount
-        embed = discord.Embed(title="🎉 Victoire à la Roulette ! 🎉", color=color_green )
-        embed.description = f"**Félicitations, {interaction.user.display_name} !** Votre pari a porté ses fruits !"
-        embed.add_field(name="Votre pari", value=f"{bet.capitalize()} : {amount} {COIN_EMOJI}", inline=True)
-        embed.add_field(name="Multiplicateur", value=f"x{payout}", inline=True)
-        embed.add_field(name="Gains nets", value=f"**+{winnings}** {COIN_EMOJI}", inline=True)
-    else:
-        embed = discord.Embed(title="😔 Défaite à la Roulette", color=color_red)
-        embed.description = f"Désolé, {interaction.user.display_name}. La chance n'était pas de votre côté cette fois-ci."
-        embed.add_field(name="Votre pari", value=f"{bet.capitalize()} : {amount} {COIN_EMOJI}", inline=True)
-        embed.add_field(name="Pertes", value=f"**-{amount}** {COIN_EMOJI}", inline=True)
+    @commands.slash_command(name="roulette_start", description="Démarrer la partie de roulette")
+    async def roulette_start(self, interaction: Interaction):
+        user_id = interaction.user.id
 
-    embed.add_field(name="Résultat", value=f"**{result_visual}**", inline=False)
-    embed.add_field(name="Nouveau solde", value=f"**{new_balance}** {COIN_EMOJI}", inline=False)
-    embed.set_footer(text="Bonne chance pour votre prochain pari !")
+        # Vérification des permission d'hôte de l'utilisateur
+        if user_id not in roulette_sessions:
+            embed = Embed(title="Erreur", description="Vous n'êtes pas l'hôte d'une partie de roulette.", color=0xff0000)
+            await interaction.response.send_message(embed=embed)
+            return
 
-    await interaction.followup.send(embed=embed)
+        # Vérification de l'état de la session
+        session = roulette_sessions[user_id]
+        if session.is_active:
+            embed = Embed(title="Erreur", description="La partie est déjà en cours.", color=0xff0000)
+            await interaction.response.send_message(embed=embed)
+            return
 
+        # Commencement de la session
+        session.is_active = True
+        embed = Embed(title="Roulette", description="La partie de roulette commence! Choisissez votre type de pari.", color=0x0000ff)
+        await interaction.response.send_message(embed=embed)
+
+        # Demander les paris à chaque joueur
+        for player_id in session.players:
+            player = await self.bot.fetch_user(player_id)
+            view = BetTypeView(session, player_id)
+            embed = Embed(title="🎰  Roulette", description="Choisissez votre type de pari:", color=0x0000ff)
+            await player.send(embed=embed, view=view)
+
+bot.add_cog(Roulette(bot))
 
 # POKER
 
