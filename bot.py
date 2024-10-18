@@ -1792,12 +1792,13 @@ class BlackJackView(discord.ui.View):
         # Player chooses to "Hit"
         self.session.deal(self.session.player_hand, 1)  # Deal one card to the player
         player_cards = self.session.player_hand
+        dealer_cards = self.session.dealer_hand
         
         # Update embed with the new hand
         embed = discord.Embed(title="Blackjack", color=discord.Color.blue())
         embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
         embed.add_field(name="Vous", value="".join([card_to_emoji(Card.int_to_str(card)) for card in player_cards]) + f"\nScore: {self.session.evaluate_hand(player_cards)}")
-        embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(self.session.dealer_hand[0]))} {CARD_BACK}")
+        embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(self.session.dealer_hand[0]))} {CARD_BACK} \nScore: {self.session.evaluate_hand(dealer_cards)}")
 
         # Check if player busts
         if self.session.evaluate_hand(player_cards) > 21:
@@ -1932,7 +1933,7 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     embed = discord.Embed(title="Blackjack", color=discord.Color.blue())
     embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
     embed.add_field(name="Vous", value="".join([card_to_emoji(Card.int_to_str(card)) for card in player_cards]) + f"\nScore: {session.evaluate_hand(player_cards)}")
-    embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(dealer_cards[0]))} {CARD_BACK}")
+    embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(dealer_cards[0]))} {CARD_BACK} \nScore: {session.evaluate_hand(dealer_cards)}" )
 
     # Send the initial game state with the view containing the buttons
     view = BlackJackView(session, interaction)
