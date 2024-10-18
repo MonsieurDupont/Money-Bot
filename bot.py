@@ -1052,8 +1052,8 @@ class BetTypeView(View):
 
 # Commande pour jouer à la roulette
 @bot.tree.command(name="roulette", description="Jouer à la roulette")
-@app_commands.describe(amount="Montant à miser", bet="Type de mise (par exemple: 'rouge', 'noir', 'pair', 'impair', '1', '2', ...)")
-async def roulette(interaction: discord.Interaction, amount: int, bet: str):
+@app_commands.describe(amount="Montant à miser")
+async def roulette(interaction: discord.Interaction, amount: int):
     user_id = interaction.user.id
 
     # Vérifier si l'utilisateur est inscrit
