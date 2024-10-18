@@ -1805,6 +1805,7 @@ class BlackJackView(discord.ui.View):
             embed.add_field(name="Résultat", value="Vous avez dépassé 21! Perdu!")
             # self.disable_all_items()  # Disable buttons
         await interaction.response.edit_message(embed=embed, view=self)
+        self.session.end_game(interaction.user.id)
 
     @discord.ui.button(label="Stand", style=discord.ButtonStyle.gray)
     async def stand(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -1835,11 +1836,12 @@ class BlackJackView(discord.ui.View):
         embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
         embed.add_field(name="Vous", value="".join([card_to_emoji(Card.int_to_str(card)) for card in self.session.player_hand]) + f"\nScore: {player_score}")
         embed.add_field(name="Croupier", value="".join([card_to_emoji(Card.int_to_str(card)) for card in dealer_hand]) + f"\nScore: {dealer_score}")
-        embed.add_field(name="Résultat", value=result)
+        embed.add_field(name="\n Résultat", value=result)
 
         # Disable buttons after standing
-        self.disable_all_items()
+        # self.disable_all_items()
         await interaction.response.edit_message(embed=embed, view=self)
+        self.session.end_game(interaction.user.id)
 
 class BlackJackSession:
     def __init__(self):
@@ -1847,6 +1849,11 @@ class BlackJackSession:
         self.player_hand = []  
         self.dealer_hand = []
         self.dealer_revealed = False
+
+    # End session
+    def end_game(user_id):
+        if user_id in blackjack_sessions:
+            del blackjack_sessions[user_id]
 
     # Deal cards to the hand
     def deal(self, hand, amount):
@@ -1898,8 +1905,8 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     user_id = interaction.user.id
 
     # Check if player is already playing
-    if user_id in blackjack_players:
-        embed = discord.Embed(title="Erreur", description="Vous jouez déjà une partie de Black Jack", color=discord.Color.red())
+    if user_id in blackjack_sessions:
+        embed = discord.Embed(title="Erreur", description=f"Vous jouez déjà une partie de Black Jack", color=color_red)
         await interaction.response.send_message(embed=embed, ephemeral=True)
         return
 
