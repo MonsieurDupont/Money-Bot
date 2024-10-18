@@ -155,15 +155,15 @@ def add_transaction(user_id, amount, transaction_type):
 # Gestion d'erreur
 async def handle_error(interaction: discord.Interaction, error: Exception, message: str = None):
     if isinstance(error, ValueError):
-        await interaction.response.edit_message(f"Erreur de valeur : {str(error)}", ephemeral=True)
+        await interaction.response.send_message(f"Erreur de valeur : {str(error)}", ephemeral=True)
     elif isinstance(error, mysql.connector.Error):
         logging.error(f"Erreur de base de données : {str(error)}")
-        await interaction.response.edit_message("Une erreur de base de données s'est produite. Veuillez réessayer plus tard.", ephemeral=True)
+        await interaction.response.send_message("Une erreur de base de données s'est produite. Veuillez réessayer plus tard.", ephemeral=True)
     elif isinstance(error, asyncio.TimeoutError):
-        await interaction.response.edit_message("Le temps d'attente est écoulé. Veuillez réessayer.", ephemeral=True)
+        await interaction.response.send_message("Le temps d'attente est écoulé. Veuillez réessayer.", ephemeral=True)
     else:
         logging.error(f"Erreur inattendue : {str(error)}")
-        await interaction.response.edit_message(message or "Une erreur inattendue s'est produite.", ephemeral=True)
+        await interaction.response.send_message(message or "Une erreur inattendue s'est produite.", ephemeral=True)
 
 # Récupérer le solde d'un utilisateur
 async def get_user_balance(user_id: int) -> int:
@@ -1191,10 +1191,6 @@ class RouletteView(discord.ui.View):
     async def even_odd_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(EvenOddBetModal(self.game))
 
-    @discord.ui.button(label="Haut/Bas", style=discord.ButtonStyle.green)
-    async def high_low_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(HighLowBetModal(self.game))
-
     @discord.ui.button(label="Douzaine", style=discord.ButtonStyle.gray)
     async def dozen_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(DozenBetModal(self.game))
@@ -1202,22 +1198,6 @@ class RouletteView(discord.ui.View):
     @discord.ui.button(label="Colonne", style=discord.ButtonStyle.gray)
     async def column_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(ColumnBetModal(self.game))
-
-    @discord.ui.button(label="Split", style=discord.ButtonStyle.blurple)
-    async def split_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(SplitBetModal(self.game))
-
-    @discord.ui.button(label="Street", style=discord.ButtonStyle.blurple)
-    async def street_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(StreetBetModal(self.game))
-
-    @discord.ui.button(label="Corner", style=discord.ButtonStyle.blurple)
-    async def corner_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(CornerBetModal(self.game))
-
-    @discord.ui.button(label="Line", style=discord.ButtonStyle.blurple)
-    async def line_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(LineBetModal(self.game))
 
     @discord.ui.button(label="Voir les paris", style=discord.ButtonStyle.secondary)
     async def show_bets(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -1229,9 +1209,9 @@ class RouletteView(discord.ui.View):
         for item in self.children:
             item.disabled = True
 
-class NumberBetModal(discord.ui.Modal):
+class NumberBetModal(discord.ui.Modal, title="Pari sur un numéro"):
     def __init__(self, game: RouletteGame):
-        super().__init__("Pari sur un numéro")
+        super().__init__()
         self.game = game
 
     number = discord.ui.TextInput(label="Numéro (0-36)", min_length=1, max_length=2)
