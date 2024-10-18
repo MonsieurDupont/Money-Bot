@@ -39,14 +39,27 @@ DATABASE = os.getenv("DATABASE")
 GUILD_ID = os.getenv("GUILD_ID")
 APPLICATION_ID = os.getenv("APPLICATION_ID")
 CoinEmoji = "<:AploucheCoin:1286080674046152724>"
+<<<<<<< Updated upstream
 card_back = "<:cardback:1296606466920284234>"
 
+=======
+card_back = "<:cardback:1296604945121804318>"
+>>>>>>> Stashed changes
 min_work_pay = commandsconfig.getint('Constants', 'min_pay')
 max_work_pay = commandsconfig.getint('Constants', 'max_pay')
 work_cooldown_time = commandsconfig.getint('Constants', 'work_cooldown')
 print(f"Succesfully read {len(commandsconfig.options('Constants'))} 'Constants' in 'settings.ini.'")
-initial_p_bet = commandsconfig.getint('Poker', 'initial_p_bet')
-min_b_bet = commandsconfig.getint('Blackjack', 'min_b_bet')
+initial_bet_poker = commandsconfig.getint('Poker', 'initial_bet_poker')
+min_bet_blackjack = commandsconfig.getint('Blackjack', 'min_bet_blackjack')
+PAYOUT_NUMERO = commandsconfig.getint('Roulette', 'payout_numero')
+PAYOUT_ROUGE = commandsconfig.getint('Roulette', 'payout_rouge')
+PAYOUT_NOIR = commandsconfig.getint('Roulette', 'payout_noir')
+PAYOUT_PAIR = commandsconfig.getint('Roulette', 'payout_pair')
+PAYOUT_IMPAIR = commandsconfig.getint('Roulette', 'payout_impair')
+PAYOUT_1_18 = commandsconfig.getint('Roulette', 'payout_1-18')
+PAYOUT_19_36 = commandsconfig.getint('Roulette', 'payout_19-36')
+PAYOUT_DOUZAINE = commandsconfig.getint('Roulette', 'payout_douzaine')
+PAYOUT_COLONNE = commandsconfig.getint('Roulette', 'payout_colonne')
 
 # Définition des couleurs
 color_green = 0x98d444
@@ -165,7 +178,6 @@ async def register(interaction: discord.Interaction):
     if is_registered(user_id):
         embed = discord.Embed(title="Erreur", description=f"Vous êtes déjà inscrit, {interaction.user.mention}.", color=color_red)
         embed.add_field(name="Raison", value="Vous avez déjà un compte existant.", inline=False)
-        # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
         await interaction.response.send_message(embed=embed)
     else:
         query = f"""
@@ -184,7 +196,6 @@ async def register(interaction: discord.Interaction):
         else:
             embed = discord.Embed(title="Erreur", description=f"Erreur lors de l'inscription, {interaction.user.mention}.", color=color_red)
             embed.add_field(name="Raison", value="Veuillez réessayer plus tard.", inline=False)
-            # embed.set_footer(text="Si vous avez des questions, n'hésitez pas à demander.")
             await interaction.response.send_message(embed=embed)
 
 # Commande pour afficher les statistiques
@@ -290,7 +301,6 @@ async def balance(interaction: discord.Interaction, user: typing.Optional[discor
     embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
     if total <= 0:
         embed.add_field(name="", value="Wesh c'est la hess la ", inline=False)
-    # embed.add_field(name="Aide", value="Pour voir les commandes disponibles, tapez `/help`.", inline=False)
     await interaction.response.send_message(embed=embed)
 
 # Commande pour déposer de l'argent dans sa banque
@@ -968,7 +978,6 @@ async def work(interaction: discord.Interaction):
 def card_to_emoji(card):
    return card_map.get(card.lower(), "❓")
 
-
 def card_to_name(card):
     value_map = {
     '2': '2', '3': '3', '4': '4', '5': '5', '6': '6', 
@@ -984,142 +993,116 @@ def card_to_name(card):
 
     return f"{value} de {suit}"
 
+# Utilisation des constantes de payout
+def get_payout(bet):
+    payout_map = {
+        "rouge": PAYOUT_ROUGE,
+        "noir": PAYOUT_NOIR,
+        "pair": PAYOUT_PAIR,
+        "impair": PAYOUT_IMPAIR,
+        "1-18": PAYOUT_1_18,
+        "19-36": PAYOUT_19_36,
+        "douzaine 1-12": PAYOUT_DOUZAINE,
+        "douzaine 13-24": PAYOUT_DOUZAINE,
+        "douzaine 25-36": PAYOUT_DOUZAINE,
+        "colonne 1": PAYOUT_COLONNE,
+        "colonne 2": PAYOUT_COLONNE,
+        "colonne 3": PAYOUT_COLONNE,
+    }
+    
+    if bet.isdigit():  # Si le pari est un numéro spécifique
+        return PAYOUT_NUMERO
+
+    return payout_map.get(bet, 0)  # Retourne 0 si le type de pari n'est pas reconnu
+
 # Commande pour jouer à la roulette
 @bot.tree.command(name="roulette", description="Jouer à la roulette")
-@app_commands.describe(amount="Montant à miser", bet="Type de mise (par exemple, 'rouge', 'noir', 'pair', 'impair', '1', '2', ...)")
+@app_commands.describe(amount="Montant à miser", bet="Type de mise (par exemple: 'rouge', 'noir', 'pair', 'impair', '1', '2', ...)")
 async def roulette(interaction: discord.Interaction, amount: int, bet: str):
     user_id = interaction.user.id
 
+    # Vérifier si l'utilisateur est inscrit
     if not is_registered(user_id):
-        embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register`.", color=color_red)
+        embed = discord.Embed(title="Erreur", description="Vous devez vous inscrire avec `/register` avant de jouer à la roulette.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
 
+    # Vérifier si le montant du pari est valide
     if amount <= 0:
-        embed = discord.Embed(title="Erreur", description="Le montant doit être supérieur à 0.", color=color_red)
+        embed = discord.Embed(title="Erreur", description="Le montant du pari doit être supérieur à 0.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
 
+    # Vérifier si l'utilisateur a assez d'argent pour parier
     query = f"SELECT {FIELD_CASH} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
     data = fetch_data(query, (user_id,))
-    user_cash = data[0][0] if data and data[0] else 0
-
-    if user_cash < amount:
-        embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez de cash pour participer à la roulette. Votre solde : {user_cash} {CoinEmoji}", color=color_red)
+    if not data:
+        embed = discord.Embed(title="Erreur", description="Impossible de récupérer vos données. Veuillez réessayer plus tard.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+    
+    cash = data[0][0]
+    if cash < amount:
+        embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez d'argent pour ce pari. Votre solde actuel est de {cash} {CoinEmoji}.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
 
     winning_conditions = {
-        "rouge": lambda x: x == "rouge",
-        "noir": lambda x: x == "noir",
-        "pair": lambda x: x % 2 == 0,
+        "rouge": lambda x: x in [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36],
+        "noir": lambda x: x in [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35],
+        "pair": lambda x: x % 2 == 0 and x != 0,
         "impair": lambda x: x % 2 != 0,
         "1-18": lambda x: 1 <= x <= 18,
         "19-36": lambda x: 19 <= x <= 36,
-        "1": lambda x: x == 1,
-        "2": lambda x: x == 2,
-        "3": lambda x: x == 3,
-        "4": lambda x: x == 4,
-        "5": lambda x: x == 5,
-        "6": lambda x: x == 6,
-        "7": lambda x: x == 7,
-        "8": lambda x: x == 8,
-        "9": lambda x: x == 9,
-        "10": lambda x: x == 10,
-        "11": lambda x: x == 11,
-        "12": lambda x: x == 12,
-        "13": lambda x: x == 13,
-        "14": lambda x: x == 14,
-        "15": lambda x: x == 15,
-        "16": lambda x: x == 16,
-        "17": lambda x: x == 17,
-        "18": lambda x: x == 18,
-        "19": lambda x: x == 19,
-        "20": lambda x: x == 20,
-        "21": lambda x: x == 21,
-        "22": lambda x: x == 22,
-        "23": lambda x: x == 23,
-        "24": lambda x: x == 24,
-        "25": lambda x: x == 25,
-        "26": lambda x: x == 26,
-        "27": lambda x: x == 27,
-        "28": lambda x: x == 28,
-        "29": lambda x: x == 29,
-        "30": lambda x: x == 30,
-        "31": lambda x: x == 31,
-        "32": lambda x: x == 32,
-        "33": lambda x: x == 33,
-        "34": lambda x: x == 34,
-        "35": lambda x: x == 35,
-        "36": lambda x: x == 36,
         "douzaine 1-12": lambda x: 1 <= x <= 12,
         "douzaine 13-24": lambda x: 13 <= x <= 24,
-        " douzaine 25-36": lambda x: 25 <= x <= 36,
+        "douzaine 25-36": lambda x: 25 <= x <= 36,
         "colonne 1": lambda x: x in [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34],
         "colonne 2": lambda x: x in [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35],
         "colonne 3": lambda x: x in [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36],
-        "carré 1": lambda x: x in [1, 4, 7, 10, 13, 16, 19, 22, 25],
-        "carré 2": lambda x: x in [2, 5, 8, 11, 14, 17, 20, 23, 26],
-        "carré 3": lambda x: x in [3, 6, 9, 12, 15, 18, 21, 24, 27],
-        "sixain 1": lambda x: x in [1, 2, 3, 4, 5, 6],
-        "sixain 2": lambda x: x in [7, 8, 9, 10, 11, 12],
-        "sixain 3": lambda x: x in [13, 14, 15, 16, 17, 18],
-        "sixain 4": lambda x: x in [19, 20, 21, 22, 23, 24],
-        "sixain 5": lambda x: x in [25, 26, 27, 28, 29, 30],
-        "sixain 6": lambda x: x in [31, 32, 33, 34, 35, 36],
-        "transversale 1": lambda x: x in [1, 2, 3],
-        "transversale 2": lambda x: x in [4, 5, 6],
-        "transversale 3": lambda x: x in [7, 8, 9],
-        "transversale 4": lambda x: x in [10, 11, 12],
-        "transversale 5": lambda x: x in [13, 14, 15],
-        "transversale 6": lambda x: x in [16, 17, 18],
-        "transversale 7": lambda x: x in [19, 20, 21],
-        "transversale 8": lambda x: x in [22, 23, 24],
-        "transversale 9": lambda x: x in [25, 26, 27],
-        "transversale 10": lambda x: x in [28, 29, 30],
-        "transversale 11": lambda x: x in [31, 32, 33],
-        "transversale 12": lambda x: x in [34, 35, 36]
     }
 
-    if bet not in winning_conditions:
-        embed = discord.Embed(title="Erreur", description="Type de mise invalide.", color=color_red)
+    # Ajouter les conditions pour les paris sur des numéros spécifiques
+    for i in range(37):
+        winning_conditions[str(i)] = lambda x, i=i: x == i
+
+    # Vérifier si le type de pari est valide
+    valid_bets = ["rouge", "noir", "pair", "impair", "1-18", "19-36", "douzaine 1-12", "douzaine 13-24", "douzaine 25-36", "colonne 1", "colonne 2", "colonne 3"]
+    if bet not in valid_bets and not bet.isdigit():
+        embed = discord.Embed(title="Erreur", description=f"Type de pari invalide. Les types de paris valides sont : {', '.join(valid_bets)} ou un nombre entre 0 et 36.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
 
-    # Génération du résultat aléatoire
+    if bet.isdigit() and (int(bet) < 0 or int(bet) > 36):
+        embed = discord.Embed(title="Erreur", description="Pour les paris sur un numéro spécifique, choisissez un nombre entre 0 et 36.", color=color_red)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    # Simuler le lancement de la roulette
     winning_number = random.randint(0, 36)
-    winning_color = "rouge" if winning_number in [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36] else "noir"
-    winning_parity = "pair" if winning_number % 2 == 0 else "impair"
-    winning_range = "1-18" if winning_number <= 18 else "19-36"
-    winning_douzaine = "1-12" if winning_number <= 12 else "13-24" if winning_number <= 24 else "25-36"
-    winning_colonne = "1" if winning_number in [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34] else "2" if winning_number in [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35] else "3"
-    winning_square = [(1, 4, 7, 10, 13, 16, 19, 22, 25), (2, 5, 8, 11, 14, 17, 20, 23, 26), (3, 6, 9, 12, 15, 18, 21, 24, 27), (28, 31, 34, 4, 7, 10), (29, 32, 35, 5, 8, 11), (30, 33, 36, 6, 9, 12)][(winning_number - 1) // 3]
-    winning_sixain = [(1, 2, 3, 4, 5, 6), (7, 8, 9, 10, 11, 12), (13, 14, 15, 16, 17, 18), (19, 20, 21, 22, 23, 24), (25, 26, 27, 28, 29, 30), (31, 32, 33, 34, 35, 36)][(winning_number - 1) // 6]
-    winning_transversale = [(1, 2, 3), (4, 5, 6), (7, 8, 9), (10, 11, 12), (13, 14, 15), (16, 17, 18), (19, 20, 21), (22, 23, 24), (25, 26, 27), (28, 29, 30), (31, 32, 33), (34, 35, 36)][(winning_number - 1) // 3]
 
+    # Vérifier si le joueur a gagné
     if winning_conditions[bet](winning_number):
-        if bet.isdigit():
-            winnings = amount * 35
-        elif bet in ["rouge", "noir", "pair", "impair", "1-18", "19-36"]:
-            winnings = amount
-        elif bet in ["douzaine 1-12", "douzaine 13-24", "douzaine 25-36", "colonne 1", "colonne 2", "colonne 3"]:
-            winnings = amount * 2
-        elif bet in ["carré 1", "carré 2", "carré 3"]:
-            winnings = amount * 8
-        elif bet in ["sixain 1", "sixain 2", "sixain 3", "sixain 4", "sixain 5", "sixain 6"]:
-            winnings = amount * 5
-        elif bet in ["transversale 1", "transversale 2", "transversale 3", "transversale 4", "transversale 5", "transversale 6", "transversale 7", "transversale 8", "transversale 9", "transversale 10", "transversale 11", "transversale 12"]:
-            winnings = amount * 11
+        payout = get_payout(bet)
+        if payout == 0:
+            embed = discord.Embed(title="Erreur", description="Une erreur s'est produite lors du calcul des gains. Veuillez contacter un administrateur.", color=color_red)
+            await interaction.response.send_message(embed=embed)
+            return
+        
+        winnings = amount * payout
+        new_balance = cash + winnings - amount  # Soustraire la mise initiale
+        query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = %s WHERE {FIELD_USER_ID} = %s"
+        execute_query(query, (new_balance, user_id))
+
+        embed = discord.Embed(title="Résultat", description=f"Félicitations ! Vous avez gagné {winnings} {CoinEmoji} avec un pari de {amount} {CoinEmoji} sur {bet}. Votre nouveau solde est de {new_balance} {CoinEmoji}.", color=color_green)
+        await interaction.response.send_message(embed=embed)
     else:
-        winnings = -amount
+        new_balance = cash - amount
+        query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = %s WHERE {FIELD_USER_ID} = %s"
+        execute_query(query, (new_balance, user_id))
 
-    # Mise à jour du solde de l'utilisateur
-    query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = {FIELD_CASH} + %s WHERE {FIELD_USER_ID} = %s"
-    execute_query(query, (winnings, user_id))
-
-    # Envoi du résultat
-    embed = discord.Embed(title="Résultat de la roulette", description=f"Le numéro gagnant est {winning_number} {winning_color}. Vous avez {'gagné' if winnings > 0 else 'perdu'} {abs(winnings)} {CoinEmoji}.", color=color_green if winnings > 0 else color_red)
-    await interaction.response.send_message(embed=embed)
+        embed = discord.Embed(title="Résultat", description=f"Désolé, vous avez perdu votre pari de {amount} {CoinEmoji} sur {bet}. Votre nouveau solde est de {new_balance} {CoinEmoji}.", color=color_red)
+        await interaction.response.send_message(embed=embed)
 
 class PokerPlayerClass:
     def __init__(self, id):
@@ -1155,7 +1138,7 @@ class PokerSessionClass:
 Poker_game_in_progress = False
 poker_session = None
 
-@bot.tree.command(name="poker", description=f"Jouer au poker. La mise initiale est de {initial_p_bet}")
+@bot.tree.command(name="poker", description=f"Jouer au poker. La mise initiale est de {initial_bet_poker}")
 async def poker(interaction: discord.Interaction):
     user_id = interaction.user.id
     global Poker_game_in_progress, poker_session
@@ -1166,7 +1149,7 @@ async def poker(interaction: discord.Interaction):
     cash, bank = data[0]
     total = cash + bank
 
-    if total < initial_p_bet:
+    if total < initial_bet_poker:
         embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez d'argent pour la mise initiale", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
@@ -1321,8 +1304,8 @@ async def blackjack(interaction: discord.Interaction, amount: int):
         return """
 
     # Verifier si la mise est inferieure a la mise minimale
-    if amount < min_b_bet:
-        embed = discord.Embed(title="Erreur", description=f"La mise minimale est de **{initial_p_bet}** {CoinEmoji}", color=color_red)
+    if amount < min_bet_blackjack:
+        embed = discord.Embed(title="Erreur", description=f"La mise minimale est de **{initial_bet_poker}** {CoinEmoji}", color=color_red)
         await interaction.response.send_message(embed=embed, ephemeral=True)
         return
     
@@ -1362,9 +1345,6 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     embed.add_field(name="", value=f"Score: {blackjack_sessions[user_id].evaluate_hand(dealer_cards)}")
 
     await interaction.response.send_message(embed=embed, view=view)
-
-
-
 
 if __name__ == "__main__":
     bot.run(TOKEN)
