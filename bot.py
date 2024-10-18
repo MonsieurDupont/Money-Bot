@@ -1143,18 +1143,44 @@ class RouletteGame:
             winning_number = random.choice(ROULETTE_NUMBERS)
             winning_color = ROULETTE_COLORS[str(winning_number)]
 
-            embed = discord.Embed(title="La roulette a tourné ! ",
-                                description=f"Le numéro gagnant est {winning_number} {ROULETTE_NUMBER_EMOJIS[str(winning_number)]} {ROULETTE_COLOR_EMOJIS[winning_color]}. ",
+            embed = discord.Embed(title="La roulette a tourné !",
+                                description=f"Le numéro gagnant est {winning_number} {ROULETTE_NUMBER_EMOJIS[str(winning_number)]} {ROULETTE_COLOR_EMOJIS[winning_color]}.",
                                 color=discord.Color.red())
+
+            winners = []
+            losers = []
+            total_winnings = 0
+            total_losses = 0
 
             for bet in self.bets:
                 try:
                     winnings = self.calculate_winnings(bet, winning_number, winning_color)
                     if winnings > 0:
                         await update_user_balance(bet.user.id, winnings)
-                        embed.add_field(name=f"{bet.user.name} a gagné ! ", value=f"{winnings} {COIN_EMOJI}", inline=False)
+                        winners.append((bet.user.name, winnings))
+                        total_winnings += winnings
+                    else:
+                        losers.append((bet.user.name, bet.amount))
+                        total_losses += bet.amount
                 except Exception as e:
                     logging.error(f"Erreur lors de la distribution des gains pour {bet.user.name}: {str(e)}")
+
+            # Ajouter les informations sur les gagnants
+            if winners:
+                winners_text = "\n".join([f"{name} a gagné {amount} {COIN_EMOJI}" for name, amount in winners])
+                embed.add_field(name="Gagnants", value=winners_text, inline=False)
+            else:
+                embed.add_field(name="Gagnants", value="Aucun gagnant cette fois-ci.", inline=False)
+
+            # Ajouter les informations sur les perdants
+            if losers:
+                losers_text = "\n".join([f"{name} a perdu {amount} {COIN_EMOJI}" for name, amount in losers])
+                embed.add_field(name="Perdants", value=losers_text, inline=False)
+            else:
+                embed.add_field(name="Perdants", value="Aucun perdant cette fois-ci.", inline=False)
+
+            # Ajouter le résumé des gains et pertes
+            embed.add_field(name="Résumé", value=f"Total des gains : {total_winnings} {COIN_EMOJI}\nTotal des pertes : {total_losses} {COIN_EMOJI}", inline=False)
 
             await message.edit(embed=embed)
         except Exception as e:
