@@ -1211,7 +1211,7 @@ class Roulette(commands.Cog):
         self.bot = bot
         self.sessions = {}  # {channel_id: RouletteSession}
 
-    @commands.slash_command(name="roulette", description="Rejoindre une partie de roulette")
+    @bot.tree.command(name="roulette", description="Rejoindre une partie de roulette")
     async def roulette(self, interaction: Interaction, amount: int):
         user_id = interaction.user.id
 
