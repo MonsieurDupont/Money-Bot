@@ -1817,6 +1817,7 @@ class BlackJackView(discord.ui.View):
     @discord.ui.button(label="Hit", style=discord.ButtonStyle.green)
     async def hit(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.user_id:
+            print("WIOEFBUWOEIUFBWEOIFBW")
             self.stop()
             return
         
