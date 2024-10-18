@@ -1046,7 +1046,7 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
         embed = discord.Embed(title="Erreur", description="Impossible de récupérer vos données. Veuillez réessayer plus tard.", color=color_red)
         await interaction.response.send_message(embed=embed)
         return
-    
+
     cash = data[0][0]
     if cash < amount:
         embed = discord.Embed(title="Erreur", description=f"Vous n'avez pas assez d'argent pour ce pari. Votre solde actuel est de {cash} {COIN_EMOJI}.", color=color_red)
@@ -1105,25 +1105,29 @@ async def roulette(interaction: discord.Interaction, amount: int, bet: str):
             embed = discord.Embed(title="Erreur", description="Une erreur s'est produite lors du calcul des gains. Veuillez contacter un administrateur.", color=color_red)
             await interaction.response.send_message(embed=embed)
             return
-        
+
         winnings = amount * payout
         new_balance = cash + winnings - amount  # Soustraire la mise initiale
-        query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = %s WHERE {FIELD_USER_ID} = %s"
-        execute_query(query, (new_balance, user_id))
-
-        embed = discord.Embed(title="Résultat", description=f"Félicitations ! Vous avez gagné {winnings} {COIN_EMOJI} avec un pari de {amount} {COIN_EMOJI} sur {bet}.", color=color_green)
-        embed.add_field(name="Numéro gagnant", value=result_visual, inline=False)
-        embed.add_field(name="Nouveau solde", value=f"{new_balance} {COIN_EMOJI}", inline=False)
-        await interaction.response.send_message(embed=embed)
     else:
         new_balance = cash - amount
-        query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = %s WHERE {FIELD_USER_ID} = %s"
-        execute_query(query, (new_balance, user_id))
 
-        embed = discord.Embed(title="Résultat", description=f"Désolé, vous avez perdu votre pari de {amount} {COIN_EMOJI} sur {bet}.", color=color_red)
-        embed.add_field(name="Numéro gagnant", value=result_visual, inline=False)
-        embed.add_field(name=" Nouveau solde", value=f"{new_balance} {COIN_EMOJI}", inline=False)
+    # Mettre à jour le solde de l'utilisateur
+    query = f"UPDATE {TABLE_USERS} SET {FIELD_CASH} = %s WHERE {FIELD_USER_ID} = %s"
+    success = execute_query(query, (new_balance , user_id))
+    if not success:
+        embed = discord.Embed(title="Erreur", description="Impossible de mettre à jour votre solde. Veuillez réessayer plus tard.", color=color_red)
         await interaction.response.send_message(embed=embed)
+        return
+
+    # Envoyer le résultat
+    if winning_conditions[bet](winning_number):
+        embed = discord.Embed(title="Résultat", description=f"Félicitations ! Vous avez gagné {winnings} {COIN_EMOJI} avec un pari de {amount} {COIN_EMOJI} sur {bet}.", color=color_green)
+    else:
+        embed = discord.Embed(title="Résultat", description=f"Désolé, vous avez perdu votre pari de {amount} {COIN_EMOJI} sur {bet}.", color=color_red)
+
+    embed.add_field(name="Numéro gagnant", value=result_visual, inline=False)
+    embed.add_field(name="Nouveau solde", value=f"{new_balance} {COIN_EMOJI}", inline=False)
+    await interaction.response.send_message(embed=embed)
 
 
 # POKER
