@@ -1864,12 +1864,13 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     await interaction.response.send_message(embed=embed, view=view)
  """
 class BlackJackView(discord.ui.View):
-    def __init__(self, session, interaction, user_id):
+    def __init__(self, session, interaction, user_id, bet):
         super().__init__()
         self.session = session
         self.interaction = interaction
         self.value = None
         self.user_id = user_id
+        self.bet = bet
 
     @discord.ui.button(label="Hit", style=discord.ButtonStyle.green)
     async def hit(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -1891,10 +1892,13 @@ class BlackJackView(discord.ui.View):
 
         # Check if player busts
         if self.session.evaluate_hand(player_cards) > 21:
-            embed.add_field(name="Résultat", value="Vous avez dépassé 21! Perdu!")
+            embed = discord.Embed(title=f"Resultat : -{self.bet} {COIN_EMOJI}", color=color_red)
+            embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
+            embed.add_field(name="Vous", value="".join([card_to_emoji(Card.int_to_str(card)) for card in player_cards]) + f"\nScore: {self.session.evaluate_hand(player_cards)}")
+            embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(self.session.dealer_hand[0]))} {CARD_BACK} \nScore: {self.session.evaluate_hand(dealer_cards)}")
             self.session.end_game(self.user_id)
             # self.disable_all_items()  # Disable buttons
-        await interaction.response.edit_message(embed=embed, view=self)
+        await interaction.response.edit_message(embed=embed)
         
 
     @discord.ui.button(label="Stand", style=discord.ButtonStyle.gray)
@@ -1915,25 +1919,29 @@ class BlackJackView(discord.ui.View):
 
         # Determine the result
         result = ""
+        color = None
         if dealer_score > 21:
-            result = "Le croupier a dépassé 21! Vous avez gagné!"
+            result = f"+ {self.bet}"
+            color = color_green
         elif dealer_score > player_score:
-            result = "Le croupier a gagné!"
+            result = f"-{self.bet}"
+            color = color_red
         elif dealer_score < player_score:
-            result = "Vous avez gagné!"
+            result = f"+{self.bet}"
+            color = color_green
         else:
-            result = "Égalité!"
+            result = "Égalité"
+            color = color_yellow
         
         # Update the embed
-        embed = discord.Embed(title="Blackjack", color=discord.Color.blue())
+        embed = discord.Embed(title=f"Resultat : {result}", color=color)
         embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
         embed.add_field(name="Vous", value="".join([card_to_emoji(Card.int_to_str(card)) for card in self.session.player_hand]) + f"\nScore: {player_score}")
         embed.add_field(name="Croupier", value="".join([card_to_emoji(Card.int_to_str(card)) for card in dealer_hand]) + f"\nScore: {dealer_score}")
-        embed.add_field(name="\n Résultat", value=result)
 
         # Disable buttons after standing
         # self.disable_all_items()
-        await interaction.response.edit_message(embed=embed, view=self)
+        await interaction.response.edit_message(embed=embed,)
         self.session.end_game(self.user_id)
 
 class BlackJackSession:
@@ -2035,7 +2043,7 @@ async def blackjack(interaction: discord.Interaction, amount: int):
     embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(dealer_cards[0]))} {CARD_BACK} \nScore: {session.evaluate_hand(dealer_cards)}" )
 
     # Send the initial game state with the view containing the buttons
-    view = BlackJackView(session, interaction, user_id)
+    view = BlackJackView(session, interaction, user_id, amount)
     await interaction.response.send_message(embed=embed, view=view)
 
 if __name__ == "__main__":
