@@ -1877,18 +1877,17 @@ class BlackJackView(discord.ui.View):
         if interaction.user.id != self.user_id:      
             return
         
-        # Player chooses to "Hit"
-        self.session.deal(self.session.player_hand, 1)  # Deal one card to the player
+        # Le joueur pioche
+        self.session.deal(self.session.player_hand, 1) 
         player_cards = self.session.player_hand
         dealer_cards = self.session.dealer_hand
         
-        # Update embed with the new hand
         embed = discord.Embed(title="Blackjack", color=discord.Color.blue())
         embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
         embed.add_field(name="Vous", value="".join([card_to_emoji(Card.int_to_str(card)) for card in player_cards]) + f"\nScore: {self.session.evaluate_hand(player_cards)}")
         embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(self.session.dealer_hand[0]))} {CARD_BACK} \nScore: {self.session.evaluate_hand(dealer_cards)}")
 
-        # Check if player busts
+        # Verifier si le joueur perd ou pioche et ateint 21
         if self.session.evaluate_hand(player_cards) > 21:
             embed = discord.Embed(title=f"Resultat : -{self.bet} {COIN_EMOJI}", color=color_red)
             embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
@@ -1909,41 +1908,45 @@ class BlackJackView(discord.ui.View):
         if interaction.user.id != self.user_id:
             
             return
-        # Player chooses to "Stand"
+        # Le joueur choisis de stand
         dealer_hand = self.session.dealer_hand
         self.session.dealer_revealed = True
         
-        # Dealer hits until score is 17 or higher
+        # Le croupier pioche jusqu'a ateindre 17
         while self.session.evaluate_hand(dealer_hand) < 17:
             self.session.deal(dealer_hand, 1)
         
         player_score = self.session.evaluate_hand(self.session.player_hand)
         dealer_score = self.session.evaluate_hand(dealer_hand)
 
-        # Determine the result
+        # Determiner le resultat en cas de Stand
         result = ""
         color = None
         if dealer_score > 21:
             result = f"Vous gagnez {self.bet} {COIN_EMOJI}"
             color = color_green
+            query = f"""UPDATE {TABLE_USERS} u SET u.{FIELD_CASH} = u.{FIELD_CASH} + %s WHERE u.{FIELD_USER_ID} = %s"""
+            # add_transaction(self.user_id, self.bet, blackjack)
         elif dealer_score > player_score:
             result = f"Vous perdez {self.bet} {COIN_EMOJI}"
             color = color_red
+            query = f"""UPDATE {TABLE_USERS} u SET u.{FIELD_CASH} = u.{FIELD_CASH} - %s WHERE u.{FIELD_USER_ID} = %s"""
+            # add_transaction(self.user_id, self.bet, blackjack)
         elif dealer_score < player_score:
             result = f"Vous gagnez {self.bet} {COIN_EMOJI}"
             color = color_green
+            query = f"""UPDATE {TABLE_USERS} u SET u.{FIELD_CASH} = u.{FIELD_CASH} + %s WHERE u.{FIELD_USER_ID} = %s"""
+            # add_transaction(self.user_id, self.bet, blackjack)
         else:
             result = "Égalité"
             color = color_yellow
+        execute_query(query, (self.bet, self.user_id))
         
-        # Update the embed
         embed = discord.Embed(title=f"Resultat : {result}", color=color)
         embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
         embed.add_field(name="Vous", value="".join([card_to_emoji(Card.int_to_str(card)) for card in self.session.player_hand]) + f"\nScore: {player_score}")
         embed.add_field(name="Croupier", value="".join([card_to_emoji(Card.int_to_str(card)) for card in dealer_hand]) + f"\nScore: {dealer_score}")
 
-        # Disable buttons after standing
-        # self.disable_all_items()
         await interaction.response.edit_message(embed=embed)
         self.session.end_game(self.user_id)
 
@@ -1954,33 +1957,29 @@ class BlackJackSession:
         self.dealer_hand = []
         self.dealer_revealed = False
 
-    # End session
     def end_game(self, user_id):
         del blackjack_sessions[user_id]
         
-    # Deal cards to the hand
     def deal(self, hand, amount):
         for i in range(amount):
             cards = self.deck.draw(1)
             hand.extend(cards)
         return hand
 
-    # Rank cards based on their value in blackjack
     def rank_card(self, card):
-        rank_str = card[:-1].lower()  # Exclude the suit (last character)
-        if rank_str.isdigit():  # For ranks 2 to 9
+        rank_str = card[:-1].lower()  
+        if rank_str.isdigit():  
             return int(rank_str)
-        elif rank_str == 't':  # For the 10 card
+        elif rank_str == 't':  
             return 10
         elif rank_str in ['j', 'q', 'k']:
-            return 10  # Face cards are worth 10
+            return 10  
         elif rank_str == 'a':
-            return 1  # Ace is worth 1 (can handle 11 separately)
+            return 1  
         else:
-            print("ERROR: Invalid card")
-            return 0  # Invalid card
+            print("ERROR: BlackJack | Carte invalide")
+            return 0 
         
-    # Evaluate hand value, considering Ace as either 1 or 11
     def evaluate_hand(self, hand):
         total_value = 0
         aces = 0
@@ -1990,16 +1989,14 @@ class BlackJackSession:
             card_value = self.rank_card(strcard)
             total_value += card_value
             if strcard.startswith('a'):
-                aces += 1  # Count Aces for adjustment later
+                aces += 1  
 
-        # Adjust for Aces if total exceeds 21
         while total_value > 21 and aces > 0:
-            total_value -= 10  # Count one Ace as 1 instead of 11
+            total_value -= 10  
             aces -= 1
 
         return total_value
 
-# Global dictionaries to manage blackjack sessions
 blackjack_sessions = {}
 blackjack_players = []
 
@@ -2007,19 +2004,19 @@ blackjack_players = []
 async def blackjack(interaction: discord.Interaction, amount: int):
     user_id = interaction.user.id
 
-    # Check if player is already playing
+    # Verifier si le joueur joue deja
     if user_id in blackjack_sessions:
         embed = discord.Embed(title="Erreur", description=f"Vous jouez déjà une partie de Black Jack", color=color_red)
         await interaction.response.send_message(embed=embed, ephemeral=True)
         return
 
-    # Check if the bet amount is valid
+    # Verifier si le joueur mise la mise minimale
     if amount < BLACKJACK_MIN_BET:
         embed = discord.Embed(title="Erreur", description=f"La mise minimale est de **{BLACKJACK_MIN_BET}** {COIN_EMOJI}", color=discord.Color.red())
         await interaction.response.send_message(embed=embed, ephemeral=True)
         return
 
-    # Check if player has enough money
+    # Verifier si le joueur a assez d'argent
     query = f"SELECT {FIELD_CASH} FROM {TABLE_USERS} WHERE {FIELD_USER_ID} = %s"
     data = fetch_data(query, (user_id,))
     if amount > data[0][0]:
@@ -2027,25 +2024,23 @@ async def blackjack(interaction: discord.Interaction, amount: int):
         await interaction.response.send_message(embed=embed, ephemeral=True)
         return
     
-    # Add player to active players list and create a new session
+    # Creer une session
     blackjack_players.append(user_id)
     blackjack_sessions[user_id] = BlackJackSession()
 
-    # Deal initial cards to the player and dealer
+    # Tirer les cartes initiales
     session = blackjack_sessions[user_id]
-    session.deal(session.player_hand, 2)  # Player gets 2 cards
-    session.deal(session.dealer_hand, 1)  # Dealer gets 1 card
+    session.deal(session.player_hand, 2)  
+    session.deal(session.dealer_hand, 1) 
 
     player_cards = session.player_hand
     dealer_cards = session.dealer_hand
 
-    # Create the embed to display the initial cards
     embed = discord.Embed(title="Blackjack", color=discord.Color.blue())
     embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
     embed.add_field(name="Vous", value="".join([card_to_emoji(Card.int_to_str(card)) for card in player_cards]) + f"\nScore: {session.evaluate_hand(player_cards)}")
     embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(dealer_cards[0]))} {CARD_BACK} \nScore: {session.evaluate_hand(dealer_cards)}" )
 
-    # Send the initial game state with the view containing the buttons
     view = BlackJackView(session, interaction, user_id, amount)
     await interaction.response.send_message(embed=embed, view=view)
 
