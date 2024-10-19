@@ -1875,7 +1875,7 @@ class BlackJackView(discord.ui.View):
     async def hit(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.user_id:
             print("WIOEFBUWOEIUFBWEOIFBW")
-            self.stop()
+            
             return
         
         # Player chooses to "Hit"
@@ -1900,7 +1900,7 @@ class BlackJackView(discord.ui.View):
     @discord.ui.button(label="Stand", style=discord.ButtonStyle.gray)
     async def stand(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.user_id:
-            self.stop()
+            
             return
         # Player chooses to "Stand"
         dealer_hand = self.session.dealer_hand
