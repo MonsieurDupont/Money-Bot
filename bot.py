@@ -1092,7 +1092,7 @@ class RouletteGame:
             self.is_running = True
             self.bets = []
 
-            embed = discord.Embed(title="🎰 Nouvelle partie de Roulette ! 🎰",
+            embed = discord.Embed(title=":roulette: Nouvelle partie de Roulette ! :roulette:",
                                 description=f"La roulette va tourner dans {ROULETTE_WAIT_TIME} secondes !\n"
                                             f"Utilisez les boutons ci-dessous pour placer vos paris ! ",
                                 color=discord.Color.gold())
