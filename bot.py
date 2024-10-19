@@ -1922,6 +1922,7 @@ class BlackJackView(discord.ui.View):
         # Determiner le resultat en cas de Stand
         result = ""
         color = None
+        query = None
         if dealer_score > 21:
             result = f"Vous gagnez {self.bet} {COIN_EMOJI}"
             color = color_green
