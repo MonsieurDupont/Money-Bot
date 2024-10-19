@@ -1921,13 +1921,13 @@ class BlackJackView(discord.ui.View):
         result = ""
         color = None
         if dealer_score > 21:
-            result = f"+ {self.bet}"
+            result = f"Vous gagnez {self.bet} {COIN_EMOJI}"
             color = color_green
         elif dealer_score > player_score:
-            result = f"-{self.bet}"
+            result = f"Vous perdez {self.bet} {COIN_EMOJI}"
             color = color_red
         elif dealer_score < player_score:
-            result = f"+{self.bet}"
+            result = f"Vous gagnez {self.bet} {COIN_EMOJI}"
             color = color_green
         else:
             result = "Égalité"
@@ -1941,7 +1941,7 @@ class BlackJackView(discord.ui.View):
 
         # Disable buttons after standing
         # self.disable_all_items()
-        await interaction.response.edit_message(embed=embed,)
+        await interaction.response.edit_message(embed=embed)
         self.session.end_game(self.user_id)
 
 class BlackJackSession:
