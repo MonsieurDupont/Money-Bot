@@ -1874,9 +1874,7 @@ class BlackJackView(discord.ui.View):
 
     @discord.ui.button(label="Hit", style=discord.ButtonStyle.green)
     async def hit(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.user_id:
-            print("WIOEFBUWOEIUFBWEOIFBW")
-            
+        if interaction.user.id != self.user_id:      
             return
         
         # Player chooses to "Hit"
@@ -1897,7 +1895,12 @@ class BlackJackView(discord.ui.View):
             embed.add_field(name="Vous", value="".join([card_to_emoji(Card.int_to_str(card)) for card in player_cards]) + f"\nScore: {self.session.evaluate_hand(player_cards)}")
             embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(self.session.dealer_hand[0]))} {CARD_BACK} \nScore: {self.session.evaluate_hand(dealer_cards)}")
             self.session.end_game(self.user_id)
-            # self.disable_all_items()  # Disable buttons
+        elif self.session.evaluate_hand(player_cards) == 21:
+            embed = discord.Embed(title=f"Resultat : Vous gagnez {self.bet} {COIN_EMOJI}", color=color_green)
+            embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
+            embed.add_field(name="Vous", value="".join([card_to_emoji(Card.int_to_str(card)) for card in player_cards]) + f"\nScore: {self.session.evaluate_hand(player_cards)}")
+            embed.add_field(name="Croupier", value=f"{card_to_emoji(Card.int_to_str(self.session.dealer_hand[0]))} {CARD_BACK} \nScore: {self.session.evaluate_hand(dealer_cards)}")
+            self.session.end_game(self.user_id)
         await interaction.response.edit_message(embed=embed)
         
 
