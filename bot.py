@@ -1173,7 +1173,7 @@ class RouletteGame:
             logging.error(f"Erreur lors du calcul des gains : {str(e)}")
             raise ValueError(f"Erreur lors du calcul des gains : {str(e)}")
 
-    async def spin_roulette(self, message: discord.InteractionMessage, view: RouletteView):
+    async def spin_roulette(self, message: discord.InteractionMessage, view: 'RouletteView'):
         try:
             if not self.bets:
                 await message.edit(content="Aucun pari n'a été placé pour cette rotation.")
@@ -1238,7 +1238,7 @@ class RouletteGame:
         return "\n".join(summary)
 
 class RouletteView(discord.ui.View):
-    def __init__(self, game: RouletteGame):
+    def __init__(self, game: 'RouletteGame'):
         super().__init__()
         self.game = game
         self.last_message = None
