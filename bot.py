@@ -1927,21 +1927,24 @@ class BlackJackView(discord.ui.View):
             result = f"Vous gagnez {self.bet} {COIN_EMOJI}"
             color = color_green
             query = f"""UPDATE {TABLE_USERS} u SET u.{FIELD_CASH} = u.{FIELD_CASH} + %s WHERE u.{FIELD_USER_ID} = %s"""
+            execute_query(query, (self.bet, self.user_id))
             # add_transaction(self.user_id, self.bet, blackjack)
         elif dealer_score > player_score:
             result = f"Vous perdez {self.bet} {COIN_EMOJI}"
             color = color_red
             query = f"""UPDATE {TABLE_USERS} u SET u.{FIELD_CASH} = u.{FIELD_CASH} - %s WHERE u.{FIELD_USER_ID} = %s"""
+            execute_query(query, (self.bet, self.user_id))
             # add_transaction(self.user_id, self.bet, blackjack)
         elif dealer_score < player_score:
             result = f"Vous gagnez {self.bet} {COIN_EMOJI}"
             color = color_green
             query = f"""UPDATE {TABLE_USERS} u SET u.{FIELD_CASH} = u.{FIELD_CASH} + %s WHERE u.{FIELD_USER_ID} = %s"""
+            execute_query(query, (self.bet, self.user_id))
             # add_transaction(self.user_id, self.bet, blackjack)
         else:
             result = "Égalité"
             color = color_yellow
-        execute_query(query, (self.bet, self.user_id))
+        
         
         embed = discord.Embed(title=f"Resultat : {result}", color=color)
         embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url)
