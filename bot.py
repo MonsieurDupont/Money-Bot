@@ -1073,55 +1073,7 @@ class RouletteBet:
         self.bet_type = bet_type
         self.bet_value = bet_value
 
-class RouletteView(discord.ui.View):
-    def __init__(self, game: RouletteGame):
-        super().__init__()
-        self.game = game
-        self.last_message = None
 
-    def disable_all_items(self):
-        for item in self.children:
-            item.disabled = True
-
-    async def send_bet_view(self, interaction: discord.Interaction, view, content):
-        if self.last_message:
-            try:
-                await self.last_message.delete()
-            except discord.NotFound:
-                pass  # Message already deleted, ignore
-
-        await interaction.response.defer()
-        self.last_message = await interaction.followup.send(content, view=view, ephemeral=True)
-
-    @discord.ui.button(label="Numéro", style=discord.ButtonStyle.red)
-    async def number_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(NumberBetModal(self.game))
-
-    @discord.ui.button(label="Couleur", style=discord.ButtonStyle.blurple)
-    async def color_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        view = ColorBetView(self.game, self)
-        await self.send_bet_view(interaction, view, "Choisissez une couleur :")
-
-    @discord.ui.button(label="Pair/Impair", style=discord.ButtonStyle.green)
-    async def even_odd_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        view = EvenOddBetView(self.game, self)
-        await self.send_bet_view(interaction, view, "Choisissez Pair ou Impair :")
-
-    @discord.ui.button(label="Douzaine", style=discord.ButtonStyle.grey)
-    async def dozen_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        view = DozenBetView(self.game, self)
-        await self.send_bet_view(interaction, view, "Choisissez une douzaine :")
-
-    @discord.ui.button(label="Colonne", style=discord.ButtonStyle.primary)
-    async def column_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
-        view = ColumnBetView(self.game, self)
-        await self.send_bet_view(interaction, view, "Choisissez une colonne :")
-
-    @discord.ui.button(label="Voir les paris", style=discord.ButtonStyle.secondary)
-    async def show_bets(self, interaction: discord.Interaction, button: discord.ui.Button):
-        bets_summary = self.game.get_current_bets_summary()
-        embed = discord.Embed(title="Paris actuels", description=bets_summary, color=discord.Color.blue())
-        await interaction.response.send_message(embed=embed, ephemeral=True)
 
     def disable_all_items(self):
         for item in self.children:
@@ -1284,6 +1236,56 @@ class RouletteGame:
             summary.append(bet_info)
         
         return "\n".join(summary)
+
+class RouletteView(discord.ui.View):
+    def __init__(self, game: RouletteGame):
+        super().__init__()
+        self.game = game
+        self.last_message = None
+
+    def disable_all_items(self):
+        for item in self.children:
+            item.disabled = True
+
+    async def send_bet_view(self, interaction: discord.Interaction, view, content):
+        if self.last_message:
+            try:
+                await self.last_message.delete()
+            except discord.NotFound:
+                pass  # Message already deleted, ignore
+
+        await interaction.response.defer()
+        self.last_message = await interaction.followup.send(content, view=view, ephemeral=True)
+
+    @discord.ui.button(label="Numéro", style=discord.ButtonStyle.red)
+    async def number_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(NumberBetModal(self.game))
+
+    @discord.ui.button(label="Couleur", style=discord.ButtonStyle.blurple)
+    async def color_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = ColorBetView(self.game, self)
+        await self.send_bet_view(interaction, view, "Choisissez une couleur :")
+
+    @discord.ui.button(label="Pair/Impair", style=discord.ButtonStyle.green)
+    async def even_odd_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = EvenOddBetView(self.game, self)
+        await self.send_bet_view(interaction, view, "Choisissez Pair ou Impair :")
+
+    @discord.ui.button(label="Douzaine", style=discord.ButtonStyle.grey)
+    async def dozen_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = DozenBetView(self.game, self)
+        await self.send_bet_view(interaction, view, "Choisissez une douzaine :")
+
+    @discord.ui.button(label="Colonne", style=discord.ButtonStyle.primary)
+    async def column_bet(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = ColumnBetView(self.game, self)
+        await self.send_bet_view(interaction, view, "Choisissez une colonne :")
+
+    @discord.ui.button(label="Voir les paris", style=discord.ButtonStyle.secondary)
+    async def show_bets(self, interaction: discord.Interaction, button: discord.ui.Button):
+        bets_summary = self.game.get_current_bets_summary()
+        embed = discord.Embed(title="Paris actuels", description=bets_summary, color=discord.Color.blue())
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class AmountInputModal(discord.ui.Modal, title="Entrer le montant du pari"):
     def __init__(self, game: RouletteGame, bet_type: str, bet_value: str):
